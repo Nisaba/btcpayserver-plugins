@@ -5,19 +5,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace BTCPayServer.Plugins.Template.Migrations
+namespace BTCPayServer.Plugins.Serilog.Migrations
 {
-    [DbContext(typeof(MyPluginDbContext))]
-    partial class MyPluginDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(SerilogPluginDbContext))]
+    partial class SerilogDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("BTCPayServer.Plugins.Template")
-                .HasAnnotation("ProductVersion", "3.1.10");
+                .HasDefaultSchema("BTCPayServer.Plugins.Serilog")
+                .HasAnnotation("ProductVersion", "1.0.0.1");
 
-            modelBuilder.Entity("BTCPayServer.Plugins.Template.Data.PluginData", b =>
+            modelBuilder.Entity("BTCPayServer.Plugins.Serilog.Data.PluginData", b =>
                 {
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd()

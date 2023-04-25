@@ -1,21 +1,22 @@
 using System;
+using BTCPayServer.Plugins.Serilog;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace BTCPayServer.Plugins.Template.Migrations
+namespace BTCPayServer.Plugins.Serilog.Migrations
 {
-    [DbContext(typeof(MyPluginDbContext))]
+    [DbContext(typeof(SerilogPluginDbContext))]
     [Migration("20201117154419_Init")]
     public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
-                name: "BTCPayServer.Plugins.Template");
+                name: "BTCPayServer.Plugins.Serilog");
 
             migrationBuilder.CreateTable(
                 name: "PluginRecords",
-                schema: "BTCPayServer.Plugins.Template",
+                schema: "BTCPayServer.Plugins.Serilog",
                 columns: table => new
                 {
                     Id = table.Column<string>(nullable: false),
@@ -31,7 +32,7 @@ namespace BTCPayServer.Plugins.Template.Migrations
         {
             migrationBuilder.DropTable(
                 name: "PluginRecords",
-                schema: "BTCPayServer.Plugins.Template");
+                schema: "BTCPayServer.Plugins.Serilog");
         }
     }
 }

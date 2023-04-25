@@ -6,8 +6,8 @@
 
   <!-- Plugin specific properties -->
   <PropertyGroup>
-    <Product>BTCPay Server Plugin Template</Product>
-    <Description>A template for your own BTCPay Server plugin.</Description>
+    <Product>BTCPay Server Plugin Serilog</Product>
+    <Description>Add Serilog notifications capabilities to BTCPay Server.</Description>
     <Version>1.0.0</Version>
   </PropertyGroup>
 

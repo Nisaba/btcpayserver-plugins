@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33516.290
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BTCPayServer.Plugins.Serilog", "BTCPayServer.Plugins.Serilog.csproj", "{2D7800EC-EB95-427F-B0BA-5407175308C4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BTCPayServer", "..\btcpayserver\BTCPayServer\BTCPayServer.csproj", "{AFB2FED1-0DD5-4F0D-B090-0016851620EC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Altcoins-Debug|Any CPU = Altcoins-Debug|Any CPU
+		Altcoins-Release|Any CPU = Altcoins-Release|Any CPU
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2D7800EC-EB95-427F-B0BA-5407175308C4}.Altcoins-Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D7800EC-EB95-427F-B0BA-5407175308C4}.Altcoins-Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D7800EC-EB95-427F-B0BA-5407175308C4}.Altcoins-Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D7800EC-EB95-427F-B0BA-5407175308C4}.Altcoins-Release|Any CPU.Build.0 = Release|Any CPU
+		{2D7800EC-EB95-427F-B0BA-5407175308C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D7800EC-EB95-427F-B0BA-5407175308C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D7800EC-EB95-427F-B0BA-5407175308C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D7800EC-EB95-427F-B0BA-5407175308C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFB2FED1-0DD5-4F0D-B090-0016851620EC}.Altcoins-Debug|Any CPU.ActiveCfg = Altcoins-Debug|Any CPU
+		{AFB2FED1-0DD5-4F0D-B090-0016851620EC}.Altcoins-Debug|Any CPU.Build.0 = Altcoins-Debug|Any CPU
+		{AFB2FED1-0DD5-4F0D-B090-0016851620EC}.Altcoins-Release|Any CPU.ActiveCfg = Altcoins-Release|Any CPU
+		{AFB2FED1-0DD5-4F0D-B090-0016851620EC}.Altcoins-Release|Any CPU.Build.0 = Altcoins-Release|Any CPU
+		{AFB2FED1-0DD5-4F0D-B090-0016851620EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFB2FED1-0DD5-4F0D-B090-0016851620EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFB2FED1-0DD5-4F0D-B090-0016851620EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFB2FED1-0DD5-4F0D-B090-0016851620EC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DFB134E4-7A44-4801-A187-04F7EF29E6BA}
+	EndGlobalSection
+EndGlobal

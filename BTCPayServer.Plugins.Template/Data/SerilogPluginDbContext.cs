@@ -2,18 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using BTCPayServer.Plugins.Template.Data;
+using BTCPayServer.Plugins.Serilog.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace BTCPayServer.Plugins.Template;
+namespace BTCPayServer.Plugins.Serilog;
 
-public class MyPluginDbContext : DbContext
+public class SerilogPluginDbContext : DbContext
 {
     private readonly bool _designTime;
 
-    public MyPluginDbContext(DbContextOptions<MyPluginDbContext> options, bool designTime = false)
+    public SerilogPluginDbContext(DbContextOptions<SerilogPluginDbContext> options, bool designTime = false)
         : base(options)
     {
         _designTime = designTime;
@@ -24,7 +24,7 @@ public class MyPluginDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.HasDefaultSchema("BTCPayServer.Plugins.Template");
+        modelBuilder.HasDefaultSchema("BTCPayServer.Plugins.Serilog");
         if (Database.IsSqlite() && !_designTime)
             // SQLite does not have proper support for DateTimeOffset via Entity Framework Core, see the limitations
             // here: https://docs.microsoft.com/en-us/ef/core/providers/sqlite/limitations#query-limitations

@@ -2,20 +2,20 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BTCPayServer.Abstractions.Constants;
 using BTCPayServer.Client;
-using BTCPayServer.Plugins.Template.Data;
-using BTCPayServer.Plugins.Template.Services;
+using BTCPayServer.Plugins.Serilog.Data;
+using BTCPayServer.Plugins.Serilog.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BTCPayServer.Plugins.Template;
+namespace BTCPayServer.Plugins.Serilog;
 
-[Route("~/plugins/template")]
+[Route("~/plugins/serilog")]
 [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanViewProfile)]
 public class UIPluginController : Controller
 {
-    private readonly MyPluginService _PluginService;
+    private readonly SerilogService _PluginService;
 
-    public UIPluginController(MyPluginService PluginService)
+    public UIPluginController(SerilogService PluginService)
     {
         _PluginService = PluginService;
     }
