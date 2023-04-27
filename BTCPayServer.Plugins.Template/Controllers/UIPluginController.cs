@@ -117,9 +117,10 @@ public class UIPluginController : Controller
                 {
                     var LoggerTestConfig = new LoggerConfiguration();
                     var cfg = model.Settings.telegramConfig;
-                    LoggerTestConfig.WriteTo.Telegram(cfg.Token, cfg.ChatID, (int?)cfg.MinLevel);
+                    LoggerTestConfig.WriteTo.Telegram(botToken:cfg.Token, chatId:cfg.ChatID, restrictedToMinimumLevel: cfg.MinLevel, batchSizeLimit : 1);
                     Log.Logger = LoggerTestConfig.CreateLogger();
                     Log.Write(cfg.MinLevel, "Test Log BTCPay - Telegram");
+                    Log.CloseAndFlush();
                     TempData[WellKnownTempData.SuccessMessage] = "Telegram Log sent. Don't forget to save.";
                 }
                 catch (Exception e)
@@ -201,7 +202,7 @@ public class UIPluginController : Controller
             default:
                 break;
         }
-        return View("Logs", model);
+        return View("Index", model);
     }
 
 

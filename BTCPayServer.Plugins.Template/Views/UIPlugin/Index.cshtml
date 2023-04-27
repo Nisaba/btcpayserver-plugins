@@ -11,12 +11,8 @@
     The following is data persisted to the configured database but in an isolated DbContext.
     Every time you start BTCPay Server with this plugin enabled, a timestamp is logged.
 </p>
-<ul class="list-group">
-    @foreach (var item in Model.Data)
-    {
-        <li class="list-group-item">@item.Id at @item.Timestamp.ToString("F")</li>
-    }
-</ul>
+<!--<ul class="list-group">
+</ul>-->
 
 <form method="post" autocomplete="off">
     <!--
@@ -93,21 +89,6 @@
     <table class="table table-sm mt-0 mx-0">
         <tr>
             <td class="border-0 ps-0 align-middle">
-                <input asp-for="Settings.logSlackEnabled" type="checkbox" class="form-check-input" />
-                <label asp-for="Settings.logSlackEnabled" class="form-check-label"></label>
-                <span asp-validation-for="Settings.logSlackEnabled" class="text-danger"></span>
-            </td>
-            <td width="20" />
-            <td class="border-0 ps-0 align-middle">
-                <label asp-for="Settings.slackConfig.MinLevel" class="form-check-label"></label>
-                <select asp-for="Settings.slackConfig.MinLevel" asp-items="Html.GetEnumSelectList<Serilog.Events.LogEventLevel>()"></select>
-            </td>
-        </tr>
-    </table>
-
-    <table class="table table-sm mt-0 mx-0">
-        <tr>
-            <td class="border-0 ps-0 align-middle">
                 <label asp-for="Settings.slackConfig.Channel" class="form-label"></label>
                 <input asp-for="Settings.slackConfig.Channel" data-fill="port" class="form-control" />
                 <span asp-validation-for="Settings.slackConfig.Channel" class="text-danger"></span>
@@ -126,6 +107,21 @@
         <input asp-for="Settings.slackConfig.HookUrl" data-fill="port" class="form-control" />
         <span asp-validation-for="Settings.slackConfig.HookUrl" class="text-danger"></span>
     </div>
+
+    <table class="table table-sm mt-0 mx-0">
+        <tr>
+            <td class="border-0 ps-0 align-middle">
+                <input asp-for="Settings.logSlackEnabled" type="checkbox" class="form-check-input" />
+                <label asp-for="Settings.logSlackEnabled" class="form-check-label"></label>
+                <span asp-validation-for="Settings.logSlackEnabled" class="text-danger"></span>
+            </td>
+            <td width="20" />
+            <td class="border-0 ps-0 align-middle">
+                <label asp-for="Settings.slackConfig.MinLevel" class="form-check-label"></label>
+                <select asp-for="Settings.slackConfig.MinLevel" asp-items="Html.GetEnumSelectList<Serilog.Events.LogEventLevel>()"></select>
+            </td>
+        </tr>
+    </table>
 
     <br>
     <div class="row">
@@ -150,21 +146,6 @@
     <table class="table table-sm mt-0 mx-0">
         <tr>
             <td class="border-0 ps-0 align-middle">
-                <input asp-for="Settings.logTelegramEnabled" type="checkbox" class="form-check-input" />
-                <label asp-for="Settings.logTelegramEnabled" class="form-check-label"></label>
-                <span asp-validation-for="Settings.logTelegramEnabled" class="text-danger"></span>
-            </td>
-            <td width="20" />
-            <td class="border-0 ps-0 align-middle">
-                <label asp-for="Settings.telegramConfig.MinLevel" class="form-check-label"></label>
-                <select asp-for="Settings.telegramConfig.MinLevel" asp-items="Html.GetEnumSelectList<Serilog.Events.LogEventLevel>()"></select>
-            </td>
-        </tr>
-    </table>
-
-    <table class="table table-sm mt-0 mx-0">
-        <tr>
-            <td class="border-0 ps-0 align-middle">
                 <label asp-for="Settings.telegramConfig.Token" class="form-label"></label>
                 <input asp-for="Settings.telegramConfig.Token" data-fill="port" class="form-control" />
                 <span asp-validation-for="Settings.telegramConfig.Token" class="text-danger"></span>
@@ -174,6 +155,21 @@
                 <label asp-for="Settings.telegramConfig.ChatID" class="form-label"></label>
                 <input asp-for="Settings.telegramConfig.ChatID" data-fill="port" class="form-control" />
                 <span asp-validation-for="Settings.telegramConfig.ChatID" class="text-danger"></span>
+            </td>
+        </tr>
+    </table>
+
+    <table class="table table-sm mt-0 mx-0">
+        <tr>
+            <td class="border-0 ps-0 align-middle">
+                <input asp-for="Settings.logTelegramEnabled" type="checkbox" class="form-check-input" />
+                <label asp-for="Settings.logTelegramEnabled" class="form-check-label"></label>
+                <span asp-validation-for="Settings.logTelegramEnabled" class="text-danger"></span>
+            </td>
+            <td width="20" />
+            <td class="border-0 ps-0 align-middle">
+                <label asp-for="Settings.telegramConfig.MinLevel" class="form-check-label"></label>
+                <select asp-for="Settings.telegramConfig.MinLevel" asp-items="Html.GetEnumSelectList<Serilog.Events.LogEventLevel>()"></select>
             </td>
         </tr>
     </table>
