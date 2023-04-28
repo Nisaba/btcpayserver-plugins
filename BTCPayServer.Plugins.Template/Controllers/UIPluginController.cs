@@ -8,8 +8,10 @@ using BTCPayServer.Plugins.Serilog.Data;
 using BTCPayServer.Plugins.Serilog.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 using Serilog.Sinks.Slack.Models;
 using Serilog;
+using SerilogLib = Serilog;
 using Serilog.Sinks.Slack;
 
 namespace BTCPayServer.Plugins.Serilog;
@@ -34,14 +36,14 @@ public class UIPluginController : Controller
     [HttpPost]
     public async Task<IActionResult> Index(PluginPageViewModel model, string command)
     {
-        var oldLogger = Log.Logger;
+        var oldLogger = SerilogLib.Log.Logger;
         switch (command)
         {
             /*case "TestEmail":
                 if (model.Settings.logEmailEnabled && !model.Settings.emailConfig.IsComplete())
                 {
-                    ModelState.AddModelError("Settings.logEmailEnabled", "Invalid Email configuration");
-                    return View("Logs", model);
+                    TempData[WellKnownTempData.ErrorMessage] = "Invalid Email configuration";
+                    return View("Index", model);
                 }
                 try
                 {
@@ -80,14 +82,14 @@ public class UIPluginController : Controller
                 Log.Logger = oldLogger;
                 break;*/
             case "TestSlack":
-                if (model.Settings.logSlackEnabled && !model.Settings.slackConfig.IsComplete())
+                if (!model.Settings.slackConfig.IsComplete())
                 {
-                    ModelState.AddModelError("Settings.logSlackEnabled", "Invalid Slack configuration");
-                    return View("Logs", model);
+                    TempData[WellKnownTempData.ErrorMessage] = "Invalid Slack configuration";
+                    return View("Index", model);
                 }
                 try
                 {
-                    var LoggerTestConfig = new LoggerConfiguration();
+                    var LoggerTestConfig = new SerilogLib.LoggerConfiguration();
                     var cfg = model.Settings.slackConfig;
                     var opt = new SlackSinkOptions()
                     {
@@ -97,67 +99,71 @@ public class UIPluginController : Controller
                     };
 
                     LoggerTestConfig.WriteTo.Slack(slackSinkOptions: opt, restrictedToMinimumLevel: cfg.MinLevel);
-                    Log.Logger = LoggerTestConfig.CreateLogger();
-                    Log.Write(cfg.MinLevel, "Test Log BTCPay - Slack");
+                    SerilogLib.Log.Logger = LoggerTestConfig.CreateLogger();
+                    SerilogLib.Log.Write(cfg.MinLevel, "Test Log BTCPay - Slack");
                     TempData[WellKnownTempData.SuccessMessage] = "Slack Log sent. Don't forget to save.";
                 }
                 catch (Exception e)
                 {
                     TempData[WellKnownTempData.ErrorMessage] = $"Slack Log error : {e.Message}";
                 }
-                Log.Logger = oldLogger;
+                SerilogLib.Log.Logger = oldLogger;
                 break;
             case "TestTelegram":
-                if (model.Settings.logTelegramEnabled && !model.Settings.telegramConfig.IsComplete())
+                if (!model.Settings.telegramConfig.IsComplete())
                 {
-                    ModelState.AddModelError("Settings.logTelegramEnabled", "Invalid Telegram configuration");
-                    return View("Logs", model);
+                    TempData[WellKnownTempData.ErrorMessage] = "Invalid Telegram configuration";
+                    return View("Index", model);
                 }
                 try
                 {
-                    var LoggerTestConfig = new LoggerConfiguration();
+                    SerilogLib.Debugging.SelfLog.Enable(Console.Error);
+                    var LoggerTestConfig = new SerilogLib.LoggerConfiguration();
                     var cfg = model.Settings.telegramConfig;
                     LoggerTestConfig.WriteTo.Telegram(botToken:cfg.Token, chatId:cfg.ChatID, restrictedToMinimumLevel: cfg.MinLevel, batchSizeLimit : 1);
-                    Log.Logger = LoggerTestConfig.CreateLogger();
-                    Log.Write(cfg.MinLevel, "Test Log BTCPay - Telegram");
-                    Log.CloseAndFlush();
+                    SerilogLib.Log.Logger = LoggerTestConfig.CreateLogger();
+                    SerilogLib.Log.Write(cfg.MinLevel, "Test Log BTCPay - Telegram");
+                    SerilogLib.Log.CloseAndFlush();
                     TempData[WellKnownTempData.SuccessMessage] = "Telegram Log sent. Don't forget to save.";
                 }
                 catch (Exception e)
                 {
                     TempData[WellKnownTempData.ErrorMessage] = $"Telegram Log error : {e.Message}";
                 }
-                Log.Logger = oldLogger;
+                SerilogLib.Log.Logger = oldLogger;
                 break;
             case "Save":
+                 var bFlag = false;
                 /*EmailSettings? emailSetttings = new EmailSettings();
                 if (model.Settings.logEmailEnabled)
                 {
-                    if (!model.Settings.emailConfig.IsComplete())
-                    { 
-                        ModelState.AddModelError("Settings.logEmailEnabled", "Invalid Email configuration");
-                        return View("Logs", model);
-                    }
-                    emailSetttings = await _SettingsRepository.GetSettingAsync<EmailSettings>();
-                    if (emailSetttings == null)
-                    {
-                        ModelState.AddModelError("Settings.logEmailEnabled", "Email settings not set ");
-                        return View("Logs", model);
+                        if (!model.Settings.emailConfig.IsComplete())
+                        { 
+                            ModelState.AddModelError("Settings.logEmailEnabled", "Invalid Email configuration");
+                            bFlag = true;;
+                        } else {
+                        emailSetttings = await _SettingsRepository.GetSettingAsync<EmailSettings>();
+                        if (emailSetttings == null)
+                        {
+                            ModelState.AddModelError("Settings.logEmailEnabled", "Email settings not set ");
+                            bFlag = true;;
+                        }
                     }
                 }*/
+
                 if (model.Settings.logSlackEnabled && !model.Settings.slackConfig.IsComplete())
                 {
                     ModelState.AddModelError("Settings.logSlackEnabled", "Invalid Slack configuration");
-                    return View("Logs", model);
+                    bFlag = true;
                 }
                 if (model.Settings.logTelegramEnabled && !model.Settings.telegramConfig.IsComplete())
                 {
                     ModelState.AddModelError("Settings.logTelegramEnabled", "Invalid Telegram configuration");
-                    return View("Logs", model);
+                    bFlag = true;
                 }
+                if (bFlag) return View("Index", model);
 
-
-                var LoggerConfig = new LoggerConfiguration();
+                var LoggerConfig = new SerilogLib.LoggerConfiguration();
                 /*if (model.Settings.logEmailEnabled)
                 {
                     var cfg = model.Settings.emailConfig;
@@ -192,7 +198,7 @@ public class UIPluginController : Controller
                     var cfg = model.Settings.telegramConfig;
                     LoggerConfig.WriteTo.Telegram(cfg.Token, cfg.ChatID, (int?)cfg.MinLevel);
                 }
-                Log.Logger = LoggerConfig.CreateLogger();
+                SerilogLib.Log.Logger = LoggerConfig.CreateLogger();
 
                 // TODO
                 //await _SettingsRepository.UpdateSetting(model.Settings);

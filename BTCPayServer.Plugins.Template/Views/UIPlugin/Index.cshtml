@@ -6,13 +6,13 @@
 }
 <h1>@ViewData["Title"]</h1>
 
-<h2>Persisted Data</h2>
 <p>
     The following is data persisted to the configured database but in an isolated DbContext.
     Every time you start BTCPay Server with this plugin enabled, a timestamp is logged.
 </p>
 <!--<ul class="list-group">
 </ul>-->
+<partial name="_StatusMessage" />
 
 <form method="post" autocomplete="off">
     <!--
@@ -76,7 +76,9 @@
                 <h4 class="mb-3">
                     Slack
                     <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noreferrer noopener">
-                        <vc:icon symbol="info" />
+                        <svg role="img" class="icon icon-info">
+                            <use href="/img/icon-sprite.svg?v=H3J236jgwo6vtqeJl4025BRgw5YYuCXlmUIjG2jBa5A#info"></use>
+                        </svg>
                     </a>
                 </h4>
                 <div class="d-flex align-middle">
@@ -130,10 +132,14 @@
                 <h4 class="mb-3">
                     Telegram
                     <a href="https://core.telegram.org/bots" target="_blank" rel="noreferrer noopener">
-                        <vc:icon symbol="info" />
+                        <svg role="img" class="icon icon-info">
+                            <use href="/img/icon-sprite.svg?v=H3J236jgwo6vtqeJl4025BRgw5YYuCXlmUIjG2jBa5A#info"></use>
+                        </svg>
                     </a>
                     <a href="https://stackoverflow.com/questions/32423837/telegram-bot-how-to-get-a-group-chat-id" target="_blank" rel="noreferrer noopener">
-                        <vc:icon symbol="info" />
+                        <svg role="img" class="icon icon-info">
+                            <use href="/img/icon-sprite.svg?v=H3J236jgwo6vtqeJl4025BRgw5YYuCXlmUIjG2jBa5A#info"></use>
+                        </svg>
                     </a>
                 </h4>
                 <div class="d-flex">
