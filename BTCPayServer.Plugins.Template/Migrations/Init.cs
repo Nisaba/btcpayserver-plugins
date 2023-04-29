@@ -1,4 +1,5 @@
 using System;
+using BTCPayServer.Migrations;
 using BTCPayServer.Plugins.Serilog;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -6,33 +7,31 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BTCPayServer.Plugins.Serilog.Migrations
 {
     [DbContext(typeof(SerilogPluginDbContext))]
-    [Migration("20201117154419_Init")]
+    [Migration("Init")]
     public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.EnsureSchema(
-                name: "BTCPayServer.Plugins.Serilog");
+            migrationBuilder.EnsureSchema(name: "BTCPayServer.Plugins.Serilog");
 
+            int? maxLength = this.IsMySql(migrationBuilder.ActiveProvider) ? (int?)255 : null;
             migrationBuilder.CreateTable(
-                name: "PluginRecords",
-                schema: "BTCPayServer.Plugins.Serilog",
+                name: "Settings",
                 columns: table => new
                 {
-                    Id = table.Column<string>(nullable: false),
-                    Timestamp = table.Column<DateTimeOffset>(nullable: false)
+                    Id = table.Column<string>(nullable: false, maxLength: maxLength),
+                    Value = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PluginRecords", x => x.Id);
+                    table.PrimaryKey("PK_Settings", x => x.Id);
                 });
+
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "PluginRecords",
-                schema: "BTCPayServer.Plugins.Serilog");
+            migrationBuilder.DropTable(name: "Settings");
         }
     }
 }

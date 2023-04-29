@@ -30,6 +30,18 @@ namespace BTCPayServer.Plugins.Serilog.Migrations
 
                     b.ToTable("PluginRecords");
                 });
+            modelBuilder.Entity("BTCPayServer.Plugins.Serilog.Data.SettingData", b =>
+            {
+                b.Property<string>("Id")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Value")
+                    .HasColumnType("TEXT");
+
+                b.HasKey("Id");
+
+                b.ToTable("Settings");
+            });
 #pragma warning restore 612, 618
         }
     }

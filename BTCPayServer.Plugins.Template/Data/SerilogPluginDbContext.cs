@@ -19,7 +19,7 @@ public class SerilogPluginDbContext : DbContext
         _designTime = designTime;
     }
 
-    public DbSet<PluginData> PluginRecords { get; set; }
+    public DbSet<SettingData> Settings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

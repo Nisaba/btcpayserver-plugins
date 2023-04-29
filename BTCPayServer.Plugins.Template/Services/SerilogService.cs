@@ -4,30 +4,68 @@ using System.Threading.Tasks;
 using BTCPayServer.Plugins.Serilog.Data;
 using Microsoft.EntityFrameworkCore;
 
+using Serilog.Sinks.Slack.Models;
+using Serilog;
+using SerilogLib = Serilog;
+using Serilog.Sinks.Slack;
+
 namespace BTCPayServer.Plugins.Serilog.Services;
 
 public class SerilogService
 {
-    private readonly SerilogDbContextFactory _PluginDbContextFactory;
+    private readonly SettingsRepository _SettingsRepository;
 
-    public SerilogService(SerilogDbContextFactory PluginDbContextFactory)
+    public SerilogService(SettingsRepository settingsRepository)
     {
-        _PluginDbContextFactory = PluginDbContextFactory;
+        _SettingsRepository = settingsRepository;
     }
 
-    public async Task AddTestDataRecord()
+    public async Task InitSerilogConfig()
     {
-        await using var context = _PluginDbContextFactory.CreateContext();
-
-        await context.PluginRecords.AddAsync(new PluginData { Timestamp = DateTimeOffset.UtcNow });
-        await context.SaveChangesAsync();
+        var serilogSetting = (await _SettingsRepository.GetSettingAsync<LogSettings>()) ?? new LogSettings();
+        DoSerilogConfig(serilogSetting);
     }
 
-    public async Task<List<PluginData>> Get()
+    public void DoSerilogConfig(LogSettings logSettings)
     {
-        await using var context = _PluginDbContextFactory.CreateContext();
+        var LoggerConfig = new SerilogLib.LoggerConfiguration();
+        /*if (model.Settings.logEmailEnabled)
+        {
+            var cfg = model.Settings.emailConfig;
+                var opt = new Serilog.Sinks.Email.EmailConnectionInfo
+                {
+                    EmailSubject = "BTCPay Server Log",
+                    FromEmail = emailSetttings.From,
+                    ToEmail = cfg.To,
+                    MailServer = emailSetttings.Server,
+                    Port = emailSetttings.Port ?? 25,
+                    NetworkCredentials = new System.Net.NetworkCredential(emailSetttings.Login, emailSetttings.Password),
+                    ServerCertificateValidationCallback = (senderX, certificate, chain, sslPolicyErrors) => true
+                };
+                opt.EnableSsl = (opt.Port != 25);
+                LoggerConfig.WriteTo.Email(connectionInfo: opt, outputTemplate: cfg.Template, restrictedToMinimumLevel: cfg.MinLevel, batchPostingLimit: cfg.NbMaxEventsInMail, period: cfg.PeriodTimeSpan);
 
-        return await context.PluginRecords.ToListAsync();
+        }*/
+        if (logSettings.logSlackEnabled)
+        {
+            var cfg = logSettings.slackConfig;
+            var opt = new SlackSinkOptions()
+            {
+                CustomChannel = cfg.Channel,
+                CustomUserName = cfg.UserName,
+                WebHookUrl = cfg.HookUrl
+            };
+
+            LoggerConfig.WriteTo.Slack(slackSinkOptions: opt, restrictedToMinimumLevel: cfg.MinLevel);
+        }
+        if (logSettings.logTelegramEnabled)
+        {
+            var cfg = logSettings.telegramConfig;
+            LoggerConfig.WriteTo.Telegram(cfg.Token, cfg.ChatID, (int?)cfg.MinLevel);
+        }
+        SerilogLib.Log.Logger = LoggerConfig.CreateLogger();
     }
+
+
 }
 

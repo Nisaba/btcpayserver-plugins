@@ -1,0 +1,23 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+
+namespace BTCPayServer.Plugins.Serilog.Data
+
+{
+    public class SettingData
+    {
+        public string Id { get; set; }
+
+        public string Value { get; set; }
+
+        public static void OnModelCreating(ModelBuilder builder, DatabaseFacade databaseFacade)
+        {
+            if (databaseFacade.IsNpgsql())
+            {
+                builder.Entity<SettingData>()
+                    .Property(o => o.Value)
+                    .HasColumnType("JSONB");
+            }
+        }
+    }
+}

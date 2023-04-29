@@ -35,7 +35,7 @@ namespace BTCPayServer.Plugins.Serilog.Data
 
     public abstract class LogConfig
     {
-        [Display(Name = "Notification minimum level : ")]
+        [Display(Name = "Minimum Notification level : ")]
         public LogEventLevel MinLevel { get; set; } = LogEventLevel.Information;
 
         public abstract bool IsComplete();

@@ -20,17 +20,20 @@ namespace BTCPayServer.Plugins.Serilog;
 [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanViewProfile)]
 public class UIPluginController : Controller
 {
+    private readonly SettingsRepository _SettingsRepository;
     private readonly SerilogService _PluginService;
 
-    public UIPluginController(SerilogService PluginService)
+    public UIPluginController(SerilogService PluginService, SettingsRepository settingsRepository)
     {
         _PluginService = PluginService;
+        _SettingsRepository = settingsRepository;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        return View(new PluginPageViewModel { Data = await _PluginService.Get() });
+        var data = (await _SettingsRepository.GetSettingAsync<LogSettings>()) ?? new LogSettings();
+        return View(new PluginPageViewModel { Settings = data });
     }
 
     [HttpPost]
@@ -163,45 +166,9 @@ public class UIPluginController : Controller
                 }
                 if (bFlag) return View("Index", model);
 
-                var LoggerConfig = new SerilogLib.LoggerConfiguration();
-                /*if (model.Settings.logEmailEnabled)
-                {
-                    var cfg = model.Settings.emailConfig;
-                        var opt = new Serilog.Sinks.Email.EmailConnectionInfo
-                        {
-                            EmailSubject = "BTCPay Server Log",
-                            FromEmail = emailSetttings.From,
-                            ToEmail = cfg.To,
-                            MailServer = emailSetttings.Server,
-                            Port = emailSetttings.Port ?? 25,
-                            NetworkCredentials = new System.Net.NetworkCredential(emailSetttings.Login, emailSetttings.Password),
-                            ServerCertificateValidationCallback = (senderX, certificate, chain, sslPolicyErrors) => true
-                        };
-                        opt.EnableSsl = (opt.Port != 25);
-                        LoggerConfig.WriteTo.Email(connectionInfo: opt, outputTemplate: cfg.Template, restrictedToMinimumLevel: cfg.MinLevel, batchPostingLimit: cfg.NbMaxEventsInMail, period: cfg.PeriodTimeSpan);
+                _PluginService.DoSerilogConfig(model.Settings);
 
-                }*/
-                if (model.Settings.logSlackEnabled)
-                {
-                    var cfg = model.Settings.slackConfig;
-                    var opt = new SlackSinkOptions()
-                    {
-                        CustomChannel = cfg.Channel,
-                        CustomUserName = cfg.UserName,
-                        WebHookUrl = cfg.HookUrl
-                    };
-
-                    LoggerConfig.WriteTo.Slack(slackSinkOptions: opt, restrictedToMinimumLevel: cfg.MinLevel);
-                }
-                if (model.Settings.logTelegramEnabled)
-                {
-                    var cfg = model.Settings.telegramConfig;
-                    LoggerConfig.WriteTo.Telegram(cfg.Token, cfg.ChatID, (int?)cfg.MinLevel);
-                }
-                SerilogLib.Log.Logger = LoggerConfig.CreateLogger();
-
-                // TODO
-                //await _SettingsRepository.UpdateSetting(model.Settings);
+                await _SettingsRepository.UpdateSetting(model.Settings);
                 // 5068687121:AAEpTcMQZZV8snsCHzlnm3k2gyBHqCFcsIw   -999875018
                 TempData[WellKnownTempData.SuccessMessage] = "Log settings saved. You have to restart the server for apply.";
                 break;
@@ -216,9 +183,6 @@ public class UIPluginController : Controller
 
 public class PluginPageViewModel
 {
-    // TO REMOVE
-    public List<PluginData> Data { get; set; }
-
     public string Log { get; set; }
     public int LogFileCount { get; set; }
     public int LogFileOffset { get; set; }
