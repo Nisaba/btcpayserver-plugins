@@ -13,6 +13,7 @@ using Serilog.Sinks.Slack.Models;
 using Serilog;
 using SerilogLib = Serilog;
 using Serilog.Sinks.Slack;
+using BTCPayServer.Abstractions.Contracts;
 
 namespace BTCPayServer.Plugins.Serilog;
 
@@ -20,10 +21,10 @@ namespace BTCPayServer.Plugins.Serilog;
 [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanViewProfile)]
 public class UIPluginController : Controller
 {
-    private readonly SettingsRepository _SettingsRepository;
+    private readonly ISettingsRepository _SettingsRepository;
     private readonly SerilogService _PluginService;
 
-    public UIPluginController(SerilogService PluginService, SettingsRepository settingsRepository)
+    public UIPluginController(SerilogService PluginService, ISettingsRepository settingsRepository)
     {
         _PluginService = PluginService;
         _SettingsRepository = settingsRepository;

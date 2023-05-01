@@ -38,4 +38,8 @@
     <PackageReference Include="Serilog.Sinks.Slack" Version="2.2.1" />
     <PackageReference Include="Serilog.Sinks.Telegram.Alternative" Version="1.3.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\img\" />
+  </ItemGroup>
 </Project>

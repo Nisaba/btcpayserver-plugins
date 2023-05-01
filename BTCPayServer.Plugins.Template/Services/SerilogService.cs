@@ -8,14 +8,15 @@ using Serilog.Sinks.Slack.Models;
 using Serilog;
 using SerilogLib = Serilog;
 using Serilog.Sinks.Slack;
+using BTCPayServer.Abstractions.Contracts;
 
 namespace BTCPayServer.Plugins.Serilog.Services;
 
 public class SerilogService
 {
-    private readonly SettingsRepository _SettingsRepository;
+    private readonly ISettingsRepository _SettingsRepository;
 
-    public SerilogService(SettingsRepository settingsRepository)
+    public SerilogService(ISettingsRepository settingsRepository)
     {
         _SettingsRepository = settingsRepository;
     }
