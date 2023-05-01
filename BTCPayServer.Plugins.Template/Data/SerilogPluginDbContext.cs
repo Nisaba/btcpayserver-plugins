@@ -19,12 +19,14 @@ public class SerilogPluginDbContext : DbContext
         _designTime = designTime;
     }
 
-    public DbSet<SettingData> Settings { get; set; }
+    public DbSet<SettingData> SerilogSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("BTCPayServer.Plugins.Serilog");
+        SettingData.OnModelCreating(modelBuilder, Database);
+
         if (Database.IsSqlite() && !_designTime)
             // SQLite does not have proper support for DateTimeOffset via Entity Framework Core, see the limitations
             // here: https://docs.microsoft.com/en-us/ef/core/providers/sqlite/limitations#query-limitations

@@ -16,7 +16,7 @@ namespace BTCPayServer.Plugins.Serilog.Migrations
 
             int? maxLength = this.IsMySql(migrationBuilder.ActiveProvider) ? (int?)255 : null;
             migrationBuilder.CreateTable(
-                name: "Settings",
+                name: "SerilogSettings",
                 columns: table => new
                 {
                     Id = table.Column<string>(nullable: false, maxLength: maxLength),
@@ -24,14 +24,14 @@ namespace BTCPayServer.Plugins.Serilog.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Settings", x => x.Id);
+                    table.PrimaryKey("PK_SerilogSettings", x => x.Id);
                 });
 
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(name: "Settings");
+            migrationBuilder.DropTable(name: "SerilogSettings");
         }
     }
 }

@@ -17,19 +17,6 @@ namespace BTCPayServer.Plugins.Serilog.Migrations
                 .HasDefaultSchema("BTCPayServer.Plugins.Serilog")
                 .HasAnnotation("ProductVersion", "1.0.0.1");
 
-            modelBuilder.Entity("BTCPayServer.Plugins.Serilog.Data.PluginData", b =>
-                {
-                    b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset>("Timestamp")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PluginRecords");
-                });
             modelBuilder.Entity("BTCPayServer.Plugins.Serilog.Data.SettingData", b =>
             {
                 b.Property<string>("Id")
@@ -40,7 +27,7 @@ namespace BTCPayServer.Plugins.Serilog.Migrations
 
                 b.HasKey("Id");
 
-                b.ToTable("Settings");
+                b.ToTable("SerilogSettings");
             });
 #pragma warning restore 612, 618
         }

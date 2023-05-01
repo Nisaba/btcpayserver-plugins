@@ -2,21 +2,21 @@
 using System.Threading;
 using System.Threading.Tasks;
 using BTCPayServer.Abstractions.Contracts;
-using BTCPayServer.Data;
 using BTCPayServer.Events;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
+using BTCPayServer.Plugins.Serilog.Data;
 
 namespace BTCPayServer.Plugins.Serilog.Services
 {
     public class SettingsRepository : ISettingsRepository
     {
-        private readonly ApplicationDbContextFactory _ContextFactory;
+        private readonly SerilogDbContextFactory _ContextFactory;
         private readonly EventAggregator _EventAggregator;
         private readonly IMemoryCache _memoryCache;
 
-        public SettingsRepository(ApplicationDbContextFactory contextFactory, EventAggregator eventAggregator, IMemoryCache memoryCache)
+        public SettingsRepository(SerilogDbContextFactory contextFactory, EventAggregator eventAggregator, IMemoryCache memoryCache)
         {
             _ContextFactory = contextFactory;
             _EventAggregator = eventAggregator;
@@ -29,7 +29,7 @@ namespace BTCPayServer.Plugins.Serilog.Services
             return await _memoryCache.GetOrCreateAsync(GetCacheKey(name), async entry =>
             {
                 await using var ctx = _ContextFactory.CreateContext();
-                var data = await ctx.Settings.Where(s => s.Id == name).FirstOrDefaultAsync();
+                var data = await ctx.SerilogSettings.Where(s => s.Id == name).FirstOrDefaultAsync();
                 return data == null ? default : Deserialize<T>(data.Value);
             });
         }
@@ -57,7 +57,7 @@ namespace BTCPayServer.Plugins.Serilog.Services
             });
         }
 
-        public SettingData UpdateSettingInContext<T>(ApplicationDbContext ctx, T obj, string? name = null) where T : class
+        public SettingData UpdateSettingInContext<T>(SerilogPluginDbContext ctx, T obj, string? name = null) where T : class
         {
             name ??= obj.GetType().FullName ?? string.Empty;
             _memoryCache.Remove(GetCacheKey(name));

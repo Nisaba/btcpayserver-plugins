@@ -38,7 +38,7 @@ public class PluginMigrationRunner : IHostedService
         }
 
         // InitLog
-        await _PluginService.InitSerilogConfig();
+        //await _PluginService.InitSerilogConfig();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

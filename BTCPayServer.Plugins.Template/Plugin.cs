@@ -19,6 +19,7 @@ public class Plugin : BaseBTCPayServerPlugin
         services.AddSingleton<IUIExtension>(new UIExtension("SerilogPluginHeaderNav", "header-nav"));
         services.AddHostedService<ApplicationPartsLogger>();
         services.AddHostedService<PluginMigrationRunner>();
+        services.AddSingleton<SettingsRepository>();
         services.AddSingleton<SerilogService>();
         services.AddSingleton<SerilogDbContextFactory>();
         services.AddDbContext<SerilogPluginDbContext>((provider, o) =>
