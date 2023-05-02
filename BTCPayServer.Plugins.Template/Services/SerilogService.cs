@@ -3,22 +3,31 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BTCPayServer.Plugins.Serilog.Data;
 using Microsoft.EntityFrameworkCore;
+using BTCPayServer.Logging;
 
 using Serilog.Sinks.Slack.Models;
 using Serilog;
 using SerilogLib = Serilog;
 using Serilog.Sinks.Slack;
 using BTCPayServer.Abstractions.Contracts;
+using NLog.Fluent;
+using Microsoft.Extensions.Logging;
 
 namespace BTCPayServer.Plugins.Serilog.Services;
 
 public class SerilogService
 {
     private readonly ISettingsRepository _SettingsRepository;
+    private readonly Logs _logs;
+    private readonly ILoggerFactory _factory;
+    //private readonly ILoggingBuilder _logBuilder;
 
-    public SerilogService(ISettingsRepository settingsRepository)
+    public SerilogService(ISettingsRepository settingsRepository, Logs logs, ILoggerFactory factory)//, ILoggingBuilder logBuilder)
     {
         _SettingsRepository = settingsRepository;
+        _logs = logs;
+        _factory = factory;
+        //_logBuilder = logBuilder;
     }
 
     public async Task InitSerilogConfig()
@@ -62,9 +71,11 @@ public class SerilogService
         if (logSettings.logTelegramEnabled)
         {
             var cfg = logSettings.telegramConfig;
-            LoggerConfig.WriteTo.Telegram(cfg.Token, cfg.ChatID, (int?)cfg.MinLevel);
+            LoggerConfig.WriteTo.Telegram(botToken: cfg.Token, chatId: cfg.ChatID, restrictedToMinimumLevel: cfg.MinLevel);
         }
         SerilogLib.Log.Logger = LoggerConfig.CreateLogger();
+        //_logBuilder.AddProvider(new SerilogLib.Extensions.Logging.SerilogLoggerProvider(SerilogLib.Log.Logger));
+        _factory.AddSerilog(SerilogLib.Log.Logger);
     }
 
 
