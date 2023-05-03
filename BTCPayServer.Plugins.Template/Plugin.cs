@@ -19,10 +19,6 @@ public class Plugin : BaseBTCPayServerPlugin
     public override void Execute(IServiceCollection services)
     {
 
-        /*var srvLogger = services.FirstOrDefault(a => a.ServiceType.Name == "ILogger`1");
-        var srvLoggerFactory = services.FirstOrDefault(a => a.ServiceType.Name == "ILoggerFactory");
-        var srvLoggerProvider = services.FirstOrDefault(a => a.ServiceType.Name == "ILoggerProvider");
-        var srvLogs = services.FirstOrDefault(a => a.ServiceType.Name == "Logs");*/
         services.AddSingleton<IUIExtension>(new UIExtension("SerilogPluginHeaderNav", "header-nav"));
         services.AddHostedService<ApplicationPartsLogger>();
         services.AddHostedService<PluginRunner>();

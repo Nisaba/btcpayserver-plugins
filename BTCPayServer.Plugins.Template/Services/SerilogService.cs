@@ -20,14 +20,12 @@ public class SerilogService
     private readonly ISettingsRepository _SettingsRepository;
     private readonly Logs _logs;
     private readonly ILoggerFactory _factory;
-    //private readonly ILoggingBuilder _logBuilder;
 
     public SerilogService(ISettingsRepository settingsRepository, Logs logs, ILoggerFactory factory)//, ILoggingBuilder logBuilder)
     {
         _SettingsRepository = settingsRepository;
         _logs = logs;
         _factory = factory;
-        //_logBuilder = logBuilder;
     }
 
     public async Task InitSerilogConfig()
@@ -74,7 +72,6 @@ public class SerilogService
             LoggerConfig.WriteTo.Telegram(botToken: cfg.Token, chatId: cfg.ChatID, restrictedToMinimumLevel: cfg.MinLevel);
         }
         SerilogLib.Log.Logger = LoggerConfig.CreateLogger();
-        //_logBuilder.AddProvider(new SerilogLib.Extensions.Logging.SerilogLoggerProvider(SerilogLib.Log.Logger));
         _factory.AddSerilog(SerilogLib.Log.Logger);
     }
 
