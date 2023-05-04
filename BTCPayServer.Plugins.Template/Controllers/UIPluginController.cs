@@ -18,7 +18,7 @@ using BTCPayServer.Abstractions.Contracts;
 namespace BTCPayServer.Plugins.Serilog;
 
 [Route("~/plugins/serilog")]
-[Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanViewProfile)]
+[Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanModifyServerSettings)]
 public class UIPluginController : Controller
 {
     private readonly ISettingsRepository _SettingsRepository;

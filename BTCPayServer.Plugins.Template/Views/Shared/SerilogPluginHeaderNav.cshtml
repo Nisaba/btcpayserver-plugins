@@ -2,9 +2,11 @@
 @using BTCPayServer.Plugins.Serilog.Views
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 
-<li class="nav-item">
+@using BTCPayServer.Client
+
+<li class="nav-item" permission="@Policies.CanModifyServerSettings">
     <a asp-controller="UIPlugin" asp-action="Index" class="nav-link @ViewData.IsActivePage(PluginNavPages.Index)">
         <img src="/Resources/img/Serilog.png" />&nbsp;
-        <span>Plugin Serilog</span>
+        <span>Serilog Server Notifications</span>
     </a>
 </li>
