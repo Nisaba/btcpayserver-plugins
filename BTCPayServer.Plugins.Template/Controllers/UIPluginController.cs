@@ -33,12 +33,12 @@ public class UIPluginController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var data = (await _SettingsRepository.GetSettingAsync<LogSettings>()) ?? new LogSettings();
-        return View(new PluginPageViewModel { Settings = data });
+        var logSettings = (await _SettingsRepository.GetSettingAsync<LogSettings>()) ?? new LogSettings();
+        return View(logSettings);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Index(PluginPageViewModel model, string command)
+    public async Task<IActionResult> Index(LogSettings model, string command)
     {
         var oldLogger = SerilogLib.Log.Logger;
         switch (command)
@@ -86,7 +86,7 @@ public class UIPluginController : Controller
                 Log.Logger = oldLogger;
                 break;*/
             case "TestSlack":
-                if (!model.Settings.slackConfig.IsComplete())
+                if (!model.slackConfig.IsComplete())
                 {
                     TempData[WellKnownTempData.ErrorMessage] = "Invalid Slack configuration";
                     return View("Index", model);
@@ -94,7 +94,7 @@ public class UIPluginController : Controller
                 try
                 {
                     var LoggerTestConfig = new SerilogLib.LoggerConfiguration();
-                    var cfg = model.Settings.slackConfig;
+                    var cfg = model.slackConfig;
                     var opt = new SlackSinkOptions()
                     {
                         CustomChannel = cfg.Channel,
@@ -114,7 +114,7 @@ public class UIPluginController : Controller
                 SerilogLib.Log.Logger = oldLogger;
                 break;
             case "TestTelegram":
-                if (!model.Settings.telegramConfig.IsComplete())
+                if (!model.telegramConfig.IsComplete())
                 {
                     TempData[WellKnownTempData.ErrorMessage] = "Invalid Telegram configuration";
                     return View("Index", model);
@@ -123,7 +123,7 @@ public class UIPluginController : Controller
                 {
                     SerilogLib.Debugging.SelfLog.Enable(Console.Error);
                     var LoggerTestConfig = new SerilogLib.LoggerConfiguration();
-                    var cfg = model.Settings.telegramConfig;
+                    var cfg = model.telegramConfig;
                     LoggerTestConfig.WriteTo.Telegram(botToken:cfg.Token, chatId:cfg.ChatID, restrictedToMinimumLevel: cfg.MinLevel, batchSizeLimit : 1);
                     SerilogLib.Log.Logger = LoggerTestConfig.CreateLogger();
                     SerilogLib.Log.Write(cfg.MinLevel, "Test Log BTCPay - Telegram");
@@ -139,9 +139,9 @@ public class UIPluginController : Controller
             case "Save":
                  var bFlag = false;
                 /*EmailSettings? emailSetttings = new EmailSettings();
-                if (model.Settings.logEmailEnabled)
+                if (model.logEmailEnabled)
                 {
-                        if (!model.Settings.emailConfig.IsComplete())
+                        if (!model.emailConfig.IsComplete())
                         { 
                             ModelState.AddModelError("Settings.logEmailEnabled", "Invalid Email configuration");
                             bFlag = true;;
@@ -155,12 +155,12 @@ public class UIPluginController : Controller
                     }
                 }*/
 
-                if (model.Settings.logSlackEnabled && !model.Settings.slackConfig.IsComplete())
+                if (model.logSlackEnabled && !model.slackConfig.IsComplete())
                 {
                     ModelState.AddModelError("Settings.logSlackEnabled", "Invalid Slack configuration");
                     bFlag = true;
                 }
-                if (model.Settings.logTelegramEnabled && !model.Settings.telegramConfig.IsComplete())
+                if (model.logTelegramEnabled && !model.telegramConfig.IsComplete())
                 {
                     ModelState.AddModelError("Settings.logTelegramEnabled", "Invalid Telegram configuration");
                     bFlag = true;
@@ -169,7 +169,7 @@ public class UIPluginController : Controller
 
                 //_PluginService.DoSerilogConfig(model.Settings);
 
-                await _SettingsRepository.UpdateSetting(model.Settings);
+                await _SettingsRepository.UpdateSetting(model);
                 // 5068687121:AAEpTcMQZZV8snsCHzlnm3k2gyBHqCFcsIw   -999875018
                 TempData[WellKnownTempData.SuccessMessage] = "Log settings saved. You have to restart the server for apply.";
                 break;
@@ -182,18 +182,3 @@ public class UIPluginController : Controller
 
 }
 
-public class PluginPageViewModel
-{
-    public LogSettings Settings { get; set; }
-
-    public PluginPageViewModel()
-    {
-
-    }
-
-    public PluginPageViewModel(LogSettings settings)
-    {
-        Settings = settings;
-    }
-
-}
