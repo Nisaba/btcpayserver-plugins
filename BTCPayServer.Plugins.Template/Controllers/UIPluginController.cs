@@ -167,7 +167,7 @@ public class UIPluginController : Controller
                 }
                 if (bFlag) return View("Index", model);
 
-                _PluginService.DoSerilogConfig(model.Settings);
+                //_PluginService.DoSerilogConfig(model.Settings);
 
                 await _SettingsRepository.UpdateSetting(model.Settings);
                 // 5068687121:AAEpTcMQZZV8snsCHzlnm3k2gyBHqCFcsIw   -999875018
@@ -184,10 +184,6 @@ public class UIPluginController : Controller
 
 public class PluginPageViewModel
 {
-    public string Log { get; set; }
-    public int LogFileCount { get; set; }
-    public int LogFileOffset { get; set; }
-
     public LogSettings Settings { get; set; }
 
     public PluginPageViewModel()
