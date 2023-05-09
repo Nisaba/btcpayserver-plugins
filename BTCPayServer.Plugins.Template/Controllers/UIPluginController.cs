@@ -170,7 +170,6 @@ public class UIPluginController : Controller
                 //_PluginService.DoSerilogConfig(model.Settings);
 
                 await _SettingsRepository.UpdateSetting(model);
-                // 5068687121:AAEpTcMQZZV8snsCHzlnm3k2gyBHqCFcsIw   -999875018
                 TempData[WellKnownTempData.SuccessMessage] = "Log settings saved. You have to restart the server for apply.";
                 break;
             default:
