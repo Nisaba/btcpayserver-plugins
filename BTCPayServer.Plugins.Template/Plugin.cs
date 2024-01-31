@@ -19,7 +19,8 @@ public class Plugin : BaseBTCPayServerPlugin
     public override void Execute(IServiceCollection services)
     {
 
-        services.AddSingleton<IUIExtension>(new UIExtension("SerilogPluginHeaderNav", "header-nav"));
+        services.AddSingleton<IUIExtension>(new UIExtension("SerilogPluginServerNav", "server-nav"));
+
         services.AddHostedService<ApplicationPartsLogger>();
         services.AddHostedService<PluginRunner>();
         services.AddSingleton<SerilogService>();
