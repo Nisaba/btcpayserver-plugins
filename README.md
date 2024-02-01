@@ -7,6 +7,8 @@ https://your-btcpay-server/server/logs
 This plugin allows you to receive these logs on a Telegram or Slack channel.
 For this, it is based on the [Serilog library](https://serilog.net/).
 
+The plugin configuration page is now under BTCPay Server settings.
+
 You can define for each channel a differentiated severity level that will trigger the notifications.
 It is advisable to set the "Information" level because the vast majority of BTCPay events are recorded under this priority level.
 As such, it would undoubtedly be interesting that in the code of BTCPay, certain events are redefined with a higher priority (for example a Warning level for the de-synchronization of the bitcoin node). This would allow for better granularity.
@@ -27,3 +29,4 @@ How to set up a Telegram channel:
 https://core.telegram.org/bots
 
 https://stackoverflow.com/questions/32423837/telegram-bot-how-to-get-a-group-chat-id
+
