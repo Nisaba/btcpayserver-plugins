@@ -7,7 +7,7 @@
   <!-- Plugin specific properties -->
   <PropertyGroup>
     <Product>Serilog Server Notifications</Product>
-    <Description>Add Serilog notifications capabilities (Telegram, Slack) to BTCPay Server Logs.</Description>
+    <Description>Add Serilog notifications capabilities (Telegram, Slack) to BTCPay Server Logs. Go to BTCPay Server settings to access to the plugin configuration page.</Description>
     <Version>1.0.1</Version>
   </PropertyGroup>
 
