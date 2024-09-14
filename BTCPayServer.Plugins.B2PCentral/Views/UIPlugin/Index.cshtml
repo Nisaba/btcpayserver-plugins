@@ -1,0 +1,321 @@
+@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.B2PCentral.Views
+@using BTCPayServer.Client
+@using BTCPayServer.Plugins.B2PCentral.Models
+
+@inject BTCPayServer.Plugins.B2PCentral.Services.B2PCentralPluginService B2PCentralPluginService
+
+@model BTCPayServer.Plugins.B2PCentral.Data.B2PSettings
+@{
+    ViewData.SetActivePage(PluginNavPages.Index, "B2P Central plugin");
+}
+
+<script type="text/javascript">
+    var tblOfrs = [];
+    var tblOfrsOnChain = [];
+    var tblOfrsLightning = [];
+
+    function GetPartial(reqData, container, bt) {
+        $(container).html('<div style="display: flex; justify-content: center;"><img src="/Resources/img/Loading_icon.gif"/></div>');
+        $(bt).hide();
+        $.ajax({
+            url: 'b2pcentral/GetPartialB2PResult',
+            type: 'POST',
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(reqData),
+            success: function(result) {
+                tblOfrs = [];
+                $(container).html(result);
+                $("[id^='sortLink']").each(function () {
+                    var $this = $(this);
+                    if (!$._data(this, "events") || !$._data(this, "events").click) {
+                        $this.on("click", function (event) {
+                            event.preventDefault();
+                            var param1 = $(this).data('param1');
+                            if (tblOfrs.length == 0) {
+                                var param2Str = $(this).attr('data-param2');
+                                tblOfrs = JSON.parse(param2Str);
+                            }
+                            SortHtmlTable(param1);
+                        });
+                    }
+                });
+                $(bt).show();
+            },
+            error: function (xhr, status, error) {
+                $(container).html("Error: " + error + "<br/>" + xhr.responseText);
+                $(bt).show();
+            }
+        });
+    }
+
+    function SortHtmlTable(currentID) {
+        var table, rows, switching, i, xTbl1, xTbl2, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById("offers" + currentID);
+        switching = true;
+        dir = "asc";
+
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 2); i += 2) {
+                shouldSwitch = false;
+                xTbl1 = (i - 1) / 2;
+                xTbl2 = xTbl1 + 1;
+                if (dir == "asc") {
+                    if (tblOfrs[xTbl1] > tblOfrs[xTbl2]) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == "desc") {
+                    if (tblOfrs[xTbl1] < tblOfrs[xTbl2]) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 2], rows[i]);
+                rows[i].parentNode.insertBefore(rows[i + 3], rows[i + 1]);
+                var v = tblOfrs[xTbl1];
+                tblOfrs[xTbl1] = tblOfrs[xTbl2];
+                tblOfrs[xTbl2] = v;
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+    }
+
+    function SwitchTab(switchValue) {
+        if (switchValue === 1) {
+            $("#SectionNav-1").addClass("active").siblings().removeClass("active");
+            $("#tabOnChain").show();
+            $("#tabLightning").hide();
+            tblOfrsLightning = tblOfrs;
+            tblOfrs = tblOfrsOnChain;
+        } else {
+            $("#SectionNav-2").addClass("active").siblings().removeClass("active");
+            $("#tabOnChain").hide();
+            $("#tabLightning").show();
+            tblOfrsOnChain = tblOfrs;
+            tblOfrs = tblOfrsLightning;
+        }
+    }
+
+</script>
+
+<table><tr>
+        <td>
+            <a href="https://www.b2p-central.com" target="b2p">
+                <img src="/Resources/img/B2Plogo.jpg" />
+            </a>
+        </td>
+        <td width="20" />
+        <td>
+            <h2>@ViewData["Title"]</h2>
+            <br />
+            <p>
+                Get P2P bitcoin buy offers from <a href="https://www.b2p-central.com" target="b2p">B2P Central</a>, according to your onchain and lightning wallets balances and the store's default currency.
+             </p>
+        </td>
+</tr></table>
+<br />
+
+<partial name="_StatusMessage" />
+
+<div permission="@Policies.CanModifyStoreSettings">
+    <br />
+    <h4>Configuration</h4>
+    <p>
+       First, you need to get a B2P Central API key <a href="https://getapi.b2p-central.com" target="b2pApi">here</a>.
+    </p>
+    <form method="post" autocomplete="off">
+        <input asp-for="ProvidersString" type="hidden"/>
+        <table class="table table-sm mt-0 mx-0">
+            <tr>
+                <td width="100">
+                    <label asp-for="ApiKey" class="form-label"></label>
+                </td>
+                <td width="400" d class="border-0 ps-0 align-middle">
+                    <input asp-for="ApiKey" data-fill="port" class="form-control" />
+                    <span asp-validation-for="ApiKey" class="text-danger"></span>
+                </td>
+                <td width="20" />
+                <td>
+                    <button id="SaveButton" type="submit" class="btn btn-primary" value="Save" name="Command">Save</button>
+                </td>
+                @if (!string.IsNullOrEmpty(Model.ApiKey))
+                {
+                    <td>
+                        <button class="btn btn-secondary mt-2" value="Test" name="Command">Test</button>
+                    </td>
+                }
+            </tr>
+        </table>
+    </form>
+</div>
+
+<div permission="@Policies.CanViewStoreSettings">
+    <br />
+    @if (string.IsNullOrEmpty(Model.ApiKey))
+    {
+        <p>
+            <i>B2P settings not set for this store...</i>
+        </p>
+    } else
+    {
+        var walletConfig = await B2PCentralPluginService.GetBalances(Model.StoreId, Context.Request.PathBase);
+
+        <nav id="SectionNav">
+            <div class="nav">
+                <a id="SectionNav-1" class="nav-link active" href="#SectionNav" onclick="SwitchTab(1)">On Chain</a>
+                <a id="SectionNav-2" class="nav-link" href="#SectionNav" onclick="SwitchTab(2)">Lightning</a>
+            </div>
+        </nav>
+
+        <div id="tabOnChain">
+            <h4>On Chain</h4>
+            @if (walletConfig.OnChainEnabled)
+            {
+                <p><b>Balance</b>: @walletConfig.OnChainBalance BTC  - @walletConfig.OnChainFiatBalance @walletConfig.FiatCurrency</p>
+            }
+            else
+            {
+                <p>On Chain wallet not configured</p>
+            }
+
+            @if (walletConfig.OnChainBalance == 0) {
+                <p>No bitcoins available for sale</p>
+            } else {
+                <b>Select providers:</b><br/>
+                <table><tr>
+                <td>
+                    HodlHodl &nbsp;
+                    <input id="chkHodl" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.HodlHodl)" />
+                </td><td width="15" />
+                <td>
+                    Paxful &nbsp;
+                    <input id="chkPxf" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.Paxful)" />
+                </td><td width="15" />
+                <td>
+                    LocalCoinSwap &nbsp;
+                    <input id="chkLocalSw" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.LocalCoinSwap)" />
+                </td><td width="15" />
+                <td>
+                    Peach &nbsp;
+                    <input id="chkPeach" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.Peach)" />
+                </td>
+                </tr></table>
+                <br />
+                <table>
+                    <td>
+                        Percent to sale:&nbsp;
+                            <input id="percentOnChain" type="number" max="100" value="100" onchange="document.getElementById('lblOnChainSale').textContent =parseInt((percentOnChain.value*@walletConfig.OnChainFiatBalance)/100)" />
+                    </td><td width="25" />                        
+                    <td>
+                        <label id="lblOnChainSale">@walletConfig.OnChainBalance</label>&nbsp; @walletConfig.FiatCurrency
+                    </td><td width="25" />
+                    <td><button id="btOnChainSearch" class="btn btn-primary" onclick="OnChainSearchClick()">Search</button></td>
+                </table><br />
+                <div id="container-B2pOnChain"></div>
+            }
+
+            @if (walletConfig.OnChainBalance > 0)
+            {
+                <script type="text/javascript">
+                    function OnChainSearchClick() {
+                        var tbl = [];
+                        if (document.querySelector('#chkHodl').checked) tbl.push(@((short)ProvidersEnum.HodlHodl));
+                        if (document.querySelector('#chkPxf').checked) tbl.push(@((short)ProvidersEnum.Paxful));
+                        if (document.querySelector('#chkLocalSw').checked) tbl.push(@((short)ProvidersEnum.LocalCoinSwap));
+                        if (document.querySelector('#chkPeach').checked) tbl.push(@((short)ProvidersEnum.Peach));
+                        if (tbl.length == 0) return;
+
+                        const data = {
+                            Rate: @walletConfig.Rate, ApiKey: '@Model.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
+                            Amount: @walletConfig.OnChainBalance, Providers: tbl
+                        };
+                        GetPartial(data, "#container-B2pOnChain", "#btOnChainSearch");
+                    }
+                </script>
+            }
+        </div>
+
+        <div id="tabLightning" style="display:none">
+            <h4>Lightning</h4>
+            @if (walletConfig.OffChainEnabled)
+            {
+                <p><b>Balance</b>: @walletConfig.OffChainBalance BTC  - @walletConfig.OffChainFiatBalance @walletConfig.FiatCurrency</p>
+            }
+            else
+            {
+                <p>Lightning not configured</p>
+            }
+
+            @if (walletConfig.OffChainBalance == 0)
+            {
+                <p>No bitcoins available for sale</p>
+            }
+            else
+            {
+                <b>Select providers:</b><br />
+                <table>
+                    <tr>
+                        <td>
+                            LNp2pBot &nbsp;
+                            <input id="chkLNp2p" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.LNp2pBot)" />
+                        </td>
+                        <td width="15" />
+                        <td>
+                            RoboSats &nbsp;
+                            <input id="chkRbs" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.RoboSats)" />
+                        </td>
+                    </tr>
+                </table>
+                <br />
+                <table>
+                    <tr>
+                        <td>
+                            Percent to sale:&nbsp;
+                            <input id="percentLightning" type="number" max="100" value="100" onchange="document.getElementById('lblLightningToSale').textContent=parseInt((percentLightning.value*@walletConfig.OffChainFiatBalance)/100)" />
+                        </td>
+                        <td width="25" />
+                        <td>
+                            <label id="lblLightningToSale">@walletConfig.OffChainBalance</label>&nbsp;@walletConfig.FiatCurrency
+                        </td>
+                        <td width="25" />
+                        <td><button id="btLightningSearch" class="btn btn-primary" onclick="LightningSearchClick()">Search</button></td>
+                    </tr>
+                </table>
+
+                <br />
+                <div id="container-B2pLightning"></div>
+            }
+
+
+            @if (walletConfig.OffChainBalance > 0)
+            {
+                <script type="text/javascript">
+                    function LightningSearchClick() {
+                        var tbl = [];
+                        if (document.querySelector('#chkLNp2p').checked) tbl.push(@((short)ProvidersEnum.LNp2pBot));
+                        if (document.querySelector('#chkRbs').checked) tbl.push(@((short)ProvidersEnum.RoboSats));
+                        if (tbl.length == 0) return;
+
+                        const data = {
+                            Rate: @walletConfig.Rate, ApiKey: '@Model.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
+                            Amount: @walletConfig.OffChainBalance, Providers: tbl
+                        };
+                        GetPartial(data, "#container-B2pLightning", "#btLightningSearch");
+                    }
+                </script>
+            }
+        </div>
+    }
+
+</div>

@@ -1,0 +1,18 @@
+@using BTCPayServer.Abstractions.Contracts
+@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.B2PCentral.Views
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+
+@inject IScopeProvider ScopeProvider
+@{
+    var storeId = ScopeProvider.GetCurrentStoreId();
+}
+@if (!string.IsNullOrEmpty(storeId))
+{
+<li class="nav-item">
+    <a asp-controller="UIPlugin" asp-action="Index" asp-route-storeId="@storeId" class="nav-link @ViewData.IsActivePage(PluginNavPages.Index)">
+        <img src="/Resources/img/b2p-vector.svg" width="32" height="32"/>&nbsp;
+        <span>B2P Central</span>
+    </a>
+</li>
+}

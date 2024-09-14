@@ -1,0 +1,91 @@
+@using BTCPayServer.Services
+@using System.Security.Cryptography
+@model BTCPayServer.Plugins.B2PCentral.Models.B2PResult
+@inject DisplayFormatter DisplayFormatter
+
+@if (!string.IsNullOrEmpty(Model.ErrorMsg))
+{
+    <p><b>Error: </b>@Model.ErrorMsg</p>
+}
+@if (Model.Offers.Any())
+{
+    var currentID = RandomNumberGenerator.GetInt32(10000);
+    <div class="table-responsive">
+        <table id="offers@(currentID)" class="table table-hover mass-action">
+            <thead class="mass-action-head">
+                <tr>
+                    <th class="text-nowrap">Id</th>
+                    <th class="text-nowrap">Provider</th>
+                    <th class="text-nowrap">Country</th>
+                    <th class="amount-col">
+                        <a class="text-nowrap" href="#" id="sortLink@(currentID)" data-param1="@(currentID)" data-param2='[@String.Join(", ", Model.Offers.Select(a => a.Price))]'>
+                            Price
+                            <span class="fa fa-sort" />
+                        </a>
+                    </th>
+                    <th class="amount-col">%</th>
+                    <th class="text-nowrap">Min Amount</th>
+                    <th class="text-nowrap">Max Amount</th>
+                    <th class="text-nowrap">User</th>
+                    <th class="text-nowrap">NbTrades</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Offers)
+                {
+                    var detailsId = $"ofrDetails_{item.ID}";
+                    <tr class="mass-action-row item">
+                        <td class="text-break align-middle invoiceId-col">
+                            <a href="@item.Url" target="_blank" class="invoice-details-link">@item.ID</a>
+                        </td>
+                        <td>@item.NumProvider.ToString()</td>
+                        <td align="center">@item.CountryCode</td>
+                        <td class="align-middle amount-col">
+                            <span data-sensitive>@DisplayFormatter.Currency((decimal)item.Price, item.CurrencyCode)</span>
+                        </td>
+                        <td class="align-middle amount-col">
+                            <span data-sensitive>@((int)(((decimal)item.Price / Model.Rate) * 100) - 100) %</span>
+                        </td>
+                        <td align="right">@item.MaxAmount</td>
+                        <td align="right">@item.MaxAmount</td>
+                        <td align="right">
+                            <vc:truncate-center text="@item.UserName" classes="truncate-center-id" />
+                        </td>
+                        <td align="right">@item.UserNbTrades</td>
+                        <td class="align-middle text-end">
+                            <div class="d-inline-flex align-items-center gap-2">
+                                <button class="accordion-button collapsed only-for-js ms-0 d-inline-block" type="button" data-bs-toggle="collapse" data-bs-target="#@detailsId" aria-expanded="false" aria-controls="@detailsId">
+                                    <vc:icon symbol="caret-down" />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr id="@detailsId" class="invoice-details-row collapse">
+                        <td colspan="10" class="border-top-0">
+                            Payment:<br/>
+                            @foreach (var pay in item.PaymentMethods)
+                            {
+                                <div class="badge badge-expired">
+                                    @pay
+                                </div>
+                                switch (item.NumProvider) {
+                                    case BTCPayServer.Plugins.B2PCentral.Models.ProvidersEnum.Peach:
+                                        <br/><br/><p><i>Peach offers must be consulted in your Peach mobile application...</i></p>
+                                        break;
+                                    case BTCPayServer.Plugins.B2PCentral.Models.ProvidersEnum.RoboSats:
+                                        <br/><br /><p><i>To view this offer, you must use an Onion browser (TOR Browser or Brave in TOR mode) and have a RoboSats robot already created....</i></p>
+                                        break;
+
+                                }
+                            }
+                            <br />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!--<vc:pager view-model="Model" />-->
+}
