@@ -47,7 +47,7 @@
                         <td class="align-middle amount-col">
                             <span data-sensitive>@((int)(((decimal)item.Price / Model.Rate) * 100) - 100) %</span>
                         </td>
-                        <td align="right">@item.MaxAmount</td>
+                        <td align="right">@item.MinAmount</td>
                         <td align="right">@item.MaxAmount</td>
                         <td align="right">
                             <vc:truncate-center text="@item.UserName" classes="truncate-center-id" />

@@ -2,8 +2,10 @@
 @using BTCPayServer.Plugins.B2PCentral.Views
 @using BTCPayServer.Client
 @using BTCPayServer.Plugins.B2PCentral.Models
+@using BTCPayServer.Services
 
 @inject BTCPayServer.Plugins.B2PCentral.Services.B2PCentralPluginService B2PCentralPluginService
+@inject DisplayFormatter DisplayFormatter
 
 @model BTCPayServer.Plugins.B2PCentral.Data.B2PSettings
 @{
@@ -169,7 +171,7 @@
         </p>
     } else
     {
-        var walletConfig = await B2PCentralPluginService.GetBalances(Model.StoreId, Context.Request.PathBase);
+        var walletConfig = await B2PCentralPluginService.GetBalances(Model.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
 
         <nav id="SectionNav">
             <div class="nav">
@@ -182,7 +184,7 @@
             <h4>On Chain</h4>
             @if (walletConfig.OnChainEnabled)
             {
-                <p><b>Balance</b>: @walletConfig.OnChainBalance BTC  - @walletConfig.OnChainFiatBalance @walletConfig.FiatCurrency</p>
+                <p><b>Balance</b>: @walletConfig.OnChainBalance BTC  ~ @DisplayFormatter.Currency(walletConfig.OnChainFiatBalance, walletConfig.FiatCurrency)</p>
             }
             else
             {
@@ -218,7 +220,7 @@
                             <input id="percentOnChain" type="number" max="100" value="100" onchange="document.getElementById('lblOnChainSale').textContent =parseInt((percentOnChain.value*@walletConfig.OnChainFiatBalance)/100)" />
                     </td><td width="25" />                        
                     <td>
-                        <label id="lblOnChainSale">@walletConfig.OnChainBalance</label>&nbsp; @walletConfig.FiatCurrency
+                        <label id="lblOnChainSale">@((int)walletConfig.OnChainFiatBalance)</label>&nbsp; @walletConfig.FiatCurrency
                     </td><td width="25" />
                     <td><button id="btOnChainSearch" class="btn btn-primary" onclick="OnChainSearchClick()">Search</button></td>
                 </table><br />
@@ -238,7 +240,7 @@
 
                         const data = {
                             Rate: @walletConfig.Rate, ApiKey: '@Model.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
-                            Amount: @walletConfig.OnChainBalance, Providers: tbl
+                            Amount: document.getElementById('lblOnChainSale').textContent, Providers: tbl
                         };
                         GetPartial(data, "#container-B2pOnChain", "#btOnChainSearch");
                     }
@@ -250,7 +252,7 @@
             <h4>Lightning</h4>
             @if (walletConfig.OffChainEnabled)
             {
-                <p><b>Balance</b>: @walletConfig.OffChainBalance BTC  - @walletConfig.OffChainFiatBalance @walletConfig.FiatCurrency</p>
+                <p><b>Balance</b>: @walletConfig.OffChainBalance BTC  ~ @DisplayFormatter.Currency(walletConfig.OffChainFiatBalance, walletConfig.FiatCurrency)</p>
             }
             else
             {
@@ -286,7 +288,7 @@
                         </td>
                         <td width="25" />
                         <td>
-                            <label id="lblLightningToSale">@walletConfig.OffChainBalance</label>&nbsp;@walletConfig.FiatCurrency
+                            <label id="lblLightningToSale">@((int)walletConfig.OffChainFiatBalance)</label>&nbsp;@walletConfig.FiatCurrency
                         </td>
                         <td width="25" />
                         <td><button id="btLightningSearch" class="btn btn-primary" onclick="LightningSearchClick()">Search</button></td>
@@ -306,10 +308,10 @@
                         if (document.querySelector('#chkLNp2p').checked) tbl.push(@((short)ProvidersEnum.LNp2pBot));
                         if (document.querySelector('#chkRbs').checked) tbl.push(@((short)ProvidersEnum.RoboSats));
                         if (tbl.length == 0) return;
-
+                        
                         const data = {
                             Rate: @walletConfig.Rate, ApiKey: '@Model.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
-                            Amount: @walletConfig.OffChainBalance, Providers: tbl
+                            Amount: document.getElementById('lblLightningToSale').textContent, Providers: tbl
                         };
                         GetPartial(data, "#container-B2pLightning", "#btLightningSearch");
                     }

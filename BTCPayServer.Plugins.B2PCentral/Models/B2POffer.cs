@@ -2,7 +2,7 @@
 
 namespace BTCPayServer.Plugins.B2PCentral.Models
 {
-    public struct B2POffer
+    public class B2POffer
     {
         public string ID { get; set; }
         public string CountryCode { get; set; }

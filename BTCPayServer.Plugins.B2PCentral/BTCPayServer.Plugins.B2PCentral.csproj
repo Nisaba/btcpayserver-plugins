@@ -7,7 +7,7 @@
   <PropertyGroup>
     <Product>B2P Central plugin</Product>
     <Description>Get P2P bitcoin buy offers from B2P Central, according to your onchain and lightning wallets balances</Description>
-    <Version>0.9.0</Version>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <!-- Plugin development properties -->

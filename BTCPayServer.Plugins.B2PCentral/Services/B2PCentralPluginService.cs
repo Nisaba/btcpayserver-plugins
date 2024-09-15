@@ -33,6 +33,7 @@ public class B2PCentralPluginService
     private readonly ILogger _logger;
     private readonly B2PCentralPluginDbContext context;
     private readonly HttpClient _httpClient;
+    private readonly HttpClient _httpClient2;
     private readonly BTCPayNetworkProvider _networkProvider;
     private readonly PaymentMethodHandlerDictionary _paymentMethodHandlerDictionary;
     private readonly BTCPayWalletProvider _walletProvider;
@@ -43,6 +44,7 @@ public class B2PCentralPluginService
                                    StoreRepository storeRepository,
                                    ILogger<B2PCentralPluginService> logger,
                                    HttpClient httpClient,
+                                   HttpClient httpClient2,
                                    BTCPayWalletProvider walletProvider,
                                    PaymentMethodHandlerDictionary paymentMethodHandlerDictionary,
                                    LightningClientFactoryService lightningClientFactory,
@@ -60,6 +62,7 @@ public class B2PCentralPluginService
         _lightningNetworkOptions = lightningNetworkOptions;
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri("https://api.b2p-central.com/api/");
+        _httpClient2 = httpClient2;
     }
 
     public async Task<string> TestB2P(B2PSettings settings)
@@ -164,15 +167,19 @@ public class B2PCentralPluginService
                 }
 
                 if (cnfg.OnChainBalance > 0 || cnfg.OffChainBalance > 0) {
-                    _httpClient.BaseAddress = new Uri($"{BaseUrl}/api/rates?storeId=${storeId}&currencyPairs=BTC_${cnfg.FiatCurrency}");
+                    if (_httpClient2.BaseAddress ==  null)
+                    {
+                        _httpClient2.BaseAddress = new Uri($"{BaseUrl}/api/");
+                    }
                     string sRep;
-                    using (var rep = await _httpClient.GetAsync(""))
+                    using (var rep = await _httpClient2.GetAsync($"rates?storeId={storeId}&currencyPairs=BTC_{cnfg.FiatCurrency}"))
                     {
                         rep.EnsureSuccessStatusCode();
                         sRep = await rep.Content.ReadAsStringAsync();
                     }
                     dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
-                    cnfg.Rate = decimal.Parse(JsonRep.rate);
+                    string rate = JsonRep[0].rate;
+                    cnfg.Rate = decimal.Parse(rate);
 
                     cnfg.OffChainFiatBalance = cnfg.Rate * cnfg.OffChainBalance;
                     cnfg.OnChainFiatBalance = cnfg.Rate * cnfg.OnChainBalance;

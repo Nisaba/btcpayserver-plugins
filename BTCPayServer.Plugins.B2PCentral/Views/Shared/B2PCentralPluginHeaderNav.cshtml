@@ -10,7 +10,7 @@
 @if (!string.IsNullOrEmpty(storeId))
 {
 <li class="nav-item">
-    <a asp-controller="UIPlugin" asp-action="Index" asp-route-storeId="@storeId" class="nav-link @ViewData.IsActivePage(PluginNavPages.Index)">
+    <a asp-controller="B2PPlugin" asp-action="Index" asp-route-storeId="@storeId" class="nav-link @ViewData.IsActivePage(PluginNavPages.Index)">
         <img src="/Resources/img/b2p-vector.svg" width="32" height="32"/>&nbsp;
         <span>B2P Central</span>
     </a>

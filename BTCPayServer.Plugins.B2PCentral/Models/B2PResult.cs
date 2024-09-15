@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace BTCPayServer.Plugins.B2PCentral.Models
 {
-    public class B2PResult: BasePagingViewModel
+    public class B2PResult //: BasePagingViewModel
     {
         private decimal _rate;
 
@@ -13,7 +13,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Models
 
         public List<B2POffer> Offers { get; set; }
 
-        public override int CurrentPageCount => Offers.Count;
+        //public override int CurrentPageCount => Offers.Count;
 
     }
 }

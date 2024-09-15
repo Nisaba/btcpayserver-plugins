@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using BTCPayServer.Abstractions.Constants;
 using BTCPayServer.Client;
@@ -14,11 +16,11 @@ namespace BTCPayServer.Plugins.B2PCentral;
 
 [Route("~/plugins/{storeId}/b2pcentral")]
 [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie)]
-public class UIPluginController : Controller
+public class B2PPluginController : Controller
 {
     private readonly B2PCentralPluginService _PluginService;
 
-    public UIPluginController(B2PCentralPluginService PluginService)
+    public B2PPluginController(B2PCentralPluginService PluginService)
     {
         _PluginService = PluginService;
     }
@@ -74,6 +76,13 @@ public class UIPluginController : Controller
                 Providers = req.Providers
             };
             model.Offers = await _PluginService.GetOffersListAsync(ofrReq, req.ApiKey);
+            var vRate = (float)req.Rate;
+            foreach (var ofr in model.Offers.Where(a => a.NumProvider == ProvidersEnum.LNp2pBot))
+            {
+                ofr.Price = vRate * (1 + (ofr.Price / 100));
+            }
+            //model.Offers.Where(a => a.NumProvider == ProvidersEnum.LNp2pBot).ToList().ForEach(ofr => ofr.p = 35);
+
         }
         catch (Exception ex)
         {
