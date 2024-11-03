@@ -20,3 +20,8 @@ Click on the offer you want (column id) to open it in a new browser tab and make
 
 ![image](https://github.com/user-attachments/assets/e44b05fb-b06e-4d3d-b895-5b02b7aea501)
 
+
+- What's new in v 1.2.1 :
+Bump to BTCPay v2
+Add NoOnes as onchain provider
+
