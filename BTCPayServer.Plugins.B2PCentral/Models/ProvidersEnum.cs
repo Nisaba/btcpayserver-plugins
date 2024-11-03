@@ -31,8 +31,8 @@ namespace BTCPayServer.Plugins.B2PCentral.Models
         [Description("Paxful")]
         Paxful = 7,
 
-        [Description("reserved")]
-        Reserved2 = 8,
+        [Description("NoOnes")]
+        NoOnes = 8,
 
         [Description("LNp2pBot")]
         LNp2pBot = 9,

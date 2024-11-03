@@ -205,6 +205,10 @@
                     <input id="chkPxf" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.Paxful)" />
                 </td><td width="15" />
                 <td>
+                    NoOnes &nbsp;
+                    <input id="chkNoo" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.NoOnes)" />
+                </td><td width="15" />
+                <td>
                     LocalCoinSwap &nbsp;
                     <input id="chkLocalSw" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.LocalCoinSwap)" />
                 </td><td width="15" />
@@ -234,6 +238,7 @@
                         var tbl = [];
                         if (document.querySelector('#chkHodl').checked) tbl.push(@((short)ProvidersEnum.HodlHodl));
                         if (document.querySelector('#chkPxf').checked) tbl.push(@((short)ProvidersEnum.Paxful));
+                        if (document.querySelector('#chkNoo').checked) tbl.push(@((short)ProvidersEnum.NoOnes));
                         if (document.querySelector('#chkLocalSw').checked) tbl.push(@((short)ProvidersEnum.LocalCoinSwap));
                         if (document.querySelector('#chkPeach').checked) tbl.push(@((short)ProvidersEnum.Peach));
                         if (tbl.length == 0) return;

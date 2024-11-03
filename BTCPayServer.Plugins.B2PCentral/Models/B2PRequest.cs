@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BTCPayServer.Plugins.B2PCentral.Models
+﻿namespace BTCPayServer.Plugins.B2PCentral.Models
 {
     public struct B2PRequest
     {

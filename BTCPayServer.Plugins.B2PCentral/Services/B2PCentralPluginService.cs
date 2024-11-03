@@ -3,6 +3,7 @@ using BTCPayServer.Data;
 using BTCPayServer.Lightning;
 using BTCPayServer.Models.StoreViewModels;
 using BTCPayServer.Payments;
+using BTCPayServer.Payments.Bitcoin;
 using BTCPayServer.Payments.Lightning;
 using BTCPayServer.Plugins.B2PCentral.Data;
 using BTCPayServer.Plugins.B2PCentral.Models;
@@ -39,6 +40,8 @@ public class B2PCentralPluginService
     private readonly BTCPayWalletProvider _walletProvider;
     private readonly LightningClientFactoryService _lightningClientFactory;
     private readonly IOptions<LightningNetworkOptions> _lightningNetworkOptions;
+    private readonly WalletHistogramService _walletHistogramService;
+    private readonly PaymentMethodHandlerDictionary _handlers;
 
     public B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbContextFactory,
                                    StoreRepository storeRepository,
@@ -49,7 +52,9 @@ public class B2PCentralPluginService
                                    PaymentMethodHandlerDictionary paymentMethodHandlerDictionary,
                                    LightningClientFactoryService lightningClientFactory,
                                    IOptions<LightningNetworkOptions> lightningNetworkOptions,
-                                   BTCPayNetworkProvider networkProvider)
+                                   BTCPayNetworkProvider networkProvider,
+                                   WalletHistogramService walletHistogramService,
+                                   PaymentMethodHandlerDictionary handlers)
     {
         _pluginDbContextFactory = pluginDbContextFactory;
         _storeRepository = storeRepository;
@@ -58,11 +63,14 @@ public class B2PCentralPluginService
         _networkProvider = networkProvider;
         _paymentMethodHandlerDictionary = paymentMethodHandlerDictionary;
         _walletProvider = walletProvider;
+
         _lightningClientFactory = lightningClientFactory;
         _lightningNetworkOptions = lightningNetworkOptions;
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri("https://api.b2p-central.com/api/");
         _httpClient2 = httpClient2;
+        _walletHistogramService = walletHistogramService;
+        _handlers = handlers;
     }
 
     public async Task<string> TestB2P(B2PSettings settings)
@@ -149,13 +157,21 @@ public class B2PCentralPluginService
                 if (cnfg.OnChainEnabled)
                 {
                     var walletId = new WalletId(store.Id, "BTC");
-                    using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
-                    var wallet = _walletProvider.GetWallet(_networkProvider.DefaultNetwork);
-                    var derivation = store.GetDerivationSchemeSettings(_networkProvider, walletId.CryptoCode);
-                    if (derivation is not null)
+                    var data = await _walletHistogramService.GetHistogram(store, walletId, WalletHistogramType.Week);
+                    if (data != null)
+                    { 
+                        cnfg.OnChainBalance = data.Balance;
+                    } else
                     {
-                        var balance = await wallet.GetBalance(derivation.AccountDerivation, cts.Token);
-                        cnfg.OnChainBalance = balance.Available.GetValue(derivation.Network);
+                        using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
+                        var wallet = _walletProvider.GetWallet(_networkProvider.DefaultNetwork);
+                        var derivation = store.GetDerivationSchemeSettings(_handlers, walletId.CryptoCode);
+                        if (derivation is not null)
+                        {
+                            var network = _handlers.GetBitcoinHandler(walletId.CryptoCode).Network;
+                            var balance = await wallet.GetBalance(derivation.AccountDerivation, cts.Token);
+                            cnfg.OnChainBalance = balance.Available.GetValue(network);
+                        }
                     }
                 }
 
@@ -235,54 +251,47 @@ public class B2PCentralPluginService
         var excludeFilters = storeBlob.GetExcludedPaymentMethods();
         var derivationByCryptoCode =
             store
-            .GetSupportedPaymentMethods(_networkProvider)
-            .OfType<DerivationSchemeSettings>()
-            .ToDictionary(c => c.Network.CryptoCode.ToUpperInvariant());
+                .GetPaymentMethodConfigs<DerivationSchemeSettings>(_handlers)
+                .ToDictionary(c => ((IHasNetwork)_handlers[c.Key]).Network.CryptoCode, c => c.Value);
 
         var lightningByCryptoCode = store
-            .GetSupportedPaymentMethods(_networkProvider)
-            .OfType<LightningSupportedPaymentMethod>()
-            .Where(method => method.PaymentId.PaymentType == LightningPaymentType.Instance)
-            .ToDictionary(c => c.CryptoCode.ToUpperInvariant());
+            .GetPaymentMethodConfigs(_handlers)
+            .Where(c => c.Value is LightningPaymentMethodConfig)
+            .ToDictionary(c => ((IHasNetwork)_handlers[c.Key]).Network.CryptoCode, c => (LightningPaymentMethodConfig)c.Value);
 
         derivationSchemes = new List<StoreDerivationScheme>();
         lightningNodes = new List<StoreLightningNode>();
 
-        foreach (var paymentMethodId in _paymentMethodHandlerDictionary.Distinct().SelectMany(handler => handler.GetSupportedPaymentMethods()))
+        foreach (var handler in _handlers)
         {
-            switch (paymentMethodId.PaymentType)
+            if (handler is BitcoinLikePaymentHandler { Network: var network })
             {
-                case BitcoinPaymentType _:
-                    var strategy = derivationByCryptoCode.TryGet(paymentMethodId.CryptoCode);
-                    var network = _networkProvider.GetNetwork<BTCPayNetwork>(paymentMethodId.CryptoCode);
-                    var value = strategy?.ToPrettyString() ?? string.Empty;
+                var strategy = derivationByCryptoCode.TryGet(network.CryptoCode);
+                var value = strategy?.ToPrettyString() ?? string.Empty;
+                derivationSchemes.Add(new StoreDerivationScheme
+                {
+                    Crypto = network.CryptoCode,
+                    PaymentMethodId = handler.PaymentMethodId,
+                    WalletSupported = network.WalletSupported,
+                    Value = value,
+                    WalletId = new WalletId(store.Id, network.CryptoCode),
+                    Enabled = !excludeFilters.Match(handler.PaymentMethodId) && strategy != null,
+                    Collapsed = network is Plugins.Altcoins.ElementsBTCPayNetwork { IsNativeAsset: false } && string.IsNullOrEmpty(value)
 
-                    derivationSchemes.Add(new StoreDerivationScheme
-                    {
-                        Crypto = paymentMethodId.CryptoCode,
-                        WalletSupported = network.WalletSupported,
-                        Value = value,
-                        WalletId = new WalletId(store.Id, paymentMethodId.CryptoCode),
-                        Enabled = !excludeFilters.Match(paymentMethodId) && strategy != null,
-#if ALTCOINS
-                            Collapsed = network is Plugins.Altcoins.ElementsBTCPayNetwork elementsBTCPayNetwork && elementsBTCPayNetwork.NetworkCryptoCode != elementsBTCPayNetwork.CryptoCode && string.IsNullOrEmpty(value)
-#endif
-                    });
-                    break;
-
-                case LNURLPayPaymentType lnurlPayPaymentType:
-                    break;
-
-                case LightningPaymentType _:
-                    var lightning = lightningByCryptoCode.TryGet(paymentMethodId.CryptoCode);
-                    var isEnabled = !excludeFilters.Match(paymentMethodId) && lightning != null;
-                    lightningNodes.Add(new StoreLightningNode
-                    {
-                        CryptoCode = paymentMethodId.CryptoCode,
-                        Address = lightning?.GetDisplayableConnectionString(),
-                        Enabled = isEnabled
-                    });
-                    break;
+                });
+            }
+            else if (handler is LightningLikePaymentHandler)
+            {
+                var lnNetwork = ((IHasNetwork)handler).Network;
+                var lightning = lightningByCryptoCode.TryGet(lnNetwork.CryptoCode);
+                var isEnabled = !excludeFilters.Match(handler.PaymentMethodId) && lightning != null;
+                lightningNodes.Add(new StoreLightningNode
+                {
+                    CryptoCode = lnNetwork.CryptoCode,
+                    PaymentMethodId = handler.PaymentMethodId,
+                    Address = lightning?.GetDisplayableConnectionString(),
+                    Enabled = isEnabled
+                });
             }
         }
     }
@@ -290,10 +299,8 @@ public class B2PCentralPluginService
     private ILightningClient GetLightningClient(StoreData store)
     {
         var network = _networkProvider.GetNetwork<BTCPayNetwork>("BTC");
-        var id = new PaymentMethodId("BTC", PaymentTypes.LightningLike);
-        var existing = store.GetSupportedPaymentMethods(_networkProvider)
-            .OfType<LightningSupportedPaymentMethod>()
-            .FirstOrDefault(d => d.PaymentId == id);
+        var id = PaymentTypes.LN.GetPaymentMethodId("BTC");
+        var existing = store.GetPaymentMethodConfig<LightningPaymentMethodConfig>(id, _handlers);
         if (existing == null)
             return null;
 

@@ -1,6 +1,4 @@
-﻿using BTCPayServer.Models;
-using NBitpayClient;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace BTCPayServer.Plugins.B2PCentral.Models
 {
