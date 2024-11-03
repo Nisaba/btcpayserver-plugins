@@ -30,3 +30,9 @@ https://core.telegram.org/bots
 
 https://stackoverflow.com/questions/32423837/telegram-bot-how-to-get-a-group-chat-id
 
+
+
+What's new in v 1.2.1 :
+- Bump to BTCPay v2
+
+If you like my work, you can send me with a few sats here: donate@btcpay2.nisaba.solutions. Thank you !
