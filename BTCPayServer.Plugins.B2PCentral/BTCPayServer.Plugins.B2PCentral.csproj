@@ -49,6 +49,7 @@
     </ProjectReference>
   </ItemGroup>
   -->
+	
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\**" />
