@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
@@ -7,7 +7,7 @@
   <PropertyGroup>
     <Product>B2P Central plugin</Product>
     <Description>Get P2P bitcoin buy offers from B2P Central, according to your onchain and lightning wallets balances</Description>
-    <Version>1.2.1</Version>
+    <Version>1.2.2</Version>
   </PropertyGroup>
 
   <!-- Plugin development properties -->
@@ -51,11 +51,14 @@
   -->
 
   <ItemGroup>
-    <ProjectReference Include="..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
     <EmbeddedResource Include="Resources\**" />
   </ItemGroup>
 
   <ItemGroup>
     <None Remove="Resources\img\B2Plogo.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
   </ItemGroup>
 </Project>
