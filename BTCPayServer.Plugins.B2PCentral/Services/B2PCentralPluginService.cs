@@ -1,3 +1,4 @@
+using BTCPayServer.Client.Models;
 using BTCPayServer.Configuration;
 using BTCPayServer.Data;
 using BTCPayServer.Lightning;
@@ -157,7 +158,7 @@ public class B2PCentralPluginService
                 if (cnfg.OnChainEnabled)
                 {
                     var walletId = new WalletId(store.Id, "BTC");
-                    var data = await _walletHistogramService.GetHistogram(store, walletId, WalletHistogramType.Week);
+                    var data = await _walletHistogramService.GetHistogram(store, walletId, HistogramType.Week);
                     if (data != null)
                     { 
                         cnfg.OnChainBalance = data.Balance;
@@ -245,7 +246,7 @@ public class B2PCentralPluginService
     }
 
 
-    private void getPaymentMethods(StoreData store, StoreBlob storeBlob,
+    private void getPaymentMethods(BTCPayServer.Data.StoreData store, StoreBlob storeBlob,
         out List<StoreDerivationScheme> derivationSchemes, out List<StoreLightningNode> lightningNodes)
     {
         var excludeFilters = storeBlob.GetExcludedPaymentMethods();
@@ -296,7 +297,7 @@ public class B2PCentralPluginService
         }
     }
 
-    private ILightningClient GetLightningClient(StoreData store)
+    private ILightningClient GetLightningClient(BTCPayServer.Data.StoreData store)
     {
         var network = _networkProvider.GetNetwork<BTCPayNetwork>("BTC");
         var id = PaymentTypes.LN.GetPaymentMethodId("BTC");
