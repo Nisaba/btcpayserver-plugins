@@ -22,8 +22,8 @@ namespace BTCPayServer.Plugins.B2PCentral.Models
         [Description("Peach")]
         Peach = 4,
 
-        [Description("reserved")]
-        Reserved1 = 5,
+        [Description("Bisq v1")]
+        BisqV1 = 5,
 
         [Description("LocalCoinSwap")]
         LocalCoinSwap = 6,

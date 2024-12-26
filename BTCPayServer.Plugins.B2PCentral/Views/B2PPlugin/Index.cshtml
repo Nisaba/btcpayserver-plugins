@@ -216,7 +216,12 @@
                     Peach &nbsp;
                     <input id="chkPeach" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.Peach)" />
                 </td>
-                </tr></table>
+                <td>
+                    Bisq v1 &nbsp;
+                    <input id="chkBisqV1" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.BisqV1)" />
+                </td>
+                </tr>
+                </table>
                 <br />
                 <table>
                     <td>
@@ -241,6 +246,7 @@
                         if (document.querySelector('#chkNoo').checked) tbl.push(@((short)ProvidersEnum.NoOnes));
                         if (document.querySelector('#chkLocalSw').checked) tbl.push(@((short)ProvidersEnum.LocalCoinSwap));
                         if (document.querySelector('#chkPeach').checked) tbl.push(@((short)ProvidersEnum.Peach));
+                        if (document.querySelector('#chkBisqV1').checked) tbl.push(@((short)ProvidersEnum.BisqV1));
                         if (tbl.length == 0) return;
 
                         const data = {

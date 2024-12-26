@@ -25,5 +25,11 @@ What's new in v 1.2.1 :
 - Bump to BTCPay v2
 - Add NoOnes as onchain provider
 
+What's new in v 1.2.2 :
+- Bump to BTCPay v2.0.3
+
+What's new in v 1.2.3 :
+- Add Bisq v1 as onchain provider
+
 
 
