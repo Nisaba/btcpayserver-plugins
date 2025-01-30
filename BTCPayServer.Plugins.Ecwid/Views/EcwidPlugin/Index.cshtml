@@ -1,0 +1,54 @@
+@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.Ecwid.Views
+@using BTCPayServer.Client
+@using BTCPayServer.Services
+
+@inject BTCPayServer.Plugins.Ecwid.Services.EcwidPluginService EcwidPluginService
+
+@model BTCPayServer.Plugins.Ecwid.Data.EcwidSettings
+@{
+    ViewData.SetActivePage(PluginNavPages.Index, "Ecwid plugin");
+}
+
+<table>
+    <tr>
+        <td>
+            <a href="https://www.b2p-central.com" target="b2p">
+                <img src="/Resources/img/Ecwid.png" />
+            </a>
+        </td>
+        <td width="20" />
+        <td>
+            <h2>Ecwid plugin</h2>
+            <br />
+            <p>
+                This plugin allows you to interface your BTCCPay store with your Ecwid store.
+            </p>
+        </td>
+    </tr>
+</table>
+<br />
+
+<partial name="_StatusMessage" />
+
+<div permission="@Policies.CanModifyStoreSettings">
+    <br />
+    <h4>Configuration</h4>
+    <form method="post" autocomplete="off">
+        <table class="table table-sm mt-0 mx-0">
+            <tr>
+                <td width="100">
+                    <label asp-for="ClientSecret" class="form-label"></label>
+                </td>
+                <td width="400" d class="border-0 ps-0 align-middle">
+                    <input asp-for="ClientSecret" data-fill="port" class="form-control" />
+                    <span asp-validation-for="ClientSecret" class="text-danger"></span>
+                </td>
+                <td width="20" />
+                <td>
+                    <button id="SaveButton" type="submit" class="btn btn-primary" value="Save" name="Command">Save</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>

@@ -13,7 +13,7 @@ public class EcwidPluginDbContext : DbContext
         _designTime = designTime;
     }
 
-    public DbSet<EcwidSettings> B2PSettings { get; set; }
+    public DbSet<EcwidSettings> EcwidSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
