@@ -1,6 +1,7 @@
 using BTCPayServer.Abstractions.Constants;
 using BTCPayServer.Client;
 using BTCPayServer.Plugins.Ecwid.Data;
+using BTCPayServer.Plugins.Ecwid.Model;
 using BTCPayServer.Plugins.Ecwid.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,12 @@ public class EcwidPluginController : Controller
     [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy= Policies.CanViewStoreSettings)]
     public async Task<IActionResult> Index(string storeId)
     {
-        return View(await _PluginService.GetStoreSettings(storeId));
+        var model = new EcwidModel
+        {
+            Settings = await _PluginService.GetStoreSettings(storeId),
+            EcwidPluginUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}Payment"
+        };
+        return View(model);
     }
 
     [HttpPost]

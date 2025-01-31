@@ -1,11 +1,10 @@
 @using BTCPayServer.Abstractions.Extensions
 @using BTCPayServer.Plugins.Ecwid.Views
 @using BTCPayServer.Client
-@using BTCPayServer.Services
 
 @inject BTCPayServer.Plugins.Ecwid.Services.EcwidPluginService EcwidPluginService
 
-@model BTCPayServer.Plugins.Ecwid.Data.EcwidSettings
+@model BTCPayServer.Plugins.Ecwid.Model.EcwidModel
 @{
     ViewData.SetActivePage(PluginNavPages.Index, "Ecwid plugin");
 }
@@ -13,9 +12,7 @@
 <table>
     <tr>
         <td>
-            <a href="https://www.b2p-central.com" target="b2p">
-                <img src="/Resources/img/Ecwid.png" />
-            </a>
+            <img src="/Resources/img/Ecwid.png" />
         </td>
         <td width="20" />
         <td>
@@ -38,11 +35,11 @@
         <table class="table table-sm mt-0 mx-0">
             <tr>
                 <td width="100">
-                    <label asp-for="ClientSecret" class="form-label"></label>
+                    <label asp-for="Settings.ClientSecret" class="form-label"></label>
                 </td>
                 <td width="400" d class="border-0 ps-0 align-middle">
-                    <input asp-for="ClientSecret" data-fill="port" class="form-control" />
-                    <span asp-validation-for="ClientSecret" class="text-danger"></span>
+                    <input asp-for="Settings.ClientSecret" data-fill="port" class="form-control" />
+                    <span asp-validation-for="Settings.ClientSecret" class="text-danger"></span>
                 </td>
                 <td width="20" />
                 <td>
@@ -51,4 +48,8 @@
             </tr>
         </table>
     </form>
+    <br />
+    <h4>Ecwid plugin Url</h4>
+    @Model.EcwidPluginUrl<br/>
+    <i>this url must be set in your Ecwid store settings</i>
 </div>
