@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace BTCPayServer.Plugins.Ecwid;
 
 [Route("~/plugins/{storeId}/Ecwid")]
-[Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie)]
+[Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy= Policies.CanModifyStoreSettings)]
 public class EcwidPluginController : Controller
 {
     private readonly EcwidPluginService _PluginService;
@@ -21,7 +21,6 @@ public class EcwidPluginController : Controller
     }
 
     [HttpGet]
-    [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy= Policies.CanViewStoreSettings)]
     public async Task<IActionResult> Index(string storeId)
     {
         var model = new EcwidModel
@@ -33,15 +32,14 @@ public class EcwidPluginController : Controller
     }
 
     [HttpPost]
-    [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanModifyStoreSettings)]
-    public async Task<IActionResult> Index(EcwidSettings model, string command)
+    public async Task<IActionResult> Index(EcwidModel model, string command)
     {
         if (ModelState.IsValid)
         {
             switch (command)
             {
                 case "Save":
-                    await _PluginService.UpdateSettings(model);
+                    await _PluginService.UpdateSettings(model.Settings);
                     break;
             }
         }
