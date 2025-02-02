@@ -10,6 +10,7 @@ using BTCPayServer.Client;
 using BTCPayServer.Client.Models;
 using Newtonsoft.Json.Linq;
 using static Dapper.SqlMapper;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BTCPayServer.Plugins.Ecwid.Services
 {
@@ -76,6 +77,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             try
             {
                 var ecwidJson = GetEcwidPayload(ecwidSecretKey, ecwidData);
+                _logger.LogWarning($"Json: {ecwidJson}", "EcwidPlugin:CreateBTCPayInvoice()");
                 var req = new CreateInvoiceRequest()
                 {
                     Currency = ecwidJson.Currency,
