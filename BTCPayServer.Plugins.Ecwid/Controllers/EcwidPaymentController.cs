@@ -29,7 +29,7 @@ namespace BTCPayServer.Plugins.Ecwid
         }
 
         [HttpPost]
-        public async Task<IActionResult> Index([FromBody] string data)
+        public async Task<IActionResult> Index([FromForm] string data)
         {
             try
             {
