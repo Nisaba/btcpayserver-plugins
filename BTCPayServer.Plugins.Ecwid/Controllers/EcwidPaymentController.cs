@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace BTCPayServer.Plugins.Ecwid
 {
     [Route("~/plugins/{storeId}/EcwidPayment")]
-    [Authorize(Policy = Policies.Unrestricted)]
+//    [Authorize(Policy = Policies.Unrestricted)]
     public class EcwidPaymentController : Controller
     {
         private readonly EcwidPluginService _PluginService;
