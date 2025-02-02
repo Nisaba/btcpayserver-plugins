@@ -67,11 +67,18 @@ namespace BTCPayServer.Plugins.Ecwid.Services
 
         public dynamic GetEcwidPayload(string appSecretKey, string encryptedData)
         {
-            byte[] encryptionKey = Encoding.UTF8.GetBytes(appSecretKey.Substring(0, 16));
-
-            string jsonData = Aes128Decrypt(encryptionKey, encryptedData);
-
-            return JsonConvert.DeserializeObject<dynamic>(jsonData);
+            try
+            {
+                encryptedData = FixBase64String(encryptedData);
+                byte[] encryptionKey = Encoding.UTF8.GetBytes(appSecretKey.Substring(0, 16));
+                string jsonData = Aes128Decrypt(encryptionKey, encryptedData);
+                return JsonConvert.DeserializeObject<dynamic>(jsonData);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "EcwidPlugin:GetEcwidPayload()");
+                throw;
+            }
         }
 
         private string Aes128Decrypt(byte[] key, string encryptedData)
@@ -91,5 +98,17 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                 }
             }
         }
+
+        private static string FixBase64String(string base64)
+        {
+            base64 = base64.Replace('-', '+').Replace('_', '/'); // Corriger URL-safe Base64
+            int mod4 = base64.Length % 4;
+            if (mod4 > 0)
+            {
+                base64 += new string('=', 4 - mod4); // Ajouter du padding si nécessaire
+            }
+            return base64;
+        }
+
     }
 }
