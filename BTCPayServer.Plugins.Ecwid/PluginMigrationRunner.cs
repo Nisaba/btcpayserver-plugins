@@ -36,9 +36,6 @@ public class PluginMigrationRunner : IHostedService
             settings.UpdatedSomething = true;
             await _settingsRepository.UpdateSetting(settings);
         }
-
-        // test record
-        // await _pluginService.AddTestDataRecord();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

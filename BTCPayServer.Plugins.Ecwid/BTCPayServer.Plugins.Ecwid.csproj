@@ -6,8 +6,8 @@
   <!-- Plugin specific properties -->
   <PropertyGroup>
     <Product>Ecwid plugin</Product>
-    <Description>This plugin allows you to interface your BTCCPay store with your Ecwid store</Description>
-    <Version>0.9.0</Version>
+    <Description>This plugin allows you to interface your BTCPay store with your Ecwid store</Description>
+    <Version>0.9.1</Version>
   </PropertyGroup>
 
   <!-- Plugin development properties -->
