@@ -1,9 +1,5 @@
-﻿using BTCPayServer.Abstractions.Constants;
-using BTCPayServer.Client;
-using BTCPayServer.Plugins.Ecwid.Data;
-using BTCPayServer.Plugins.Ecwid.Services;
+﻿using BTCPayServer.Plugins.Ecwid.Services;
 using BTCPayServer.Services.Stores;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -37,11 +33,9 @@ namespace BTCPayServer.Plugins.Ecwid
                 _logger.LogWarning($"Data: {data}", "EcwidPlugin:PaymentController()");
                 var settings = await _PluginService.GetStoreSettings(storeId);
 
-                var ecwidData = _PluginService.GetEcwidPayload(settings.ClientSecret, data);
-                _logger.LogWarning($"ecwidData: {ecwidData}", "EcwidPlugin:PaymentController()");
+                var CheckoutLink = await _PluginService.CreateBTCPayInvoice(settings.ClientSecret, data, storeId);
 
-
-                return Ok();
+                return Redirect(CheckoutLink);
             } catch (Exception ex)
             {
                 _logger.LogError(ex, "EcwidPlugin:PaymentController()");

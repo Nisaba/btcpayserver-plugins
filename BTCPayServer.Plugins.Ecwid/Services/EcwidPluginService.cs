@@ -6,6 +6,10 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using BTCPayServer.Client;
+using BTCPayServer.Client.Models;
+using Newtonsoft.Json.Linq;
+using static Dapper.SqlMapper;
 
 namespace BTCPayServer.Plugins.Ecwid.Services
 {
@@ -13,11 +17,13 @@ namespace BTCPayServer.Plugins.Ecwid.Services
     {
         private readonly ILogger<EcwidPluginService> _logger;
         private readonly EcwidPluginDbContext _context;
+        private readonly BTCPayServerClient _client;
 
-        public EcwidPluginService(EcwidPluginDbContextFactory pluginDbContextFactory, ILogger<EcwidPluginService> logger)
+        public EcwidPluginService(EcwidPluginDbContextFactory pluginDbContextFactory, ILogger<EcwidPluginService> logger, BTCPayServerClient client)
         {
             _logger = logger;
             _context = pluginDbContextFactory.CreateContext();
+            _client = client;
         }
 
         public async Task<EcwidSettings> GetStoreSettings(string storeId)
@@ -65,7 +71,44 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
         }
 
-        public dynamic GetEcwidPayload(string appSecretKey, string encryptedData)
+        public async Task<string> CreateBTCPayInvoice(string ecwidSecretKey, string ecwidData, string storeId)
+        {
+            try
+            {
+                var ecwidJson = GetEcwidPayload(ecwidSecretKey, ecwidData);
+                var req = new CreateInvoiceRequest()
+                {
+                    Currency = ecwidJson.Currency,
+                    Amount = ecwidJson.Order.Amount,
+                    Checkout = new InvoiceDataBase.CheckoutOptions()
+                    {
+                        DefaultLanguage = ecwidJson.Lang,
+                        RedirectURL = ecwidJson.ReturnURL,
+                        RedirectAutomatically = true
+                    },
+                    Metadata = JObject.FromObject(new
+                    {
+                        itemDesc = "From Ecwid",
+                        buyerEmail = ecwidJson.Email,
+                        ecwidStoreId = ecwidJson.StoreId,
+                        ecwidOrderId = ecwidJson.Order.Id,
+                        ecwidOrderNumber = ecwidJson.Order.Number,
+                        ecwidUrl = ecwidJson.Order.GlobalReferer,
+                    }),
+                    Receipt = new InvoiceDataBase.ReceiptOptions() { Enabled = true }
+                };
+                var invoice = await _client.CreateInvoice(storeId, req);
+                return invoice.CheckoutLink;
+
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "EcwidPlugin:CreateBTCPayInvoice()");
+                throw;
+            }
+        }
+
+        private dynamic GetEcwidPayload(string appSecretKey, string encryptedData)
         {
             try
             {
@@ -73,7 +116,8 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                 byte[] encryptedBytes = Convert.FromBase64String(encryptedData);
 
                 byte[] encryptionKey = Encoding.UTF8.GetBytes(appSecretKey.Substring(0, 16));
-                string jsonData = Aes128Decrypt(encryptionKey, encryptedData);
+                string decryptData = Aes128Decrypt(encryptionKey, encryptedData);
+                string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
                 return JsonConvert.DeserializeObject<dynamic>(jsonData);
             }
             catch (Exception ex)
