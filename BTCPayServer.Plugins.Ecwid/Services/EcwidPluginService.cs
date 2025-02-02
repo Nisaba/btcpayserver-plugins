@@ -70,6 +70,8 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             try
             {
                 encryptedData = FixBase64String(encryptedData);
+                byte[] encryptedBytes = Convert.FromBase64String(encryptedData);
+
                 byte[] encryptionKey = Encoding.UTF8.GetBytes(appSecretKey.Substring(0, 16));
                 string jsonData = Aes128Decrypt(encryptionKey, encryptedData);
                 return JsonConvert.DeserializeObject<dynamic>(jsonData);
@@ -88,7 +90,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             using (Aes aes = Aes.Create())
             {
                 aes.Key = key;
-                aes.Mode = CipherMode.ECB;
+                aes.Mode = CipherMode.CBC;
                 aes.Padding = PaddingMode.PKCS7;
 
                 using (ICryptoTransform decryptor = aes.CreateDecryptor())
@@ -101,11 +103,11 @@ namespace BTCPayServer.Plugins.Ecwid.Services
 
         private static string FixBase64String(string base64)
         {
-            base64 = base64.Replace('-', '+').Replace('_', '/'); // Corriger URL-safe Base64
+            base64 = base64.Replace('-', '+').Replace('_', '/');
             int mod4 = base64.Length % 4;
             if (mod4 > 0)
             {
-                base64 += new string('=', 4 - mod4); // Ajouter du padding si nécessaire
+                base64 += new string('=', 4 - mod4);
             }
             return base64;
         }
