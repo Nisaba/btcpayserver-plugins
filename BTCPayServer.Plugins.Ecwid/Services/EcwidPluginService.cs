@@ -41,7 +41,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Ecwid:GetStoreSettings()");
+                _logger.LogError(e, "EcwidPlugin:GetStoreSettings()");
                 throw;
             }
         }
@@ -67,7 +67,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Ecwid:UpdateSettings()");
+                _logger.LogError(e, "EcwidPlugin:UpdateSettings()");
                 throw;
             }
         }
@@ -120,6 +120,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                 byte[] encryptionKey = Encoding.UTF8.GetBytes(appSecretKey.Substring(0, 16));
                 string decryptData = Aes128Decrypt(encryptionKey, encryptedData);
                 string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
+                _logger.LogWarning($"Json: {jsonData}", "EcwidPlugin:GetEcwidPayload()");
                 return JsonConvert.DeserializeObject<dynamic>(jsonData);
             }
             catch (Exception ex)
