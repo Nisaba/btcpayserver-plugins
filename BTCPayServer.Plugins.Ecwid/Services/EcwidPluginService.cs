@@ -120,6 +120,8 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                 byte[] encryptionKey = Encoding.UTF8.GetBytes(appSecretKey).Take(16).ToArray();
                 string decryptData = Aes128Decrypt(encryptionKey, encryptedData);
                 string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
+                _logger.LogWarning(jsonData, "EcwidPlugin:GetEcwidPayload()");
+
                 return JsonConvert.DeserializeObject<dynamic>(jsonData);
             }
             catch (Exception ex)
