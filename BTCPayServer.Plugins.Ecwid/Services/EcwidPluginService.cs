@@ -11,6 +11,7 @@ using BTCPayServer.Client.Models;
 using Newtonsoft.Json.Linq;
 using static Dapper.SqlMapper;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Linq;
 
 namespace BTCPayServer.Plugins.Ecwid.Services
 {
@@ -116,7 +117,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                 encryptedData = FixBase64String(encryptedData);
                 byte[] encryptedBytes = Convert.FromBase64String(encryptedData);
 
-                byte[] encryptionKey = Encoding.UTF8.GetBytes(appSecretKey.Substring(0, 16));
+                byte[] encryptionKey = Encoding.UTF8.GetBytes(appSecretKey).Take(16).ToArray();
                 string decryptData = Aes128Decrypt(encryptionKey, encryptedData);
                 string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
                 return JsonConvert.DeserializeObject<dynamic>(jsonData);
