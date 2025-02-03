@@ -29,7 +29,6 @@ namespace BTCPayServer.Plugins.Ecwid
         {
             try
             {
-                _logger.LogWarning($"Data: {data}", "EcwidPlugin:PaymentController()");
                 var storeId = Request.Path.Value.Replace("plugins/", "").Replace("/EcwidPayment", "").Replace("/", "");
                 var settings = await _PluginService.GetStoreSettings(storeId);
 

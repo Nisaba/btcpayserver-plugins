@@ -77,7 +77,6 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             try
             {
                 var ecwidJson = GetEcwidPayload(ecwidSecretKey, ecwidData);
-                _logger.LogWarning($"Json: {ecwidJson}", "EcwidPlugin:CreateBTCPayInvoice()");
                 var req = new CreateInvoiceRequest()
                 {
                     Currency = ecwidJson.Currency,
@@ -120,7 +119,6 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                 byte[] encryptionKey = Encoding.UTF8.GetBytes(appSecretKey.Substring(0, 16));
                 string decryptData = Aes128Decrypt(encryptionKey, encryptedData);
                 string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
-                _logger.LogWarning($"Json: {jsonData}", "EcwidPlugin:GetEcwidPayload()");
                 return JsonConvert.DeserializeObject<dynamic>(jsonData);
             }
             catch (Exception ex)
