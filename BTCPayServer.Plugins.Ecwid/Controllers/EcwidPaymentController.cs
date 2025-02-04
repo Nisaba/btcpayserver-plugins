@@ -32,7 +32,10 @@ namespace BTCPayServer.Plugins.Ecwid
                 var storeId = Request.Path.Value.Replace("plugins/", "").Replace("/EcwidPayment", "").Replace("/", "");
                 var settings = await _PluginService.GetStoreSettings(storeId);
 
-                var CheckoutLink = await _PluginService.CreateBTCPayInvoice(settings.ClientSecret, data, storeId);
+                var store = await _storeRepository.FindStore(storeId);
+                HttpContext.SetStoreData(store);
+
+                var CheckoutLink = await _PluginService.CreateBTCPayInvoice(settings.ClientSecret, Uri.UnescapeDataString(data), storeId);
 
                 return Redirect(CheckoutLink);
             } catch (Exception ex)

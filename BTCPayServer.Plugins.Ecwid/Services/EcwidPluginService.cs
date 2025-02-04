@@ -1,17 +1,15 @@
-﻿using BTCPayServer.Plugins.Ecwid.Data;
+﻿using BTCPayServer.Client;
+using BTCPayServer.Client.Models;
+using BTCPayServer.Plugins.Ecwid.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using BTCPayServer.Client;
-using BTCPayServer.Client.Models;
-using Newtonsoft.Json.Linq;
-using static Dapper.SqlMapper;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Linq;
+using static NBitcoin.Scripting.OutputDescriptor;
 
 namespace BTCPayServer.Plugins.Ecwid.Services
 {
@@ -78,24 +76,25 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             try
             {
                 var ecwidJson = GetEcwidPayload(ecwidSecretKey, ecwidData);
+
                 var req = new CreateInvoiceRequest()
                 {
-                    Currency = ecwidJson.Currency,
-                    Amount = ecwidJson.Order.Amount,
+                    Currency = ecwidJson["cart"]["currency"].ToString(),
+                    Amount = decimal.Parse(ecwidJson["cart"]["order"]["total"].ToString(), CultureInfo.InvariantCulture),
                     Checkout = new InvoiceDataBase.CheckoutOptions()
                     {
-                        DefaultLanguage = ecwidJson.Lang,
-                        RedirectURL = ecwidJson.ReturnURL,
-                        RedirectAutomatically = true
+                        DefaultLanguage = ecwidJson["lang"].ToString(),
+                        RedirectURL = ecwidJson["returnUrl"].ToString(),
+                        RedirectAutomatically = true,
                     },
                     Metadata = JObject.FromObject(new
                     {
                         itemDesc = "From Ecwid",
-                        buyerEmail = ecwidJson.Email,
-                        ecwidStoreId = ecwidJson.StoreId,
-                        ecwidOrderId = ecwidJson.Order.Id,
-                        ecwidOrderNumber = ecwidJson.Order.Number,
-                        ecwidUrl = ecwidJson.Order.GlobalReferer,
+                        buyerEmail = ecwidJson["cart"]["order"]["email"].ToString(),
+                        ecwidStoreId = ecwidJson["storeId"].ToString(),
+                        ecwidOrderId = ecwidJson["cart"]["order"]["id"].ToString(),
+                        ecwidOrderNumber = ecwidJson["cart"]["order"]["orderNumber"].ToString(),
+                        ecwidUrl = ecwidJson["cart"]["order"]["globalReferer"].ToString(),
                     }),
                     Receipt = new InvoiceDataBase.ReceiptOptions() { Enabled = true }
                 };
@@ -114,15 +113,10 @@ namespace BTCPayServer.Plugins.Ecwid.Services
         {
             try
             {
-                encryptedData = FixBase64String(encryptedData);
-                byte[] encryptedBytes = Convert.FromBase64String(encryptedData);
-
-                byte[] encryptionKey = Encoding.UTF8.GetBytes(appSecretKey).Take(16).ToArray();
-                string decryptData = Aes128Decrypt(encryptionKey, encryptedData);
+                string decryptData = Aes128Decrypt(appSecretKey, FixBase64String(encryptedData));
                 string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
-                _logger.LogWarning(jsonData, "EcwidPlugin:GetEcwidPayload()");
-
-                return JsonConvert.DeserializeObject<dynamic>(jsonData);
+                return JObject.Parse(jsonData);
+                //return JsonConvert.DeserializeObject<dynamic>(jsonData);
             }
             catch (Exception ex)
             {
@@ -131,13 +125,14 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
         }
 
-        private string Aes128Decrypt(byte[] key, string encryptedData)
+        private string Aes128Decrypt(string key, string encryptedData)
         {
             byte[] data = Convert.FromBase64String(encryptedData);
+            byte[] encryptionKey = Encoding.UTF8.GetBytes(key.Substring(0, 16));
 
             using (Aes aes = Aes.Create())
             {
-                aes.Key = key;
+                aes.Key = encryptionKey;
                 aes.Mode = CipherMode.CBC;
                 aes.Padding = PaddingMode.PKCS7;
 
@@ -149,7 +144,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
         }
 
-        private static string FixBase64String(string base64)
+        private string FixBase64String(string base64)
         {
             base64 = base64.Replace('-', '+').Replace('_', '/');
             int mod4 = base64.Length % 4;
