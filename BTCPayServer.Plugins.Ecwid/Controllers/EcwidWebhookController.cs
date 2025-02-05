@@ -18,7 +18,7 @@ using static Dapper.SqlMapper;
 namespace BTCPayServer.Plugins.Ecwid.Controllers
 {
     [Route("~/plugins/{storeId}/EcwidWebhook")]
-    public class EcwidWebhookController (ILogger<EcwidWebhookController> logger,
+    public class EcwidWebhookController(ILogger<EcwidWebhookController> logger,
                                          InvoiceRepository invoiceRepository,
                                          EcwidPluginService pluginService) : Controller
     {
@@ -68,13 +68,14 @@ namespace BTCPayServer.Plugins.Ecwid.Controllers
                         return Ok();
                 }
 
-                if (sPaymentStatus != "none") {
+                if (sPaymentStatus != "none")
+                {
                     await _pluginService.UpdateOrder(new EcwidWebhookModel
-                                                        {
-                                                            PaymentStatus = sPaymentStatus,
-                                                            StoreId = invoice.Metadata.GetAdditionalData<string>("ecwidStoreId"),
-                                                            TransactionId = invoice.Metadata.GetAdditionalData<string>("ecwidRefTransactionId"),
-                                                            Token = invoice.Metadata.GetAdditionalData<string>("ecwidToken")
+                    {
+                        PaymentStatus = sPaymentStatus,
+                        StoreId = invoice.Metadata.GetAdditionalData<string>("ecwidStoreId"),
+                        TransactionId = invoice.Metadata.GetAdditionalData<string>("ecwidRefTransactionId"),
+                        Token = invoice.Metadata.GetAdditionalData<string>("ecwidToken")
                     });
                 }
 
@@ -87,3 +88,4 @@ namespace BTCPayServer.Plugins.Ecwid.Controllers
             }
         }
     }
+}
