@@ -5,27 +5,26 @@ using BTCPayServer.Plugins.Ecwid.Model;
 using BTCPayServer.Plugins.Ecwid.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.Ecwid;
 
 [Route("~/plugins/{storeId}/Ecwid")]
 [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy= Policies.CanModifyStoreSettings)]
-public class EcwidPluginController : Controller
+public class EcwidPluginController(EcwidPluginService ecwidService,
+                                   BtcPayService btcPayService) : Controller
 {
-    private readonly EcwidPluginService _PluginService;
+    private readonly EcwidPluginService _ecwidService = ecwidService;
+    private readonly BtcPayService _btcPayService = btcPayService;
 
-    public EcwidPluginController(EcwidPluginService PluginService)
-    {
-        _PluginService = PluginService;
-    }
 
     [HttpGet]
     public async Task<IActionResult> Index(string storeId)
     {
         var model = new EcwidModel
         {
-            Settings = await _PluginService.GetStoreSettings(storeId),
+            Settings = await _ecwidService.GetStoreSettings(storeId),
             EcwidPluginUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}Payment"
         };
         return View(model);
@@ -36,11 +35,26 @@ public class EcwidPluginController : Controller
     {
         if (ModelState.IsValid)
         {
-            switch (command)
+            try
             {
-                case "Save":
-                    await _PluginService.UpdateSettings(model.Settings);
-                    break;
+                switch (command)
+                {
+                    case "Save":
+                        await _ecwidService.UpdateSettings(model.Settings);
+                        TempData[WellKnownTempData.SuccessMessage] = "Settings successfuly saved";
+                        break;
+                    case "CreateWebhook":
+                        var sUrl = model.EcwidPluginUrl.Replace("Payment", "Webhook");
+                        model.Settings.WebhookSecret = await _btcPayService.CreateWebHook(sUrl, model.Settings.StoreId);
+                        await _ecwidService.UpdateSettings(model.Settings);
+                        TempData[WellKnownTempData.SuccessMessage] = "Webhook successfuly created";
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData[WellKnownTempData.ErrorMessage] = $"Error: {ex.Message}";
+                throw;
             }
         }
         return View("Index", model);

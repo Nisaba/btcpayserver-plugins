@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 namespace BTCPayServer.Plugins.Ecwid
 {
     [Route("~/plugins/{storeId}/EcwidPayment")]
-    public class EcwidPaymentController(EcwidPluginService pluginService,
+    public class EcwidPaymentController(EcwidPluginService ecwidService,
                                           StoreRepository storeRepository,
                                           ILogger<EcwidPaymentController> logger) : Controller
     {
-        private readonly EcwidPluginService _pluginService = pluginService;
+        private readonly EcwidPluginService _ecwidService = ecwidService;
         private readonly StoreRepository _storeRepository = storeRepository;
         private readonly ILogger<EcwidPaymentController> _logger = logger;
 
@@ -24,7 +24,7 @@ namespace BTCPayServer.Plugins.Ecwid
             try
             {
                 var storeId = Request.Path.Value.Replace("plugins/", "").Replace("/EcwidPayment", "").Replace("/", "");
-                var settings = await _pluginService.GetStoreSettings(storeId);
+                var settings = await _ecwidService.GetStoreSettings(storeId);
 
                 var store = await _storeRepository.FindStore(storeId);
                 HttpContext.SetStoreData(store);
@@ -37,7 +37,7 @@ namespace BTCPayServer.Plugins.Ecwid
                     RedirectUrl = $"{Request.Scheme}://{Request.Host}{Request.Path.ToString().Replace("Payment", "Webhook")}"
                 };
 
-                var CheckoutLink = await _pluginService.CreateBTCPayInvoice(req);
+                var CheckoutLink = await _ecwidService.CreateBTCPayInvoice(req);
 
                 return Redirect(CheckoutLink);
             } catch (Exception ex)

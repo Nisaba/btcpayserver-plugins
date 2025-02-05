@@ -19,6 +19,7 @@ public class Plugin : BaseBTCPayServerPlugin
         services.AddHostedService<ApplicationPartsLogger>();
         services.AddHostedService<PluginMigrationRunner>();
         services.AddSingleton<EcwidPluginService>();
+        services.AddSingleton<BtcPayService>();
         services.AddSingleton<EcwidPluginDbContextFactory>();
         services.AddDbContext<EcwidPluginDbContext>((provider, o) =>
         {

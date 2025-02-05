@@ -16,7 +16,6 @@
         </td>
         <td width="20" />
         <td>
-            <h2>Ecwid plugin</h2>
             <br />
             <p>
                 This plugin allows you to interface your BTCCPay store with your Ecwid store.
@@ -30,6 +29,17 @@
 
 <div permission="@Policies.CanModifyStoreSettings">
     <br />
+
+    <h4>Ecwid plugin Url</h4>
+    <div class="input-group" data-clipboard="@Model.EcwidPluginUrl">
+        <input type="text" class="form-control copy-cursor" readonly="readonly" value="@Model.EcwidPluginUrl" />
+        <button type="button" class="btn btn-outline-secondary px-3">
+            <vc:icon symbol="actions-copy" />
+        </button>
+    </div>
+    <i>this url must be set in your Ecwid store settings...</i>
+    <br /> <br />
+
     <h4>Configuration</h4>
     <form method="post" autocomplete="off">
         <input asp-for="EcwidPluginUrl" type="hidden" />
@@ -37,21 +47,31 @@
         <table class="table table-sm mt-0 mx-0">
             <tr>
                 <td width="100">
-                    <label asp-for="Settings.ClientSecret" class="form-label"></label>
+                    <label asp-for="Settings.WebhookSecret" class="form-label"></label>
                 </td>
-                <td width="400" d class="border-0 ps-0 align-middle">
-                    <input asp-for="Settings.ClientSecret" data-fill="port" class="form-control" />
-                    <span asp-validation-for="Settings.ClientSecret" class="text-danger"></span>
+                <td width="300" class="border-0 ps-0 align-middle">
+                    <input asp-for="Settings.WebhookSecret" data-fill="port" class="form-control" />
                 </td>
                 <td width="20" />
                 <td>
+                    <button id="CreateWebhookButton" type="submit" class="btn btn-secondary" value="CreateWebhook" name="Command">Create WebHook</button>
+                </td>
+            </tr>
+            <tr>
+                <td width="100">
+                    <label asp-for="Settings.ClientSecret" class="form-label"></label>
+                </td>
+                <td width="300" class="border-0 ps-0 align-middle">
+                    <input asp-for="Settings.ClientSecret" data-fill="port" class="form-control" />
+                    <span asp-validation-for="Settings.ClientSecret" class="text-danger"></span>
+                </td>
+            </tr>
+            <tr>
+                <td width="100%" align="center" colspan="4">
+                    <br/>
                     <button id="SaveButton" type="submit" class="btn btn-primary" value="Save" name="Command">Save</button>
                 </td>
             </tr>
         </table>
     </form>
-    <br />
-    <h4>Ecwid plugin Url</h4>
-    @Model.EcwidPluginUrl<br/>
-    <i>this url must be set in your Ecwid store settings...</i>
 </div>

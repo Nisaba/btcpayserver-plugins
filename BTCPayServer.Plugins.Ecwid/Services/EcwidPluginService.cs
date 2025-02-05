@@ -36,7 +36,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                 var settings = await _context.EcwidSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
-                    settings = new EcwidSettings { StoreId = storeId, ClientSecret = "" };
+                    settings = new EcwidSettings { StoreId = storeId, ClientSecret = "", WebhookSecret = "" };
                 }
                 return settings;
 
@@ -59,6 +59,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                 }
                 else
                 {
+                    dbSettings.WebhookSecret = settings.WebhookSecret;
                     dbSettings.ClientSecret = settings.ClientSecret;
                     _context.EcwidSettings.Update(dbSettings);
                 }

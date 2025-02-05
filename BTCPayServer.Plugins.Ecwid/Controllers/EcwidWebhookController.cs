@@ -1,4 +1,5 @@
-﻿using BTCPayServer.Client.Models;
+﻿using BTCPayServer.Client;
+using BTCPayServer.Client.Models;
 using BTCPayServer.Plugins.Ecwid.Model;
 using BTCPayServer.Plugins.Ecwid.Services;
 using BTCPayServer.Services.Invoices;
@@ -7,24 +8,21 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using static BTCPayServer.Client.Models.InvoicePaymentMethodDataModel.Payment;
-using static Dapper.SqlMapper;
 
 namespace BTCPayServer.Plugins.Ecwid.Controllers
 {
     [Route("~/plugins/{storeId}/EcwidWebhook")]
     public class EcwidWebhookController(ILogger<EcwidWebhookController> logger,
                                          InvoiceRepository invoiceRepository,
-                                         EcwidPluginService pluginService) : Controller
+                                         EcwidPluginService ecwidService,
+                                         BtcPayService btcPayService) : Controller
     {
         private readonly ILogger<EcwidWebhookController> _logger = logger;
         private readonly InvoiceRepository _invoiceRepository = invoiceRepository;
-        private readonly EcwidPluginService _pluginService = pluginService;
+        private readonly EcwidPluginService _ecwidService = ecwidService;
+        private readonly BtcPayService _btcPayService = btcPayService;
 
         [HttpPost]
         public async Task<IActionResult> Index([FromHeader(Name = "BTCPAY-SIG")] string BtcPaySig)
@@ -41,10 +39,19 @@ namespace BTCPayServer.Plugins.Ecwid.Controllers
 
                 if (webhookEvent?.InvoiceId is null || webhookEvent.Metadata?.TryGetValue("orderId", out var orderIdToken) is not true || orderIdToken.ToString() is not { } orderId)
                 {
-                    _logger.LogError("Missing fields in request");
+                    _logger.LogWarning("Missing fields in request");
                     return StatusCode(StatusCodes.Status422UnprocessableEntity);
                 }
-                var invoice = await invoiceRepository.GetInvoice(webhookEvent.InvoiceId);
+
+                var storeId = Request.Path.Value.Replace("plugins/", "").Replace("/EcwidWebhook", "").Replace("/", "");
+                var settings = await _ecwidService.GetStoreSettings(storeId);
+                if (!_btcPayService.CheckSecretKey(settings.WebhookSecret, jsonStr, BtcPaySecret))
+                {
+                    _logger.LogWarning("Bad secret key");
+                    return StatusCode(StatusCodes.Status400BadRequest);
+                }
+
+                var invoice = await _invoiceRepository.GetInvoice(webhookEvent.InvoiceId);
                 if (invoice == null)
                 {
                     return StatusCode(StatusCodes.Status406NotAcceptable);
@@ -70,7 +77,7 @@ namespace BTCPayServer.Plugins.Ecwid.Controllers
 
                 if (sPaymentStatus != "none")
                 {
-                    await _pluginService.UpdateOrder(new EcwidWebhookModel
+                    await _ecwidService.UpdateOrder(new EcwidWebhookModel
                     {
                         PaymentStatus = sPaymentStatus,
                         StoreId = invoice.Metadata.GetAdditionalData<string>("ecwidStoreId"),
@@ -87,5 +94,6 @@ namespace BTCPayServer.Plugins.Ecwid.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
     }
 }
