@@ -1,4 +1,5 @@
-﻿using BTCPayServer.Plugins.Ecwid.Services;
+﻿using BTCPayServer.Plugins.Ecwid.Model;
+using BTCPayServer.Plugins.Ecwid.Services;
 using BTCPayServer.Services.Stores;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -8,21 +9,14 @@ using System.Threading.Tasks;
 namespace BTCPayServer.Plugins.Ecwid
 {
     [Route("~/plugins/{storeId}/EcwidPayment")]
-//    [Authorize(Policy = Policies.Unrestricted)]
-    public class EcwidPaymentController : Controller
+    public class EcwidPaymentController(EcwidPluginService pluginService,
+                                          StoreRepository storeRepository,
+                                          ILogger<EcwidPaymentController> logger) : Controller
     {
-        private readonly EcwidPluginService _PluginService;
-        private readonly StoreRepository _storeRepository;
-        private readonly ILogger<EcwidPaymentController> _logger;
+        private readonly EcwidPluginService _pluginService = pluginService;
+        private readonly StoreRepository _storeRepository = storeRepository;
+        private readonly ILogger<EcwidPaymentController> _logger = logger;
 
-        public EcwidPaymentController(EcwidPluginService PluginService,
-                                      StoreRepository storeRepository,
-                                      ILogger<EcwidPaymentController> logger)
-        {
-            _PluginService = PluginService;
-            _storeRepository = storeRepository;
-            _logger = logger;
-        }
 
         [HttpPost]
         public async Task<IActionResult> Index([FromForm] string data)
@@ -30,12 +24,20 @@ namespace BTCPayServer.Plugins.Ecwid
             try
             {
                 var storeId = Request.Path.Value.Replace("plugins/", "").Replace("/EcwidPayment", "").Replace("/", "");
-                var settings = await _PluginService.GetStoreSettings(storeId);
+                var settings = await _pluginService.GetStoreSettings(storeId);
 
                 var store = await _storeRepository.FindStore(storeId);
                 HttpContext.SetStoreData(store);
 
-                var CheckoutLink = await _PluginService.CreateBTCPayInvoice(settings.ClientSecret, Uri.UnescapeDataString(data), storeId);
+                var req = new EcwidPaymentRequest
+                {
+                    ClientSecret = settings.ClientSecret,
+                    BTCPayStoreID = storeId,
+                    EncryptedData = data,
+                    RedirectUrl = $"{Request.Scheme}://{Request.Host}{Request.Path.ToString().Replace("Payment", "Webhook")}"
+                };
+
+                var CheckoutLink = await _pluginService.CreateBTCPayInvoice(req);
 
                 return Redirect(CheckoutLink);
             } catch (Exception ex)

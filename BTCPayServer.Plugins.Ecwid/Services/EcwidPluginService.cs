@@ -1,13 +1,16 @@
 ﻿using BTCPayServer.Client;
 using BTCPayServer.Client.Models;
 using BTCPayServer.Plugins.Ecwid.Data;
+using BTCPayServer.Plugins.Ecwid.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Globalization;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using static NBitcoin.Scripting.OutputDescriptor;
 
@@ -71,20 +74,20 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
         }
 
-        public async Task<string> CreateBTCPayInvoice(string ecwidSecretKey, string ecwidData, string storeId)
+        public async Task<string> CreateBTCPayInvoice(EcwidPaymentRequest request)
         {
             try
             {
-                var ecwidJson = GetEcwidPayload(ecwidSecretKey, ecwidData);
+                var ecwidJson = GetEcwidPayload(request.ClientSecret, request.EncryptedData);
 
-                var req = new CreateInvoiceRequest()
+                var invoiceReq = new CreateInvoiceRequest()
                 {
                     Currency = ecwidJson["cart"]["currency"].ToString(),
                     Amount = decimal.Parse(ecwidJson["cart"]["order"]["total"].ToString(), CultureInfo.InvariantCulture),
                     Checkout = new InvoiceDataBase.CheckoutOptions()
                     {
                         DefaultLanguage = ecwidJson["lang"].ToString(),
-                        RedirectURL = ecwidJson["returnUrl"].ToString(),
+                        RedirectURL = request.RedirectUrl,
                         RedirectAutomatically = true,
                     },
                     Metadata = JObject.FromObject(new
@@ -93,18 +96,45 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                         buyerEmail = ecwidJson["cart"]["order"]["email"].ToString(),
                         ecwidStoreId = ecwidJson["storeId"].ToString(),
                         ecwidOrderId = ecwidJson["cart"]["order"]["id"].ToString(),
-                        ecwidOrderNumber = ecwidJson["cart"]["order"]["orderNumber"].ToString(),
+                        ecwidRefTransactionId = ecwidJson["cart"]["order"]["referenceTransactionId"].ToString(),
                         ecwidUrl = ecwidJson["cart"]["order"]["globalReferer"].ToString(),
+                        ecwidRedirectURL = ecwidJson["returnUrl"].ToString(),
+                        ecwidToken = ecwidJson["token"].ToString()
                     }),
                     Receipt = new InvoiceDataBase.ReceiptOptions() { Enabled = true }
                 };
-                var invoice = await _client.CreateInvoice(storeId, req);
+                var invoice = await _client.CreateInvoice(request.BTCPayStoreID, invoiceReq);
                 return invoice.CheckoutLink;
 
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "EcwidPlugin:CreateBTCPayInvoice()");
+                throw;
+            }
+        }
+
+        public async Task UpdateOrder(EcwidWebhookModel model)
+        {
+            try
+            {
+                using HttpClient client = new HttpClient();
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {model.Token}");
+
+                var data = new { paymentStatus = model.PaymentStatus };
+                string jsonData = JsonSerializer.Serialize(data);
+                HttpContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                var url = $"https://app.ecwid.com/api/v3/{model.StoreId}/orders/{model.TransactionId}";
+                using (var rep = await client.PutAsync(url, content))
+                {
+                    rep.EnsureSuccessStatusCode();
+                    await rep.Content.ReadAsStringAsync();
+                }
+
+            } catch (Exception e)
+            {
+                _logger.LogError(e, "EcwidPlugin:ManageWebhook()");
                 throw;
             }
         }
