@@ -57,6 +57,6 @@ public class EcwidPluginController(EcwidPluginService ecwidService,
                 throw;
             }
         }
-        return View("Index", model);
+        return RedirectToAction("Index");
     }
 }

@@ -33,9 +33,7 @@ namespace BTCPayServer.Plugins.Ecwid
                 {
                     ClientSecret = settings.ClientSecret,
                     BTCPayStoreID = storeId,
-                    EncryptedData = data,
-                    RedirectUrl = $"{Request.Scheme}://{Request.Host}{Request.Path.ToString().Replace("Payment", "Webhook")}"
-                };
+                    EncryptedData = data                };
 
                 var CheckoutLink = await _ecwidService.CreateBTCPayInvoice(req);
 

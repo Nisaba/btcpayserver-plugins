@@ -86,7 +86,7 @@ namespace BTCPayServer.Plugins.Ecwid.Controllers
                     });
                 }
 
-                return Redirect(invoice.Metadata.GetAdditionalData<string>("ecwidRedirectURL"));
+                return Ok();
             }
             catch (Exception ex)
             {

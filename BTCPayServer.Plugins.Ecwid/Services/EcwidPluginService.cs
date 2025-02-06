@@ -88,7 +88,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                     Checkout = new InvoiceDataBase.CheckoutOptions()
                     {
                         DefaultLanguage = ecwidJson["lang"].ToString(),
-                        RedirectURL = request.RedirectUrl,
+                        RedirectURL = ecwidJson["returnUrl"].ToString(),
                         RedirectAutomatically = true,
                     },
                     Metadata = JObject.FromObject(new
@@ -99,7 +99,6 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                         ecwidOrderId = ecwidJson["cart"]["order"]["id"].ToString(),
                         ecwidRefTransactionId = ecwidJson["cart"]["order"]["referenceTransactionId"].ToString(),
                         ecwidUrl = ecwidJson["cart"]["order"]["globalReferer"].ToString(),
-                        ecwidRedirectURL = ecwidJson["returnUrl"].ToString(),
                         ecwidToken = ecwidJson["token"].ToString()
                     }),
                     Receipt = new InvoiceDataBase.ReceiptOptions() { Enabled = true }
