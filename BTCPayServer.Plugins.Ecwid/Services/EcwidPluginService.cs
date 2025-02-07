@@ -140,13 +140,13 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
         }
 
-        private dynamic GetEcwidPayload(string appSecretKey, string encryptedData)
+        private JObject GetEcwidPayload(string appSecretKey, string encryptedData)
         {
             try
             {
                 string decryptData = Aes128Decrypt(appSecretKey, FixBase64String(encryptedData));
                 //string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
-                return JObject.Parse(decryptData);
+                return JObject.Parse(decryptData.Substring(0,decryptData.LastIndexOf("}") +1));
                 //return JsonConvert.DeserializeObject<dynamic>(jsonData);
             }
             catch (Exception ex)
@@ -165,7 +165,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             {
                 aes.Key = encryptionKey;
                 aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.PKCS7;
+                aes.Padding = PaddingMode.None;  // PaddingMode.PKCS7;
                 aes.IV = data.Take(16).ToArray();
 
                 using (ICryptoTransform decryptor = aes.CreateDecryptor())
