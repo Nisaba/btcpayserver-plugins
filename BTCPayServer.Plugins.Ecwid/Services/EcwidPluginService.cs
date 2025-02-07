@@ -164,7 +164,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             {
                 aes.Key = encryptionKey;
                 aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.PKCS7;
+                //aes.Padding = PaddingMode.PKCS7;
 
                 using (ICryptoTransform decryptor = aes.CreateDecryptor())
                 {
