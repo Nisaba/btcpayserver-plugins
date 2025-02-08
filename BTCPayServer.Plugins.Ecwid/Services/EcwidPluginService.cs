@@ -14,6 +14,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using static NBitcoin.Scripting.OutputDescriptor;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BTCPayServer.Plugins.Ecwid.Services
 {
@@ -145,8 +146,8 @@ namespace BTCPayServer.Plugins.Ecwid.Services
         {
             try
             {
-                string decryptData = Aes128Decrypt(appSecretKey, FixBase64String(encryptedData));
-                string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
+                string encryptionKey = appSecretKey.Substring(0, 16);
+                string jsonData = Aes128Decrypt(encryptionKey, encryptedData);
                 return JObject.Parse(jsonData);
                 //return JsonConvert.DeserializeObject<dynamic>(jsonData);
             }
@@ -159,18 +160,30 @@ namespace BTCPayServer.Plugins.Ecwid.Services
 
         private string Aes128Decrypt(string key, string encryptedData)
         {
-            byte[] data = Convert.FromBase64String(encryptedData);
-            byte[] encryptionKey = Encoding.UTF8.GetBytes(key.Substring(0, 16));
+            string base64Original = encryptedData.Replace('-', '+').Replace('_', '/');
 
+            // Décodage en bytes
+            byte[] decoded = Convert.FromBase64String(base64Original);
+
+            // IV = les 16 premiers octets
+            byte[] iv = new byte[16];
+            Array.Copy(decoded, iv, 16);
+
+            // Données chiffrées = le reste des octets
+            byte[] payload = new byte[decoded.Length - 16];
+            Array.Copy(decoded, 16, payload, 0, payload.Length);
+
+            // Déchiffrement AES-128-CBC
             using (Aes aes = Aes.Create())
             {
-                aes.Key = encryptionKey;
+                aes.Key = Encoding.UTF8.GetBytes(key);
+                aes.IV = iv;
                 aes.Mode = CipherMode.CBC;
                 aes.Padding = PaddingMode.PKCS7;
 
                 using (ICryptoTransform decryptor = aes.CreateDecryptor())
                 {
-                    byte[] decryptedBytes = decryptor.TransformFinalBlock(data, 0, data.Length);
+                    byte[] decryptedBytes = decryptor.TransformFinalBlock(payload, 0, payload.Length);
                     return Encoding.UTF8.GetString(decryptedBytes);
                 }
             }
