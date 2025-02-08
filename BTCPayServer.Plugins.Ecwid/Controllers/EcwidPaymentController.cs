@@ -23,7 +23,9 @@ namespace BTCPayServer.Plugins.Ecwid
         {
             try
             {
+                _logger.LogWarning($"Store ID : {storeId}");
                 var settings = await _ecwidService.GetStoreSettings(storeId);
+                _logger.LogWarning($"Ecwid Secret : {settings.ClientSecret}");
 
                 var store = await _storeRepository.FindStore(storeId);
                 HttpContext.SetStoreData(store);
