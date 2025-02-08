@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -142,7 +143,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
         }
 
 
-        private dynamic GetEcwidPayload(string appSecretKey, string encryptedData)
+        private JObject GetEcwidPayload(string appSecretKey, string encryptedData)
         {
             try
             {
@@ -178,11 +179,21 @@ namespace BTCPayServer.Plugins.Ecwid.Services
 
                 using (ICryptoTransform decryptor = aes.CreateDecryptor())
                 {
-                    byte[] decryptedBytes = decryptor.TransformFinalBlock(payload, 0, payload.Length);
-                    return Encoding.UTF8.GetString(decryptedBytes);
+                    //byte[] decryptedBytes = decryptor.TransformFinalBlock(payload, 0, payload.Length);
+                    //return Encoding.UTF8.GetString(decryptedBytes);
+
+                    using (MemoryStream msDecrypt = new MemoryStream(payload))
+                    {
+                        using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                        {
+                            using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                            {
+                                return srDecrypt.ReadToEnd();
+                            }
+                        }
+                    }
                 }
             }
         }
-
     }
 }
