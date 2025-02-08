@@ -37,7 +37,7 @@ namespace BTCPayServer.Plugins.Ecwid.Controllers
                     return Ok();
                 }
 
-                if (webhookEvent?.InvoiceId is null || webhookEvent.Metadata?.TryGetValue("orderId", out var orderIdToken) is not true || orderIdToken.ToString() is not { } orderId)
+                if (webhookEvent?.InvoiceId is null || webhookEvent.Metadata?.TryGetValue("ecwidOrderId", out var orderIdToken) is not true)
                 {
                     _logger.LogWarning("Missing fields in request");
                     return StatusCode(StatusCodes.Status422UnprocessableEntity);
