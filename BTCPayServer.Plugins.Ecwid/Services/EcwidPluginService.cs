@@ -146,10 +146,9 @@ namespace BTCPayServer.Plugins.Ecwid.Services
         {
             try
             {
-                string decryptData = Aes128Decrypt(appSecretKey, FixBase64String(encryptedData));
-                string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
+                string encryptionKey = appSecretKey.Substring(0, 16);
+                string jsonData = Aes128Decrypt(encryptionKey, encryptedData);
                 return JObject.Parse(jsonData);
-                //return JsonConvert.DeserializeObject<dynamic>(jsonData);
             }
             catch (Exception ex)
             {
@@ -160,86 +159,41 @@ namespace BTCPayServer.Plugins.Ecwid.Services
 
         private string Aes128Decrypt(string key, string encryptedData)
         {
-            byte[] data = Convert.FromBase64String(encryptedData);
-            byte[] encryptionKey = Encoding.UTF8.GetBytes(key.Substring(0, 16));
+            string base64Original = encryptedData.Replace('-', '+').Replace('_', '/');
+
+            byte[] decoded = Convert.FromBase64String(base64Original);
+
+            byte[] iv = new byte[16];
+            Array.Copy(decoded, iv, 16);
+
+            byte[] payload = new byte[decoded.Length - 16];
+            Array.Copy(decoded, 16, payload, 0, payload.Length);
 
             using (Aes aes = Aes.Create())
             {
-                aes.Key = encryptionKey;
+                aes.Key = Encoding.UTF8.GetBytes(key);
+                aes.IV = iv;
                 aes.Mode = CipherMode.CBC;
                 aes.Padding = PaddingMode.PKCS7;
 
                 using (ICryptoTransform decryptor = aes.CreateDecryptor())
                 {
-                    byte[] decryptedBytes = decryptor.TransformFinalBlock(data, 0, data.Length);
-                    return Encoding.UTF8.GetString(decryptedBytes);
+                    //byte[] decryptedBytes = decryptor.TransformFinalBlock(payload, 0, payload.Length);
+                    //return Encoding.UTF8.GetString(decryptedBytes);
+
+                    using (MemoryStream msDecrypt = new MemoryStream(payload))
+                    {
+                        using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                        {
+                            using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                            {
+                                return srDecrypt.ReadToEnd();
+                            }
+                        }
+                    }
                 }
             }
         }
 
-
-        /*       private JObject GetEcwidPayload(string appSecretKey, string encryptedData)
-               {
-                   try
-                   {
-                       string encryptionKey = appSecretKey.Substring(0, 16);
-                       string jsonData = Aes128Decrypt(encryptionKey, encryptedData);
-                       return JObject.Parse(jsonData);
-                   }
-                   catch (Exception ex)
-                   {
-                       _logger.LogError(ex, "EcwidPlugin:GetEcwidPayload()");
-                       throw;
-                   }
-               }
-
-               private string Aes128Decrypt(string key, string encryptedData)
-               {
-                   string base64Original = encryptedData.Replace('-', '+').Replace('_', '/');
-
-                   byte[] decoded = Convert.FromBase64String(base64Original);
-
-                   byte[] iv = new byte[16];
-                   Array.Copy(decoded, iv, 16);
-
-                   byte[] payload = new byte[decoded.Length - 16];
-                   Array.Copy(decoded, 16, payload, 0, payload.Length);
-
-                   using (Aes aes = Aes.Create())
-                   {
-                       aes.Key = Encoding.UTF8.GetBytes(key);
-                       aes.IV = iv;
-                       aes.Mode = CipherMode.CBC;
-                       aes.Padding = PaddingMode.PKCS7;
-
-                       using (ICryptoTransform decryptor = aes.CreateDecryptor())
-                       {
-                           //byte[] decryptedBytes = decryptor.TransformFinalBlock(payload, 0, payload.Length);
-                           //return Encoding.UTF8.GetString(decryptedBytes);
-
-                           using (MemoryStream msDecrypt = new MemoryStream(payload))
-                           {
-                               using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
-                               {
-                                   using (StreamReader srDecrypt = new StreamReader(csDecrypt))
-                                   {
-                                       return srDecrypt.ReadToEnd();
-                                   }
-                               }
-                           }
-                       }
-                   }
-               }*/
-
-        private string FixBase64String(string base64)
-        {
-            base64 = base64.Replace('-', '+').Replace('_', '/');
-            int mod4 = base64.Length % 4;
-            if (mod4 > 0)
-            {
-                base64 += new string('=', 4 - mod4);
-            }
-            return base64;
-        }
     }
 }
