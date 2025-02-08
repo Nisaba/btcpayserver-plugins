@@ -33,7 +33,7 @@ namespace BTCPayServer.Plugins.Ecwid
                 {
                     ClientSecret = settings.ClientSecret,
                     BTCPayStoreID = storeId,
-                    EncryptedData = data
+                    EncryptedData = Uri.UnescapeDataString(data)
                 };
 
                 var CheckoutLink = await _ecwidService.CreateBTCPayInvoice(req);
