@@ -62,8 +62,8 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                 }
                 else
                 {
-                    dbSettings.WebhookSecret = settings.WebhookSecret;
-                    dbSettings.ClientSecret = settings.ClientSecret;
+                    dbSettings.WebhookSecret = settings.WebhookSecret.Trim();
+                    dbSettings.ClientSecret = settings.ClientSecret.Trim();
                     _context.EcwidSettings.Update(dbSettings);
                 }
 
