@@ -25,7 +25,7 @@ namespace BTCPayServer.Plugins.Ecwid.Controllers
         private readonly BtcPayService _btcPayService = btcPayService;
 
         [HttpPost]
-        public async Task<IActionResult> Index([FromHeader(Name = "BTCPAY-SIG")] string BtcPaySig)
+        public async Task<IActionResult> Index([FromRoute] string storeId, [FromHeader(Name = "BTCPAY-SIG")] string BtcPaySig)
         {
             try
             {
@@ -43,7 +43,6 @@ namespace BTCPayServer.Plugins.Ecwid.Controllers
                     return StatusCode(StatusCodes.Status422UnprocessableEntity);
                 }
 
-                var storeId = Request.Path.Value.Replace("plugins/", "").Replace("/EcwidWebhook", "").Replace("/", "");
                 var settings = await _ecwidService.GetStoreSettings(storeId);
                 if (!_btcPayService.CheckSecretKey(settings.WebhookSecret, jsonStr, BtcPaySecret))
                 {

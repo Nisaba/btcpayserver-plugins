@@ -19,11 +19,10 @@ namespace BTCPayServer.Plugins.Ecwid
 
 
         [HttpPost]
-        public async Task<IActionResult> Index([FromForm] string data)
+        public async Task<IActionResult> Index([FromRoute] string storeId, [FromForm] string data)
         {
             try
             {
-                var storeId = Request.Path.Value.Replace("plugins/", "").Replace("/EcwidPayment", "").Replace("/", "");
                 var settings = await _ecwidService.GetStoreSettings(storeId);
 
                 var store = await _storeRepository.FindStore(storeId);

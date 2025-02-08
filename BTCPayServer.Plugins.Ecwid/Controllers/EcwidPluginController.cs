@@ -20,7 +20,7 @@ public class EcwidPluginController(EcwidPluginService ecwidService,
 
 
     [HttpGet]
-    public async Task<IActionResult> Index(string storeId)
+    public async Task<IActionResult> Index([FromRoute] string storeId)
     {
         var model = new EcwidModel
         {

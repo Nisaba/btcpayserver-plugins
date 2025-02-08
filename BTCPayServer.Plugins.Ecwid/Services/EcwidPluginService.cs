@@ -149,7 +149,6 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                 string encryptionKey = appSecretKey.Substring(0, 16);
                 string jsonData = Aes128Decrypt(encryptionKey, encryptedData);
                 return JObject.Parse(jsonData);
-                //return JsonConvert.DeserializeObject<dynamic>(jsonData);
             }
             catch (Exception ex)
             {
@@ -162,18 +161,14 @@ namespace BTCPayServer.Plugins.Ecwid.Services
         {
             string base64Original = encryptedData.Replace('-', '+').Replace('_', '/');
 
-            // Décodage en bytes
             byte[] decoded = Convert.FromBase64String(base64Original);
 
-            // IV = les 16 premiers octets
             byte[] iv = new byte[16];
             Array.Copy(decoded, iv, 16);
 
-            // Données chiffrées = le reste des octets
             byte[] payload = new byte[decoded.Length - 16];
             Array.Copy(decoded, 16, payload, 0, payload.Length);
 
-            // Déchiffrement AES-128-CBC
             using (Aes aes = Aes.Create())
             {
                 aes.Key = Encoding.UTF8.GetBytes(key);
@@ -188,64 +183,6 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                 }
             }
         }
-
-        private string FixBase64String(string base64)
-        {
-            base64 = base64.Replace('-', '+').Replace('_', '/');
-            int mod4 = base64.Length % 4;
-            if (mod4 > 0)
-            {
-                base64 += new string('=', 4 - mod4);
-            }
-            return base64;
-        }
-
-        /*      private JObject GetEcwidPayload(string appSecretKey, string encryptedData)
-              {
-                  try
-                  {
-                      string decryptData = Aes128Decrypt(appSecretKey, FixBase64String(encryptedData));
-                      //string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
-                      return JObject.Parse(decryptData.Substring(0,decryptData.LastIndexOf("}") +1));
-                      //return JsonConvert.DeserializeObject<dynamic>(jsonData);
-                  }
-                  catch (Exception ex)
-                  {
-                      _logger.LogError(ex, "EcwidPlugin:GetEcwidPayload()");
-                      throw;
-                  }
-              }
-
-              private string Aes128Decrypt(string key, string encryptedData)
-              {
-                  byte[] data = Convert.FromBase64String(encryptedData);
-                  byte[] encryptionKey = Encoding.UTF8.GetBytes(key.Substring(0, 16));
-
-                  using (Aes aes = Aes.Create())
-                  {
-                      aes.Key = encryptionKey;
-                      aes.Mode = CipherMode.CBC;
-                      aes.Padding = PaddingMode.None;  // PaddingMode.PKCS7;
-                      aes.IV = data.Take(16).ToArray();
-
-                      using (ICryptoTransform decryptor = aes.CreateDecryptor())
-                      {
-                          byte[] decryptedBytes = decryptor.TransformFinalBlock(data, 16, data.Length -16);
-                          return Encoding.UTF8.GetString(decryptedBytes);
-                      }
-                  }
-              }
-
-              private string FixBase64String(string base64)
-              {
-                  base64 = base64.Replace('-', '+').Replace('_', '/');
-                  int mod4 = base64.Length % 4;
-                  if (mod4 > 0)
-                  {
-                      base64 += new string('=', 4 - mod4);
-                  }
-                  return base64;
-              }*/
 
     }
 }
