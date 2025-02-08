@@ -140,13 +140,14 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
         }
 
-        private JObject GetEcwidPayload(string appSecretKey, string encryptedData)
+
+        private dynamic GetEcwidPayload(string appSecretKey, string encryptedData)
         {
             try
             {
                 string decryptData = Aes128Decrypt(appSecretKey, FixBase64String(encryptedData));
-                //string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
-                return JObject.Parse(decryptData.Substring(0,decryptData.LastIndexOf("}") +1));
+                string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
+                return JObject.Parse(jsonData);
                 //return JsonConvert.DeserializeObject<dynamic>(jsonData);
             }
             catch (Exception ex)
@@ -165,12 +166,11 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             {
                 aes.Key = encryptionKey;
                 aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.None;  // PaddingMode.PKCS7;
-                aes.IV = data.Take(16).ToArray();
+                aes.Padding = PaddingMode.PKCS7;
 
                 using (ICryptoTransform decryptor = aes.CreateDecryptor())
                 {
-                    byte[] decryptedBytes = decryptor.TransformFinalBlock(data, 16, data.Length -16);
+                    byte[] decryptedBytes = decryptor.TransformFinalBlock(data, 0, data.Length);
                     return Encoding.UTF8.GetString(decryptedBytes);
                 }
             }
@@ -186,6 +186,53 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
             return base64;
         }
+
+        /*      private JObject GetEcwidPayload(string appSecretKey, string encryptedData)
+              {
+                  try
+                  {
+                      string decryptData = Aes128Decrypt(appSecretKey, FixBase64String(encryptedData));
+                      //string jsonData = decryptData.Substring(decryptData.IndexOf("{"));
+                      return JObject.Parse(decryptData.Substring(0,decryptData.LastIndexOf("}") +1));
+                      //return JsonConvert.DeserializeObject<dynamic>(jsonData);
+                  }
+                  catch (Exception ex)
+                  {
+                      _logger.LogError(ex, "EcwidPlugin:GetEcwidPayload()");
+                      throw;
+                  }
+              }
+
+              private string Aes128Decrypt(string key, string encryptedData)
+              {
+                  byte[] data = Convert.FromBase64String(encryptedData);
+                  byte[] encryptionKey = Encoding.UTF8.GetBytes(key.Substring(0, 16));
+
+                  using (Aes aes = Aes.Create())
+                  {
+                      aes.Key = encryptionKey;
+                      aes.Mode = CipherMode.CBC;
+                      aes.Padding = PaddingMode.None;  // PaddingMode.PKCS7;
+                      aes.IV = data.Take(16).ToArray();
+
+                      using (ICryptoTransform decryptor = aes.CreateDecryptor())
+                      {
+                          byte[] decryptedBytes = decryptor.TransformFinalBlock(data, 16, data.Length -16);
+                          return Encoding.UTF8.GetString(decryptedBytes);
+                      }
+                  }
+              }
+
+              private string FixBase64String(string base64)
+              {
+                  base64 = base64.Replace('-', '+').Replace('_', '/');
+                  int mod4 = base64.Length % 4;
+                  if (mod4 > 0)
+                  {
+                      base64 += new string('=', 4 - mod4);
+                  }
+                  return base64;
+              }*/
 
     }
 }
