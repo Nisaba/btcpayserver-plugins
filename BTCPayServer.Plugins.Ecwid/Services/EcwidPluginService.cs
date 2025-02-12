@@ -160,6 +160,11 @@ namespace BTCPayServer.Plugins.Ecwid.Services
         private string Aes128Decrypt(string key, string encryptedData)
         {
             string base64Original = encryptedData.Replace('-', '+').Replace('_', '/');
+            int mod4 = encryptedData.Length % 4;
+            if (mod4 > 0)
+            {
+                encryptedData += new string('=', 4 - mod4);
+            }
 
             byte[] decoded = Convert.FromBase64String(base64Original);
 
