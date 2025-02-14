@@ -1,31 +1,37 @@
-# Ecwid plugin for BTCPay
+# Ecwid plugin for BTCPay Server
 
-This plugin allows you to interface your Ecwid online store with your BTCPay instance, so your customers can pay with bitcoins.
+This plugin allows you to interface your Ecwid online store with your BTCPay Server instance, so your customers can pay with bitcoins.
 
-### Steps for setup in BTCPay and Ecwid:
+## Steps to setup BTCPay as payment gateway in Ecwid:
 
-- Install this plugin in your BTCPay instance
-- In Ecwid, you need to create a custom app. Follow [this link](https://my.ecwid.com/#develop-apps) for that.
-  ![image](https://github.com/user-attachments/assets/2d6d391e-ab16-4e60-94d1-2d035d0156e5)
+1. Install this plugin "Ecwid plugin" on your BTCPay instance, you can find it under "Manage Plugins" (this only works on your own BTCPay Server, if you are on a 3rd party host, they need to install the plugin for the whole server)
+   - After you installed the plugin select the right store and click on "Ecwid" in the left sidebar
+   - It will show you a "Ecwid Payment URL" at the top, copy the shown URL, we will need it in a few steps below.
+     :::IMAGE_ECWID_PLUGIN
+ 
+2. In your Ecwid store, you need to create a custom app. Follow [this link](https://my.ecwid.com/#develop-apps).
+  - Click on "Create" next to "Create one more app"
+    ![image](https://github.com/user-attachments/assets/2d6d391e-ab16-4e60-94d1-2d035d0156e5)
+  - Next you need to contact the Ecwid support via the support form at the bottom of that app page.
+    :::IMAGE_SUPPORT_BOTTOM
+  - And ask them to change the following settings:
+    - "Access scope": we need the scope `add_payment_method` 
+    - "Payment title": `Pay with Bitcoin / Lightning Network` (this will be shown to customers as payment option, can be changed to your preference)
+    - "Payment URL": here enter the URL from the Plugin on BTCPay, which you copied at step 1. above. E.g. `https://BTCPAY.YOURDOMAIN.COM/plugins/STORE_ID/EcwidPayment`
 
-- In the *Access scopes* area, make sure that *add_payment_method* and *update_orders* are present.
-  ![image](https://github.com/user-attachments/assets/412c9c1a-8a4e-45be-927a-915a89082e53)
+After you sent the form you need to wait for Ecwid support to confirm the changes done.
 
-- In the *Connect new payment method* box, enter "BTCPay" as the Payment title, or another name that seems appropriate to you, such as "Bitcoin payment"
-  
-![image](https://github.com/user-attachments/assets/22869eb1-91e2-4c95-9b0d-04a757cc81f0)
+3. Once Ecwid support has confirmed the app settings updates, go back to the app (App -> My apps click on "Manage app")
+   - Scroll down to *App keys* section and click on the "Show client secret" link
+   - Copy the value from the *Client secret* field
+   ![image](https://github.com/user-attachments/assets/718a1789-abfc-428d-b2a1-b621efe73607)
 
-- Next, you need to go to BTCPay, in the Ecwid plugin settings. Be careful to select the correct BTCPay store. There, you need to copy the URL from the *Ecwid plugin Url* field and paste it into the *Payment URL* field under Ecwid. Now you need to validate and wait for confirmation from Ecwid support.
-  
-  ![image](https://github.com/user-attachments/assets/d1bd38c4-7a97-4269-b22e-66225e4c7b79)
-
-- Once Ecwid support has confirmed the app creation, go to the *App keys* area and copy the value from the *Client secret* field.
-![image](https://github.com/user-attachments/assets/718a1789-abfc-428d-b2a1-b621efe73607)
-
-- Paste this value into the Ecwid plugin settings under BTCPay, in the *Ecwid Client Secret* field. Save.
+4. Back on your BTCPay stores Ecwid plugin
+- Paste the value of that "Client secret" into the field "Ecwid Client Secret"
+- Click on "Save" 
 - Finally, click on *Create Webhook* to automatically create under BTCPay the webhook which will notify payments to your Ecwid store.
 
-Bitcoin payments from your Ecwid store are now live.
+Congratulations, Bitcoin payments are now live on your Ecwid store.
 
 ![image](https://github.com/user-attachments/assets/1bea2636-aaa6-4199-a172-fa0d80c38d9a)
 
