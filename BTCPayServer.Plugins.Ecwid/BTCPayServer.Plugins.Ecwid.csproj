@@ -7,7 +7,7 @@
   <PropertyGroup>
     <Product>Ecwid plugin</Product>
     <Description>This plugin allows you to interface your BTCPay store with your Ecwid store</Description>
-    <Version>0.9.1</Version>
+    <Version>0.9.2</Version>
   </PropertyGroup>
 
   <!-- Plugin development properties -->
