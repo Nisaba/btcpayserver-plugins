@@ -1,6 +1,6 @@
 ﻿namespace BTCPayServer.Plugins.Ecwid.Model
 {
-    public struct EcwidWebhookModel
+    public struct EcwidCallbackModel
     {
         public string TransactionId { get; set; }
         public string StoreId { get; set; }

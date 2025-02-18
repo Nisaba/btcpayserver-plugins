@@ -23,9 +23,6 @@ namespace BTCPayServer.Plugins.Ecwid.Migrations
                     b.Property<string>("StoreId")
                         .HasColumnType("text");
 
-                    b.Property<string>("WebhookSecret")
-                        .HasColumnType("text");
-
                     b.Property<string>("ClientSecret")
                         .HasColumnType("text");
 

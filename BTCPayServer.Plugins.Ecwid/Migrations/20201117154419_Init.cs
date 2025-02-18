@@ -18,7 +18,6 @@ namespace BTCPayServer.Plugins.Ecwid.Migrations
                 columns: table => new
                 {
                     StoreId = table.Column<string>(nullable: false),
-                    WebhookSecret = table.Column<string>(nullable: false),
                     ClientSecret = table.Column<string>(nullable: false)
                 },
                 constraints: table =>

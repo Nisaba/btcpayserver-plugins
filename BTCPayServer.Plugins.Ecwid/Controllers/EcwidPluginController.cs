@@ -43,12 +43,6 @@ public class EcwidPluginController(EcwidPluginService ecwidService,
                         await _ecwidService.UpdateSettings(model.Settings);
                         TempData[WellKnownTempData.SuccessMessage] = "Settings successfuly saved";
                         break;
-                    case "CreateWebhook":
-                        var sUrl = model.EcwidPluginUrl.Replace("Payment", "Webhook");
-                        model.Settings.WebhookSecret = await _btcPayService.CreateWebHook(sUrl, model.Settings.StoreId);
-                        await _ecwidService.UpdateSettings(model.Settings);
-                        TempData[WellKnownTempData.SuccessMessage] = "Webhook successfuly created";
-                        break;
                 }
             }
             catch (Exception ex)

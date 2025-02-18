@@ -26,33 +26,5 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             return (hashString == signature);
         }
 
-        public async Task<string> CreateWebHook(string webHookUrl, string storeId)
-        {
-            var existing = await client.GetWebhooks(storeId);
-            var existingWebHook = existing.Where(x => x.Url == webHookUrl);
-            foreach (var webhookData in existingWebHook)
-            {
-                await client.DeleteWebhook(storeId, webhookData.Id);
-            }
-
-            var response = await _client.CreateWebhook(storeId,
-                new CreateStoreWebhookRequest()
-                {
-                    Url = webHookUrl,
-                    Enabled = true,
-                    AuthorizedEvents = new StoreWebhookBaseData.AuthorizedEventsData()
-                    {
-                        SpecificEvents = new[]
-                        {
-                            WebhookEventType.InvoiceReceivedPayment, WebhookEventType.InvoiceProcessing,
-                            WebhookEventType.InvoiceExpired, WebhookEventType.InvoiceSettled,
-                            WebhookEventType.InvoiceInvalid, WebhookEventType.InvoicePaymentSettled,
-                        }
-                    }
-                });
-            return response.Secret;
-        }
-
-
     }
 }
