@@ -15,7 +15,6 @@ public class Plugin : BaseBTCPayServerPlugin
     public override void Execute(IServiceCollection services)
     {
         services.AddUIExtension("header-nav", "EcwidPluginHeaderNav");
-        //services.AddSingleton<IUIExtension>(new UIExtension("EcwidPluginHeaderNav", "header-nav"));
         services.AddHostedService<ApplicationPartsLogger>();
         services.AddHostedService<PluginMigrationRunner>();
         services.AddSingleton<EcwidPluginService>();
@@ -26,5 +25,7 @@ public class Plugin : BaseBTCPayServerPlugin
             var factory = provider.GetRequiredService<EcwidPluginDbContextFactory>();
             factory.ConfigureBuilder(o);
         });
+        services.AddSingleton<EcwidHostedService>();
+        services.AddHostedService<EcwidHostedService>();
     }
 }
