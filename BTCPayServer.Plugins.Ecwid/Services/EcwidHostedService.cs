@@ -43,7 +43,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                     }.Contains(invoiceEvent.Name):
                         {
                             var invoice = invoiceEvent.Invoice;
-                            var ecwidOrderId = invoice.GetInternalTags("ecwidOrderId").FirstOrDefault();
+                            var ecwidOrderId = invoice.Metadata.GetAdditionalData<string>("ecwidOrderId");
                             if (ecwidOrderId != null)
                             {
                                 string invoiceStatus = invoice.Status.ToString().ToLower();

@@ -136,7 +136,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
 
             } catch (Exception e)
             {
-                _logger.LogError(e, "EcwidPlugin:ManageWebhook()");
+                _logger.LogError(e, "EcwidPlugin:UpdateOrder()");
                 throw;
             }
         }
