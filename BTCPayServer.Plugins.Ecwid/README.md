@@ -30,7 +30,6 @@ After you sent the form you need to wait for Ecwid support to confirm the change
 4. Back on your BTCPay stores Ecwid plugin
 - Paste the value of that "Client secret" into the field "Ecwid Client Secret"
 - Click on "Save" 
-- Finally, click on *Create Webhook* to automatically create under BTCPay the webhook which will notify payments to your Ecwid store.
 
 Congratulations! Bitcoin payments are now live on your Ecwid store.
 
