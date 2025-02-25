@@ -32,21 +32,23 @@ This plugin allows you to interface your Ecwid online store with your BTCPay Ser
    - On the popup click on "Uninstall app"   
    ![ecwid-app-app-details.png](./docs/img/ecwid-app-app-details.png)   
    ![ecwid-app-uninstall-confirm.png](./docs/img/ecwid-app-uninstall-confirm.png)
+-----
 4. Now we need to install the app again   
    - Click on this link [https://my.ecwid.com/#develop-apps](https://my.ecwid.com/#develop-apps)
    - Next to the created app click on "Details"   
    ![ecwid-app-develop-app-overview.png](./docs/img/ecwid-app-develop-app-overview.png)   
    - On next screen, click on "Install" button   
    ![ecwid-app-install-again.png](./docs/img/ecwid-app-install-again.png)   
+-----
 5. Now go to the app overview again and click on "Manage App" next to the app you created.
    - Scroll down to *App keys* section and click on the "Show client secret" link
    - Copy the value from the *Client secret* field
    ![ecwid-app-app-keys.png](./docs/img/ecwid-app-app-keys.png)
 
 -----
-4. Back on your BTCPay Server, select the correct store and click on the Ecwid plugin
-- Paste the value of that "Client secret" into the field "Ecwid Client Secret"
-- Click on "Save"
+6. Back on your BTCPay Server, select the correct store and click on the Ecwid plugin
+   - Paste the value of that "Client secret" into the field "Ecwid Client Secret"
+   - Click on "Save"
 
 Congratulations! Bitcoin payments are now live on your Ecwid store.
 
