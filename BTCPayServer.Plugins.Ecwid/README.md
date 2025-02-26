@@ -6,6 +6,7 @@ This plugin allows you to interface your Ecwid online store with your BTCPay Ser
 
 1. Install this plugin "Ecwid plugin" on your BTCPay instance, you can find it under "Manage Plugins" (this only works on your own BTCPay Server, if you are on a 3rd party host, they need to install the plugin for the whole server)
    - After you installed the plugin select the right store and click on "Ecwid" in the left sidebar
+     
      ![Select Ecwid plugin in sidebar](./docs/img/plugin-selection.png)
    - It will show you a "Ecwid Payment URL" at the top, copy the shown URL, we will need it in a few steps below.
      ![Ecwid plugin settings page](./docs/img/plugin-settings-page.png)
