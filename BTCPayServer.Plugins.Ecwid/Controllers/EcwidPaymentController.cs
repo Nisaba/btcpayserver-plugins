@@ -24,6 +24,10 @@ namespace BTCPayServer.Plugins.Ecwid
             try
             {
                 var settings = await _ecwidService.GetStoreSettings(storeId);
+                if (string.IsNullOrEmpty(settings.ClientSecret))
+                {
+                    throw new Exception("Ecwid Plugin is not configured. Please configure the plugin first.");
+                }
 
                 var store = await _storeRepository.FindStore(storeId);
                 HttpContext.SetStoreData(store);
