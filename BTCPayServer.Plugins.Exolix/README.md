@@ -1,0 +1,1 @@
+# Exolix plugin for BTCPay Server
