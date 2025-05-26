@@ -1,0 +1,57 @@
+@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.Exolix.Views
+
+@inject BTCPayServer.Plugins.Exolix.Services.ExolixService ExolixPluginService
+
+@model BTCPayServer.Plugins.Exolix.Model.ExolixModel
+@{
+    ViewData.SetActivePage(PluginNavPages.Index, "Exolix plugin");
+}
+
+<table>
+    <tr>
+        <td>
+            <img src="/Resources/img/Exolix.png" />
+        </td>
+        <td width="20" />
+        <td>
+            <br />
+            <p>
+                Allows your customers to pay with altcoins that are not supported by BTCPay Server, using <a href="https://exolix.com?ref=F782BF2EAB748E0419F6CF993005341E" target="_blank">Exolix service</a>, in a seamless way.
+            </p>
+        </td>
+    </tr>
+</table>
+<br />
+
+<partial name="_StatusMessage" />
+<br />
+
+<div class="row">
+    <div class="col-md-10">
+        <form method="post">
+            <input asp-for="Settings.StoreId" type="hidden" />
+            <div class="form-group">
+                <div class="d-flex align-items-center">
+                    <input asp-for="@Model.Settings.Enabled" type="checkbox" class="btcpay-toggle me-3" />
+                    <label asp-for="@Model.Settings.Enabled" class="form-check-label"></label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="d-flex align-items-center">
+                    <input asp-for="@Model.Settings.IsEmailToCustomer" type="checkbox" class="btcpay-toggle me-3" />
+                    <label asp-for="@Model.Settings.IsEmailToCustomer" class="form-check-label"></label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="d-flex align-items-center">
+                    <input asp-for="@Model.Settings.AllowRefundAddress" type="checkbox" class="btcpay-toggle me-3" />
+                    <label asp-for="@Model.Settings.AllowRefundAddress" class="form-check-label"></label>
+                </div>
+            </div>
+
+
+            <button name="command" type="submit" value="save" class="btn btn-primary">Save</button>
+        </form>
+    </div>
+</div>
