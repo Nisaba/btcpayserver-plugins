@@ -1,0 +1,14 @@
+@using BTCPayServer.Plugins.Exolix.Model
+@using BTCPayServer.Plugins.Exolix.Services
+@inject ExolixPluginService pluginService
+@{
+    ExolixSettings settings = await pluginService.GetStoreSettings(Model.StoreId);
+    if (settings?.Enabled is not true) return;
+}
+
+<a href="#Exolix" class="btcpay-pill m-0 payment-method" :class="{ active: pmId === 'Exolix' }" v-on:click.prevent="changePaymentMethod('Exolix')">
+    <div style="text-align: center;">
+        <span style="display: block;">Altcoins</span>
+    </div>
+</a>
+

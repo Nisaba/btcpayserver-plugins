@@ -1,0 +1,21 @@
+@using BTCPayServer.Plugins.Exolix.Model
+@using BTCPayServer.Plugins.Exolix.Services
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@inject ExolixPluginService pluginService
+@{
+    var storeId = ((JObject)JObject.Parse(JsonConvert.SerializeObject(Model)))["StoreId"].Value<string>();
+    var settings = await pluginService.GetStoreSettings(storeId);
+
+    if (settings?.Enabled is not true) return;
+}
+<script src="~/Resources/js/exolixComponent.js"></script>
+<template id="exolix-checkout-template">
+    <div class="payment-box">
+        <h2>Exolix !</h2>
+        <div class="mt-3">
+            <!-- Votre contenu ici -->
+            <pre>{{ JSON.stringify(srvModel, null, 2) }}</pre>
+        </div>
+    </div>
+</template>

@@ -54,7 +54,10 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 }
                 else
                 {
-                    dbSettings = settings;
+                    dbSettings.Enabled = settings.Enabled;
+                    dbSettings.AcceptedCryptos = new List<string>(settings.AcceptedCryptos ?? new List<string>());
+                    dbSettings.IsEmailToCustomer = settings.IsEmailToCustomer;
+                    dbSettings.AllowRefundAddress = settings.AllowRefundAddress;
                     _context.ExolixSettings.Update(dbSettings);
                 }
 

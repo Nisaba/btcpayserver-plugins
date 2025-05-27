@@ -2,6 +2,7 @@
 using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Abstractions.Services;
 using BTCPayServer.Plugins.Exolix.Services;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BTCPayServer.Plugins.Exolix;
@@ -16,6 +17,15 @@ public class Plugin : BaseBTCPayServerPlugin
     public override void Execute(IServiceCollection services)
     {
         services.AddUIExtension("header-nav", "ExolixPluginHeaderNav");
+        // -- Checkout v2 --
+        // Tab (Payment Method)
+        services.AddUIExtension("checkout-payment-method", "CheckoutV2/CheckoutPaymentMethodExtension");
+        // Widget
+        services.AddUIExtension("checkout-payment", "CheckoutV2/CheckoutPaymentExtension");
+
+        // -- Checkout No-Script --
+     //   services.AddUIExtension("checkout-noscript-end", "CheckoutNoScript/CheckoutPaymentExtension");
+        
         services.AddHostedService<ApplicationPartsLogger>();
         services.AddHostedService<PluginMigrationRunner>();
         services.AddSingleton<ExolixPluginService>();
@@ -26,5 +36,7 @@ public class Plugin : BaseBTCPayServerPlugin
             var factory = provider.GetRequiredService<ExolixPluginDbContextFactory>();
             factory.ConfigureBuilder(o);
         });
+
     }
+
 }
