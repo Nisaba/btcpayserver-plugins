@@ -1,7 +1,11 @@
 @using BTCPayServer.Abstractions.Extensions
 @using BTCPayServer.Plugins.Exolix.Views
+@using BTCPayServer.Plugins.Exolix.Model
+@using BTCPayServer.Client
+@using BTCPayServer.Services
 
 @inject BTCPayServer.Plugins.Exolix.Services.ExolixService ExolixPluginService
+@inject DisplayFormatter DisplayFormatter
 
 @model BTCPayServer.Plugins.Exolix.Model.ExolixModel
 @{
@@ -17,7 +21,7 @@
         <td>
             <br />
             <p>
-                Allows your customers to pay with altcoins that are not supported by BTCPay Server, using <a href="https://exolix.com?ref=F782BF2EAB748E0419F6CF993005341E" target="_blank">Exolix service</a>, in a seamless way.
+                Allows your customers to pay with altcoins that are not supported by BTCPay Server, using<br/><a href="https://exolix.com?ref=F782BF2EAB748E0419F6CF993005341E" target="_blank">Exolix service</a>, in a seamless way.
             </p>
         </td>
     </tr>
@@ -27,7 +31,7 @@
 <partial name="_StatusMessage" />
 <br />
 
-<div class="row">
+<div class="row" permission="@Policies.CanModifyStoreSettings">
     <div class="col-md-10">
         <form method="post">
             <input asp-for="Settings.StoreId" type="hidden" />
@@ -50,8 +54,61 @@
                 </div>
             </div>
 
-
+            <div class="form-group">
+                <label class="form-label" asp-for="@Model.Settings.AcceptedCryptos">
+                    Accepted Cryptos (press Control to select multi values):
+                </label>
+                <select asp-for="@Model.Settings.AcceptedCryptos" class="form-select w-auto" id="default-payment-method" size="25">
+                    @foreach (var crypto in ExolixSettings.AvailableCryptos)
+                    {
+                        <option value="@crypto.Key">@crypto.Value</option>
+                    }
+                </select>
+            </div>
             <button name="command" type="submit" value="save" class="btn btn-primary">Save</button>
         </form>
     </div>
+
+</div>
+
+<div class="row" permission="@Policies.CanViewInvoices">
+    <div style="height:20px"></div>
+    <h4>Eolix Transactions</h4>
+    @if (Model.Transactions.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover mass-action">
+                <thead class="mass-action-head">
+                    <tr>
+                        <th class="text-nowrap">Swap Id</th>
+                        <th class="text-nowrap">Date</th>
+                        <th class="text-nowrap">Altcoin</th>
+                        <th class="text-nowrap">Amount (BTC)</th>
+                        <th class="text-nowrap">Invoice</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Transactions)
+                    {
+                        <tr class="mass-action-row item">
+                            <td class="text-break align-middle invoiceId-col">
+                                <a href="https://exolix.com/api/v2/transactions/@item.TxID" target="_blank" class="invoice-details-link">@item.TxID</a>
+                            </td>
+                            <td>@item.DateT</td>
+                            <td class="align-center">
+                                <div class="badge badge-expired">
+                                    @item.AltcoinFrom
+                                </div>
+                            </td>
+                            <td class="align-right">@item.BTCAmount</td>
+                            <td class="text-break align-middle invoiceId-col">
+                                <a asp-controller="UIInvoice" asp-action="Invoice" asp-route-invoiceId="@item.BTCPayInvoiceId" class="text-break">@item.BTCPayInvoiceId</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    }
 </div>

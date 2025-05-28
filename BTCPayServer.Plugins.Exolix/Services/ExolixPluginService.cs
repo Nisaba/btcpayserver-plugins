@@ -91,6 +91,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
             try
             {
                 await _context.ExolixTransactions.AddAsync(tx);
+                await _context.SaveChangesAsync();
             }
             catch (Exception e)
             {

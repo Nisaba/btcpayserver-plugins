@@ -38,10 +38,10 @@ namespace BTCPayServer.Plugins.Exolix.Migrations
                 {
                     TxID = table.Column<string>(nullable: false),
                     StoreId = table.Column<string>(nullable: false),
-                    Enabled = table.Column<bool>(nullable: false),
                     AltcoinFrom = table.Column<string>(nullable: false),
-                    BTCAmount = table.Column<decimal>(nullable: false),
-                    DateT = table.Column<DateTime>(nullable: false)
+                    BTCAmount = table.Column<float>(nullable: false),
+                    DateT = table.Column<DateTime>(nullable: false),
+                    BTCPayInvoiceId = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {

@@ -12,9 +12,9 @@ namespace BTCPayServer.Plugins.Exolix.Model
         public string StoreId { get; set; }
 
         public string AltcoinFrom { get; set; }
-
-        public decimal BTCAmount { get; set; }
-
+        public float BTCAmount { get; set; }
         public DateTime DateT { get; set; }
+
+        public string BTCPayInvoiceId { get; set; }
     }
 }

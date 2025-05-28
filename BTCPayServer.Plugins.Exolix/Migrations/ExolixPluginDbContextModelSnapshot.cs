@@ -53,10 +53,13 @@ namespace BTCPayServer.Plugins.Exolix.Migrations
                     .HasColumnType("text");
 
                 b.Property<decimal>("BTCAmount")
-                    .HasColumnType("decimal");
+                    .HasColumnType("float");
 
                 b.Property<DateTime>("DateT")
                     .HasColumnType("DateTime");
+
+                b.Property<string>("BTCPayInvoiceId")
+                    .HasColumnType("text");
 
                 b.HasKey("TxID");
                 b.HasIndex("StoreId");

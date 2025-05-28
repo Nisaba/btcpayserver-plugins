@@ -27,7 +27,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {APIKey}");
         }
 
-        public async Task<SwapCreationResponse> CreateSwapAsync(SwapCreationRequest req, string ip)
+        public async Task<SwapCreationResponse> CreateSwapAsync(SwapCreationRequest req)
         {
             string sRep = "";
             try
@@ -64,13 +64,23 @@ namespace BTCPayServer.Plugins.Exolix.Services
                     StatusMessage = JsonRep.status,
                     SwapId = JsonRep.id,
                     FromAddress = JsonRep.depositAddress,
+                    FromAmount = Convert.ToSingle(JsonRep.amount),
                 };
+                _logger.LogInformation($"Exolix Swap Created : {swap.SwapId} {req.FromCrypto}");
                 return swap;
             }
             catch (Exception ex)
             {
                 _logger.LogError($"ExolixPlugin.CreateSwap(): {ex.Message} - {sRep} - {req.FromCrypto} {req.ToCrypto}");
-                throw;
+                if (string.IsNullOrEmpty(sRep))
+                {
+                    throw;
+                } else
+                {
+                    dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
+                    string sMsg = JsonRep.message;
+                    throw new Exception(sMsg);
+                }
             }
         }
 

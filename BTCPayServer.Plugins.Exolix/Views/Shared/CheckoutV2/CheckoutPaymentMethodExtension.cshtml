@@ -3,7 +3,7 @@
 @inject ExolixPluginService pluginService
 @{
     ExolixSettings settings = await pluginService.GetStoreSettings(Model.StoreId);
-    if (settings?.Enabled is not true) return;
+    if (settings?.Enabled is not true || settings.AcceptedCryptos.Count == 0) return;
 }
 
 <a href="#Exolix" class="btcpay-pill m-0 payment-method" :class="{ active: pmId === 'Exolix' }" v-on:click.prevent="changePaymentMethod('Exolix')">
