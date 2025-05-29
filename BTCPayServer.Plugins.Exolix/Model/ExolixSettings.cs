@@ -29,7 +29,6 @@ public class ExolixSettings
             { "BNB", "Binance Coin" },
             { "ADA", "Cardano" },
             { "DOGE", "Dogecoin" },
-            { "POL", "Polygon" },
             { "SOL", "Solana" },
             { "DAI", "DAI" },
             { "USDT-ETH", "USDT Tether (Ethereum)" },

@@ -6,12 +6,20 @@ const ExolixCheckout = {
             required: true
         }
     },
+    components: {
+        qrcode: VueQrcode
+    },
     data() {
         return {
             selectedCrypto: null,
             swapData: null,
             loading: false,
-            error: null
+            error: null,
+            qrOptions: {
+                margin: 0,
+                type: 'svg',
+                color: { dark: '#000', light: '#fff' }
+            }
         }
     },
     methods: {
@@ -55,6 +63,9 @@ const ExolixCheckout = {
              } finally {
                 this.loading = false;
             }
+        },
+        getCryptoIcon(cryptoCode) {
+            return `/Resources/ico/${cryptoCode.substring(0,4)}.webp`;
         }
     },
     watch: {
@@ -70,6 +81,11 @@ const ExolixCheckout = {
         },
         due() {
             return this.asNumber(this.model.due);
+        },
+        qrCodeData() {
+            if (!this.swapData || !this.selectedCrypto) return null;
+            const protocol = this.selectedCrypto.toLowerCase();
+            return `${protocol}:${this.swapData.fromAddress}?amount=${this.formatAmount(this.swapData.fromAmount)}`;
         }
     }
 };

@@ -7,9 +7,9 @@
 @{
     var storeId = ((JObject)JObject.Parse(JsonConvert.SerializeObject(Model)))["StoreId"].Value<string>();
     var settings = await pluginService.GetStoreSettings(storeId);
-    var invoiceId = ((JObject)JObject.Parse(JsonConvert.SerializeObject(Model)))["InvoiceId"].Value<string>();
 
     if (settings?.Enabled is not true || settings.AcceptedCryptos.Count == 0) return;
+    var invoiceId = ((JObject)JObject.Parse(JsonConvert.SerializeObject(Model)))["InvoiceId"].Value<string>();
 
     var vueModel = new
     {
@@ -20,6 +20,32 @@
     };
 }
 
+<style>
+    .qr-container {
+        text-align: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 0.5rem;
+        display: inline-block;
+        position: relative;
+        margin: 0 auto;
+    }
+
+    .qr-container .qr-icon {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 70px;
+        height: 70px;
+        padding: 5px;
+        border-radius: 50%;
+        background: white;
+    }
+</style>
+
+
+<script src="~/vendor/vue-qrcode/vue-qrcode.min.js" asp-append-version="true"></script>
 <script>
     window.exolixData = @Html.Raw(JsonConvert.SerializeObject(vueModel));
 </script>
@@ -51,6 +77,13 @@
                 </div>
 
                 <div v-if="swapData" class="swap-details border rounded p-3 mb-3">
+
+                    <div class="qr-container mb-3" v-if="qrCodeData">
+                        <div>
+                            <qrcode :value="qrCodeData" :options="qrOptions" tag="div" />
+                        </div>
+                        <img class="qr-icon" :src="getCryptoIcon(selectedCrypto)" :alt="selectedCrypto" />
+                    </div>
 
                     <div class="mb-2">
                         <strong>Please send this amount</strong>

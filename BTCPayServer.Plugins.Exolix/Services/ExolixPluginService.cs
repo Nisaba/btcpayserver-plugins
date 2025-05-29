@@ -77,7 +77,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
             try
             {
                 var txs = await _context.ExolixTransactions.Where(a => a.StoreId == storeId).ToListAsync();
-                return txs;
+                return txs.Reverse<ExolixTx>().ToList();
             }
             catch (Exception e)
             {
