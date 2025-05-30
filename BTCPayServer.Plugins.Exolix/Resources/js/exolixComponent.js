@@ -19,10 +19,45 @@ const ExolixCheckout = {
                 margin: 0,
                 type: 'svg',
                 color: { dark: '#000', light: '#fff' }
+            },
+            protocolMap: {
+                'XMR': 'monero',
+                'ETH': 'ethereum',
+                'LTC': 'litecoin',
+                'BNB': 'bnb',
+                'ADA': 'cardano',
+                'DOGE': 'dogecoin',
+                'SOL': 'solana',
+                'DAI': 'ethereum',
+                'USDT-ETH': 'ethereum',
+                'USDT-TRX': 'tron',
+                'USDT-BSC': 'bnb',
+                'USDT-SOL': 'solana',
+                'USDT-NEAR': 'near',
+                'USDT-MATIC': 'polygon',
+                'USDT-TON': 'ton',
+                'USDT-AVAXC': 'avalanche',
+                'USDC-ETH': 'ethereum',
+                'USDC-BSC': 'bnb',
+                'USDC-SOL': 'solana',
+                'USDC-NEAR': 'near',
+                'USDC-MATIC': 'polygon',
+                'USDC-AVAXC': 'avalanche'
             }
         }
     },
     methods: {
+        getProtocol(cryptoCode) {
+            return this.protocolMap[cryptoCode] || cryptoCode.toLowerCase();
+        },
+
+        payInWallet() {
+            if (!this.swapData || !this.selectedCrypto) return;
+
+            const protocol = this.getProtocol(this.selectedCrypto);
+            const paymentUrl = `${protocol}:${this.swapData.fromAddress}?amount=${this.formatAmount(this.swapData.fromAmount)}`;
+            window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+        },
         asNumber(val) {
             return val && parseFloat(val.toString().replace(/\s/g, ''));
         },

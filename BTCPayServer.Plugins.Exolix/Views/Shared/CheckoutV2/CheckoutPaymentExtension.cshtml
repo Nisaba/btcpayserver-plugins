@@ -104,7 +104,15 @@
                             </button>
                         </div>
                     </div>
-
+                    <button class="btn btn-primary w-100 mt-2" v-on:click="payInWallet" :disabled="!swapData">
+                        <i class="fa fa-external-link-alt"></i>
+                        Pay in wallet
+                    </button>
+                    <br />
+                    <div class="form-text">
+                        This service is provided by <a href="https://exolix.com?ref=F782BF2EAB748E0419F6CF993005341E" target="_blank">Exolix</a>.<br />
+                        Bitcoins will be sent to the merchant as soon as your {{ selectedCrypto }} transaction is confirmed. Please wait.
+                    </div>
                 </div>
 
             </div>

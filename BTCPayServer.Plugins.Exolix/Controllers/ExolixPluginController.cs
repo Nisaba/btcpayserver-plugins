@@ -12,6 +12,7 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
 {
     [Route("~/plugins/{storeId}/Exolix")]
     [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanModifyStoreSettings)]
+    [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanViewInvoices)]
     public class ExolixPluginController (ExolixPluginService pluginService) : Controller
     {
         private readonly ExolixPluginService _pluginService = pluginService;
