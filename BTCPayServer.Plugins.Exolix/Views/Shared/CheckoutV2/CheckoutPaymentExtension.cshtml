@@ -113,6 +113,15 @@
                         This service is provided by <a href="https://exolix.com?ref=F782BF2EAB748E0419F6CF993005341E" target="_blank">Exolix</a>.<br />
                         Bitcoins will be sent to the merchant as soon as your {{ selectedCrypto }} transaction is confirmed. Please wait.
                     </div>
+                    <div class="mt-2 text-center">
+                        <a href="#" v-on:click.prevent="checkStatus" :class="{ 'text-muted': !swapData }">
+                            <i class="fa fa-refresh" :class="{ 'fa-spin': checkingStatus }"></i>
+                            Check status
+                        </a>
+                        <div v-if="swapStatus" class="mt-1 text-muted">
+                            Status: {{ swapStatus }}
+                        </div>
+                    </div>
                 </div>
 
             </div>

@@ -15,6 +15,8 @@ const ExolixCheckout = {
             swapData: null,
             loading: false,
             error: null,
+            checkingStatus: false,
+            swapStatus: null,
             qrOptions: {
                 margin: 0,
                 type: 'svg',
@@ -97,6 +99,32 @@ const ExolixCheckout = {
                 this.error = e.message || 'Failed to create swap. Please try again.';
              } finally {
                 this.loading = false;
+            }
+        },
+        async checkStatus() {
+            if (!this.swapData || !this.swapData.swapId) return;
+
+            this.checkingStatus = true;
+            try {
+                const response = await fetch(`https://exolix.com/api/v2/transactions/${this.swapData.swapId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch status');
+                }
+
+                const result = await response.json();
+                this.swapStatus = result.status || 'Unknown';
+
+            } catch (error) {
+                console.error('Status check failed:', error);
+                this.swapStatus = 'Failed to check status';
+            } finally {
+                this.checkingStatus = false;
             }
         },
         getCryptoIcon(cryptoCode) {
