@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using BTCPayServer.Plugins.Exolix.Model;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace BTCPayServer.Plugins.Exolix.Services
 {
@@ -35,9 +36,9 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 var createSwapRequest = new Dictionary<string, object>
                 {
                     ["coinFrom"] = req.FromCrypto,
-                    ["networkFrom"] = req.FromNetwork,
+                    ["networkFrom"] = GetNetwork(req.FromNetwork),
                     ["coinTo"] = req.ToCrypto,
-                    ["networkTo"] = req.ToNetwork,
+                    ["networkTo"] = GetNetwork(req.ToNetwork),
                     ["amount"] = req.FromAmount,
                     ["withdrawalAmount"] = req.ToAmount,
                     ["withdrawalAddress"] = req.ToAddress,
@@ -82,6 +83,11 @@ namespace BTCPayServer.Plugins.Exolix.Services
                     throw new Exception(sMsg);
                 }
             }
+        }
+
+        private string GetNetwork(string crypto)
+        {
+            return crypto == "BNB" ? "BSC" : (crypto == "POL" ? "MATIC" : crypto);
         }
 
     }

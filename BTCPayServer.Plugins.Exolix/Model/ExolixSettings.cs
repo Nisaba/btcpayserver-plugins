@@ -24,11 +24,13 @@ public class ExolixSettings
         new Dictionary<string, string>
         {
             { "XMR", "Monero" },
-            { "ETH", "Ethereum" },
             { "LTC", "Litecoin" },
+            { "DOGE", "Dogecoin" },
+            { "ETH", "Ethereum" },
+            { "TRX", "Tron" },
+            { "POL", "Polygon" },
             { "BNB", "Binance Coin" },
             { "ADA", "Cardano" },
-            { "DOGE", "Dogecoin" },
             { "SOL", "Solana" },
             { "DAI", "DAI" },
             { "USDT-ETH", "USDT Tether (Ethereum)" },

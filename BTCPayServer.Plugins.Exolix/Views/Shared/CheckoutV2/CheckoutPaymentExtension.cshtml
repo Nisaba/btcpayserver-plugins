@@ -111,7 +111,8 @@
                     <br />
                     <div class="form-text">
                         This service is provided by <a href="https://exolix.com?ref=F782BF2EAB748E0419F6CF993005341E" target="_blank">Exolix</a>.<br />
-                        Bitcoins will be sent to the merchant as soon as your {{ selectedCrypto }} transaction is confirmed. Please wait.
+                        Bitcoins will be sent to the merchant as soon as your {{ selectedCrypto }} transaction is confirmed. Please wait.<br />
+                        If needed, contact support@exolix.com and/or your merchant with the Swap id: {{ swapData.swapId }}
                     </div>
                     <div class="mt-2 text-center">
                         <a href="#" v-on:click.prevent="checkStatus" :class="{ 'text-muted': !swapData }">
