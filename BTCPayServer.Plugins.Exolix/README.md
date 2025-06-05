@@ -29,3 +29,8 @@ During checkout, the customer must click on "Altcoins" and then choose their cry
 Swaps are displayed to users with the "CanViewInvoices" permission. By clicking on the links, you can view the status of the Exolix swap and the BTCPay invoice.
 
 ![image](https://github.com/user-attachments/assets/4605fdfa-f696-4851-9896-d949c271b35f)
+
+## Version History
+- **1.0.1** - Initial release
+- **1.0.2** - Fixed a bug with BSC in checkout, add TRX and POL/MATIC cryptos, add informations about support in checkout
+
