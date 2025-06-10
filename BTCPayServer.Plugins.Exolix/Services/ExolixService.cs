@@ -79,7 +79,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 } else
                 {
                     dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
-                    string sMsg = JsonRep.message;
+                    string sMsg = JsonRep.message ?? JsonRep.error;
                     throw new Exception(sMsg);
                 }
             }
