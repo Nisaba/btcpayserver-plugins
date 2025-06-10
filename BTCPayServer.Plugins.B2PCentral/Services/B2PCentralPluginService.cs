@@ -213,7 +213,7 @@ public class B2PCentralPluginService
         catch (Exception e)
         {
             _logger.LogError(e, "B2PCentral:GetBalances()");
-            throw;
+//            throw;
         }
 
     }

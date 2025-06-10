@@ -31,5 +31,8 @@ What's new in v 1.2.2 :
 What's new in v 1.2.3 :
 - Add Bisq v1 as onchain provider
 
+What's new in v 1.2.4 :
+- Fix a potential bug when offchain wallet is not configured
+
 
 
