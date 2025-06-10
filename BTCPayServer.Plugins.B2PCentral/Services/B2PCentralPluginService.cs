@@ -141,12 +141,13 @@ public class B2PCentralPluginService
 
     public async Task<StoreWalletConfig> GetBalances(string storeId, string BaseUrl)
     {
+        StoreWalletConfig cnfg = new StoreWalletConfig();
         try
         {
             var store = await _storeRepository.FindStore(storeId);
             var blob = store.GetStoreBlob();
            
-            var cnfg = new StoreWalletConfig { FiatCurrency = blob.DefaultCurrency };
+            cnfg.FiatCurrency = blob.DefaultCurrency;
             if (_networkProvider.DefaultNetwork.IsBTC)
             {
                 getPaymentMethods(store, blob,
@@ -208,13 +209,13 @@ public class B2PCentralPluginService
                 cnfg.OffChainEnabled = false;
                 cnfg.OnChainEnabled = false;
             }
-            return cnfg;
         }
         catch (Exception e)
         {
             _logger.LogError(e, "B2PCentral:GetBalances()");
 //            throw;
         }
+        return cnfg;
 
     }
 
