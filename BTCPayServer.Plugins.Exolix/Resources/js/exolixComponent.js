@@ -47,7 +47,9 @@ const ExolixCheckout = {
                 'USDC-NEAR': 'near',
                 'USDC-MATIC': 'polygon',
                 'USDC-AVAXC': 'avalanche'
-            }
+            },
+            manualAmount: '',
+            showAmountInput: false
         }
     },
     methods: {
@@ -76,10 +78,14 @@ const ExolixCheckout = {
             this.swapData = null;
 
             try {
+                var btcAmount = this.asNumber(this.model.due);
+                if (btcAmount == 0) {
+                    this.error = 'Please enter a BTC amount first';
+                }
                 const formData = new FormData();
                 formData.append('CryptoFrom', this.selectedCrypto);
                 formData.append('BtcAddress', this.model.address);
-                formData.append('BtcAmount', this.model.due);
+                formData.append('BtcAmount', btcAmount);
                 formData.append('BtcPayInvoiceId', window.exolixData.invoiceId);
 
                 const response = await fetch(`/plugins/${window.exolixData.storeId}/ExolixSwap`, {
@@ -131,7 +137,23 @@ const ExolixCheckout = {
         },
         getCryptoIcon(cryptoCode) {
             return `/Resources/ico/${cryptoCode.substring(0,4)}.webp`;
+        },
+        validateManualAmount() {
+            const amount = this.asNumber(this.manualAmount);
+            if (!amount || isNaN(amount) || amount <= 0) {
+                this.error = 'Please enter a valid BTC amount (greater than 0)';
+                return false;
+            }
+            this.error = null;
+            return true;
+        },
+        handleAmountSubmit() {
+            if (this.validateManualAmount()) {
+                this.model.due = this.manualAmount;
+                this.showAmountInput = false;
+            }
         }
+
     },
     watch: {
         selectedCrypto(newValue) {
@@ -151,6 +173,9 @@ const ExolixCheckout = {
             if (!this.swapData || !this.selectedCrypto) return null;
             const protocol = this.selectedCrypto.toLowerCase();
             return `${protocol}:${this.swapData.fromAddress}?amount=${this.formatAmount(this.swapData.fromAmount)}`;
+        },
+        canShowCryptoList() {
+            return this.asNumber(this.model.due) > 0;
         }
     }
 };

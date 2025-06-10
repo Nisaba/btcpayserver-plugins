@@ -54,7 +54,24 @@
     <div class="payment-box">
         <div class="mt-3">
             <div class="payment-details">
-                <div class="mb-3">
+                <div v-if="due == 0" class="mb-3">
+                    <div class="input-group">
+                        <input type="number"
+                               v-model="manualAmount"
+                               class="form-control"
+                               step="0.00000001"
+                               min="0.00000001"
+                               placeholder="Please enter BTC amount to send"
+                               v-on:keyup.enter="handleAmountSubmit">
+                        <button class="btn btn-primary"
+                                v-on:click="handleAmountSubmit">
+                            Confirm
+                        </button>
+                    </div>
+                    <small class="text-danger" v-if="error">{{ error }}</small>
+                </div>
+
+                <div v-if="due > 0" class="mb-3">
                     <label class="form-label">Select Payment Method:</label>
                     <select class="form-select" v-model="selectedCrypto" :disabled="loading">
                         @foreach (var crypto in settings.AcceptedCryptos)

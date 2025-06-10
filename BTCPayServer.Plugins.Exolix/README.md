@@ -33,5 +33,6 @@ Swaps are displayed to users with the "CanViewInvoices" permission. By clicking 
 ## Version History
 - **1.0.1** - Initial release
 - **1.0.2** - Fixed a bug with BSC in checkout, add TRX and POL/MATIC cryptos, add informations about support in checkout
-- **1.0.3** - Improve status message in case of Exolix error
+- **1.0.3** - Improve status message in case of Exolix error, ask to enter BTC amount if BTCPay invoice amount is 0
+
 
