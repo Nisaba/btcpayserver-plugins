@@ -181,6 +181,8 @@ public class B2PCentralPluginService
                 {
                     var lightningClient = GetLightningClient(store);
                     var balance = await lightningClient.GetBalance();
+                    var info = await lightningClient.GetInfo();
+                    _logger.LogWarning("B2PCentral:InfoNode: " + info.Alias);
                     cnfg.OffChainBalance = (balance.OffchainBalance != null
                                             ? (balance.OffchainBalance.Opening ?? 0) + (balance.OffchainBalance.Local ?? 0) +
                                               (balance.OffchainBalance.Closing ?? 0) + (balance.OffchainBalance.Remote ?? 0)
