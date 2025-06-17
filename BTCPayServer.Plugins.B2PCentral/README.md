@@ -34,5 +34,8 @@ What's new in v 1.2.3 :
 What's new in v 1.2.4 :
 - Fix a potential bug when offchain wallet is not configured
 
+What's new in v 1.2.5 :
+- Display correct Lightning balance for stores using Boltz plugin
+
 
 

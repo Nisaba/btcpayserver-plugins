@@ -181,7 +181,10 @@ public class B2PCentralPluginService
                 {
                     var lightningClient = GetLightningClient(store);
                     var balance = await lightningClient.GetBalance();
-                    cnfg.OffChainBalance = balance.OffchainBalance.Local.ToDecimal(LightMoneyUnit.BTC);
+                    cnfg.OffChainBalance = (balance.OffchainBalance != null
+                                            ? (balance.OffchainBalance.Opening ?? 0) + (balance.OffchainBalance.Local ?? 0) +
+                                              (balance.OffchainBalance.Closing ?? 0) + (balance.OffchainBalance.Remote ?? 0)
+                                            : 0).ToDecimal(LightMoneyUnit.BTC);
                 }
 
                 if (cnfg.OnChainBalance > 0 || cnfg.OffChainBalance > 0) {
