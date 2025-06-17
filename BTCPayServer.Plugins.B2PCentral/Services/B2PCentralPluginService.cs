@@ -181,12 +181,15 @@ public class B2PCentralPluginService
                 {
                     var lightningClient = GetLightningClient(store);
                     var balance = await lightningClient.GetBalance();
+                    cnfg.OffChainBalance = balance.OffchainBalance.Local.ToDecimal(LightMoneyUnit.BTC);
+
                     var info = await lightningClient.GetInfo();
-                    _logger.LogWarning("B2PCentral:InfoNode: " + info.Alias);
-                    cnfg.OffChainBalance = (balance.OffchainBalance != null
-                                            ? (balance.OffchainBalance.Opening ?? 0) + (balance.OffchainBalance.Local ?? 0) +
-                                              (balance.OffchainBalance.Closing ?? 0) + (balance.OffchainBalance.Remote ?? 0)
-                                            : 0).ToDecimal(LightMoneyUnit.BTC);
+                    if (info.Alias == "boltz-client" && balance.OnchainBalance != null)
+                    {
+                        var totalOnchain = (balance.OnchainBalance.Confirmed ?? 0L) + (balance.OnchainBalance.Reserved ?? 0L) +
+                                              (balance.OnchainBalance.Unconfirmed ?? 0L);
+                        cnfg.OffChainBalance += Convert.ToDecimal(totalOnchain);
+                    }
                 }
 
                 if (cnfg.OnChainBalance > 0 || cnfg.OffChainBalance > 0) {
