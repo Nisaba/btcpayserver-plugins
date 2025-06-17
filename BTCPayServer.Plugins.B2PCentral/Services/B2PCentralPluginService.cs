@@ -190,7 +190,7 @@ public class B2PCentralPluginService
                         {
                             var totalOnchain = (balance.OnchainBalance.Confirmed ?? 0L) + (balance.OnchainBalance.Reserved ?? 0L) +
                                                   (balance.OnchainBalance.Unconfirmed ?? 0L);
-                            cnfg.OffChainBalance += Convert.ToDecimal(totalOnchain);
+                            cnfg.OffChainBalance += totalOnchain.ToUnit(MoneyUnit.Satoshi);
                         }
                     }
                     catch { }
