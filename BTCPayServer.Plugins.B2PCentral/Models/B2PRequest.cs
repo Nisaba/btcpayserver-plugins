@@ -1,6 +1,6 @@
 ﻿namespace BTCPayServer.Plugins.B2PCentral.Models
 {
-    public struct B2PRequest
+    public class B2PRequest
     {
         public decimal Rate { get; set; }
         public string ApiKey { get; set; }

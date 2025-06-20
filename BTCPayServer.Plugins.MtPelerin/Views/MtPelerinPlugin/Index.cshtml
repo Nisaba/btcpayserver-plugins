@@ -1,0 +1,139 @@
+@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.MtPelerin.Views
+@using BTCPayServer.Client
+@using BTCPayServer.Plugins.MtPelerin.Model
+@using BTCPayServer.Services
+
+@inject BTCPayServer.Plugins.MtPelerin.Services.MtPelerinPluginService MtPelerinPluginService
+@inject DisplayFormatter DisplayFormatter
+
+@model BTCPayServer.Plugins.MtPelerin.Model.MtPelerinModel
+@{
+    ViewData.SetActivePage(PluginNavPages.Index, "Mt Pelerin plugin");
+}
+
+
+<table><tr>
+        <td>
+            <a href="https://www.mtpelerin.com/" target="mtp">
+                <img src="/Resources/img/MtPelerin.png" />
+            </a>
+        </td>
+        <td width="20" />
+        <td>
+            <h2>@ViewData["Title"]</h2>
+            <br />
+            <p>
+                Allows you to forward received funds to MtPelerin, a Swiss offramp provider, and get funds in EUR, CHF or other currencies.
+            </p>
+        </td>
+    </tr></table>
+<br />
+
+<partial name="_StatusMessage" />
+
+<div permission="@Policies.CanModifyStoreSettings">
+    <br />
+    <h4>Configuration</h4>
+    <form method="post" autocomplete="off">
+        <input asp-for="Settings.StoreId" type="hidden" />
+        <table class="table table-sm mt-0 mx-0">
+            <tr>
+                <td width="100">
+                    <label asp-for="Settings.ApiKey" class="form-label"></label>
+                </td>
+                <td width="300" class="border-0 ps-0 align-middle">
+                    <input asp-for="Settings.ApiKey" data-fill="port" class="form-control" />
+                    <span asp-validation-for="Settings.ApiKey" class="text-danger"></span>
+                </td>
+            </tr>
+            <tr>
+                <td width="100">
+                    <label asp-for="Settings.Phone" class="form-label"></label>
+                </td>
+                <td width="300" class="border-0 ps-0 align-middle">
+                    <input asp-for="Settings.Phone" data-fill="port" class="form-control" />
+                    <span asp-validation-for="Settings.Phone" class="text-danger"></span>
+                </td>
+            </tr>
+            <tr>
+                <td width="100">
+                    <label asp-for="Settings.Lang" class="form-label"></label>
+                </td>
+                <td width="300" class="border-0 ps-0 align-middle">
+                    <select asp-for="Settings.Lang" class="form-select">
+                        <option value="en">English</option>
+                        <option value="fr">Français</option>
+                        <option value="de">Deutsch</option>
+                        <option value="it">Italiano</option>
+                        <option value="es">Español</option>
+                        <option value="pt">Português</option>
+                    </select>
+                    <span asp-validation-for="Settings.Lang" class="text-danger"></span>
+                </td>
+            </tr>
+            <tr>
+                <td width="100%" align="center" colspan="4">
+                    <br />
+                    <button id="SaveButton" type="submit" class="btn btn-primary" value="save" name="Command">Save</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+
+</div>
+
+<div permission="@Policies.CanViewStoreSettings">
+    <br />
+
+    @if (string.IsNullOrEmpty(Model.Settings.ApiKey))
+    {
+        <p>
+            <i>Mt Pelerin settings not set for this store...</i>
+        </p>
+    } else
+    {
+        var walletConfig = await MtPelerinPluginService.GetBalances(Model.Settings.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
+
+        <table class="table table-sm mt-0 mx-0">
+            <tr>
+                <td>
+                    <h4>On Chain</h4>
+                    @if (walletConfig.OnChainEnabled)
+                    {
+                        <p><b>Balance</b>: @walletConfig.OnChainBalance BTC  ~ @DisplayFormatter.Currency(walletConfig.OnChainFiatBalance, walletConfig.FiatCurrency)</p>
+                    }
+                    else
+                    {
+                        <p>On Chain wallet not configured</p>
+                    }
+
+                    @if (walletConfig.OnChainBalance == 0)
+                    {
+                        <p>No bitcoins available for sale</p>
+                    }
+                </td><td width="20"></td>
+                <td>
+                    <h4>Lightning</h4>
+                    @if (walletConfig.OffChainEnabled)
+                    {
+                        <p><b>Balance</b>: @walletConfig.OffChainBalance BTC  ~ @DisplayFormatter.Currency(walletConfig.OffChainFiatBalance, walletConfig.FiatCurrency)</p>
+                    }
+                    else
+                    {
+                        <p>Lightning not configured</p>
+                    }
+
+                    @if (walletConfig.OffChainBalance == 0)
+                    {
+                        <p>No bitcoins available for sale</p>
+                    }
+                </td>
+            </tr>
+        </table>
+
+        <br/>
+        <iframe allow="usb; ethereum; clipboard-write; payment; microphone; camera" loading="lazy" title="Mt Pelerin exchange widget" height="630" style="width:100%"
+            src="https://widget.mtpelerin.com/?_ctkn=@Model.Settings.ApiKey&lang=@Model.Settings.Lang"></iframe>
+    }
+</div>

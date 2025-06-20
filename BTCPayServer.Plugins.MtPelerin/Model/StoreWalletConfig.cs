@@ -1,4 +1,4 @@
-﻿namespace BTCPayServer.Plugins.B2PCentral.Models
+﻿namespace BTCPayServer.Plugins.MtPelerin.Model
 {
     public class StoreWalletConfig
     {

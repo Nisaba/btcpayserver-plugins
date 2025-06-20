@@ -3,7 +3,7 @@
     /// <summary>
     /// Offers request model
     /// </summary>
-    public struct OffersRequest
+    public class OffersRequest
     {
         /// <summary>
         /// Fiat currency

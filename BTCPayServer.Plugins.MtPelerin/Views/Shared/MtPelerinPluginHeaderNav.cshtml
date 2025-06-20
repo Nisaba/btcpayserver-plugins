@@ -1,0 +1,18 @@
+@using BTCPayServer.Abstractions.Contracts
+@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.MtPelerin.Views
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+
+@inject IScopeProvider ScopeProvider
+@{
+    var storeId = ScopeProvider.GetCurrentStoreId();
+}
+@if (!string.IsNullOrEmpty(storeId))
+{
+<li class="nav-item">
+    <a asp-controller="MtPelerinPlugin" asp-action="Index" asp-route-storeId="@storeId" class="nav-link @ViewData.IsActivePage(PluginNavPages.Index)">
+        <img src="/Resources/img/MtPelerinIco.png"/>&nbsp;
+        <span>&nbsp;Mt Pelerin</span>
+    </a>
+</li>
+}
