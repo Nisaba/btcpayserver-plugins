@@ -24,9 +24,6 @@ namespace BTCPayServer.Plugins.MtPelerin.Migrations
                 b.Property<string>("StoreId")
                     .HasColumnType("text");
 
-                b.Property<string>("ApiKey")
-                    .HasColumnType("text");
-
                 b.Property<string>("Lang")
                     .HasColumnType("text");
 
@@ -38,19 +35,6 @@ namespace BTCPayServer.Plugins.MtPelerin.Migrations
                 b.ToTable("MtPelerinSettings", "BTCPayServer.Plugins.MtPelerin");
             });
 
-            modelBuilder.Entity("BTCPayServer.Plugins.MtPelerin.Model.MtPelerinTx", b =>
-            {
-                b.Property<string>("TxID")
-                    .HasColumnType("text");
-
-                b.Property<string>("StoreId")
-                    .HasColumnType("text");
-
-                b.HasKey("TxID");
-                b.HasIndex("StoreId");
-
-                b.ToTable("MtPelerinTransactions", "BTCPayServer.Plugins.MtPelerin");
-            });
         }
     }
 }

@@ -14,7 +14,6 @@ public class MtPelerinPluginDbContext : DbContext
     }
 
     public DbSet<MtPelerinSettings> MtPelerinSettings { get; set; }
-    public DbSet<MtPelerinTx> MtPelerinTransactions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

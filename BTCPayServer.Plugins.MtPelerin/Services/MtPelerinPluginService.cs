@@ -1,11 +1,13 @@
 ﻿using BTCPayServer.Client.Models;
 using BTCPayServer.Configuration;
 using BTCPayServer.Data;
+using BTCPayServer.HostedServices;
 using BTCPayServer.Lightning;
 using BTCPayServer.Models.StoreViewModels;
 using BTCPayServer.Payments;
 using BTCPayServer.Payments.Bitcoin;
 using BTCPayServer.Payments.Lightning;
+using BTCPayServer.Payouts;
 using BTCPayServer.Plugins.MtPelerin.Model;
 using BTCPayServer.Services;
 using BTCPayServer.Services.Invoices;
@@ -15,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
+using NBitcoin.Protocol;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -22,6 +25,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using PayoutData = BTCPayServer.Data.PayoutData;
+using PullPaymentData = BTCPayServer.Data.PullPaymentData;
 
 namespace BTCPayServer.Plugins.MtPelerin.Services
 {
@@ -37,6 +42,10 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
         private readonly HttpClient _httpClient2;
         private readonly LightningClientFactoryService _lightningClientFactory;
         private readonly IOptions<LightningNetworkOptions> _lightningNetworkOptions;
+        private readonly PullPaymentHostedService _pullPaymentService;
+        private readonly ApplicationDbContextFactory _btcPayDbContextFactory;
+        private readonly PayoutMethodHandlerDictionary _payoutHandlers;
+        private readonly PullPaymentHostedService _pullPaymentHostedService;
 
         public MtPelerinPluginService(MtPelerinPluginDbContextFactory pluginDbContextFactory,
                                       StoreRepository storeRepository,
@@ -47,7 +56,11 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                                       HttpClient httpClient2,
                                       LightningClientFactoryService lightningClientFactory,
                                       IOptions<LightningNetworkOptions> lightningNetworkOptions,
-                                      PaymentMethodHandlerDictionary handlers)
+                                      PullPaymentHostedService pullPaymentService,
+                                      PaymentMethodHandlerDictionary handlers,
+                                      ApplicationDbContextFactory btcPayDbContextFactory,
+                                      PayoutMethodHandlerDictionary payoutHandlers,
+                                      PullPaymentHostedService pullPaymentHostedService)
         {
             _logger = logger;
             _context = pluginDbContextFactory.CreateContext();
@@ -59,6 +72,10 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
             _httpClient2 = httpClient2;
             _lightningClientFactory = lightningClientFactory;
             _lightningNetworkOptions = lightningNetworkOptions;
+            _pullPaymentService = pullPaymentService;
+            _btcPayDbContextFactory = btcPayDbContextFactory;
+            _payoutHandlers = payoutHandlers;
+            _pullPaymentHostedService = pullPaymentHostedService;
         }
 
         public async Task<MtPelerinSettings> GetStoreSettings(string storeId)
@@ -68,7 +85,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 var settings = await _context.MtPelerinSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
-                    settings = new MtPelerinSettings { StoreId = storeId, ApiKey = string.Empty, Lang = "en", Phone = string.Empty };
+                    settings = new MtPelerinSettings { StoreId = storeId, Lang = "en", Phone = string.Empty };
                 }
                 return settings;
 
@@ -92,7 +109,6 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 else
                 {
                     dbSettings.Lang = settings.Lang;
-                    dbSettings.ApiKey = settings.ApiKey;
                     dbSettings.Phone = settings.Phone;
                     _context.MtPelerinSettings.Update(dbSettings);
                 }
@@ -108,33 +124,59 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
             }
         }
 
-        public async Task<List<MtPelerinTx>> GetStoreTransactions(string storeId)
+        public async Task CreatePayout(string storeId, decimal amount, bool isOnChain, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                var txs = await _context.MtPelerinTransactions.Where(a => a.StoreId == storeId).ToListAsync();
-                return txs.Reverse<MtPelerinTx>().ToList();
+            try { 
+                var payoutMethodId = isOnChain ?
+                                        PayoutMethodId.TryParse("BTC-CHAIN") :
+                                        PayoutMethodId.TryParse("BTC-LN");
+
+                var ppRequest = new CreatePullPayment
+                {
+                    Name = "Mt Pelerin 2",
+                    Description = "",
+                    Amount = amount,
+                    Currency = "BTC",
+                    StoreId = storeId,
+                    PayoutMethods = new[] { payoutMethodId },
+                    ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
+                };
+            
+                var ppId = await _pullPaymentService.CreatePullPayment(ppRequest);
+            
+                var btcPayCtx = _btcPayDbContextFactory.CreateContext();
+                var pp = await btcPayCtx.PullPayments.FindAsync(ppId);
+
+                var ppBlob = pp.GetBlob();
+                var payoutHandler = _payoutHandlers.TryGet(payoutMethodId);
+                string error = null;
+
+                IClaimDestination mtPelerinDestination = null;
+                (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(MtPelerinSettings.BtcDestAdress, ppBlob, cancellationToken);
+
+                var result = await _pullPaymentHostedService.Claim(new ClaimRequest
+                {
+                    Destination = mtPelerinDestination,
+                    PullPaymentId = ppId,
+                    ClaimedAmount = amount,
+                    PayoutMethodId = payoutMethodId,
+                    StoreId = pp.StoreId
+                });
+
+                if (result.Result != ClaimRequest.ClaimResult.Ok)
+                {
+                    throw new Exception("Error creating Claim");
+                }
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "MtPelerinPlugin:GetStoreTransactions()");
+                _logger.LogError(e, "MtPelerinPlugin:CreatePayout()");
                 throw;
             }
+
         }
 
-        public async Task AddStoreTransaction (MtPelerinTx tx)
-        {
-            try
-            {
-                await _context.MtPelerinTransactions.AddAsync(tx);
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "MtPelerinPlugin:AddStoreTransaction()");
-                throw;
-            }
-        }
+
 
         public async Task<StoreWalletConfig> GetBalances(string storeId, string BaseUrl)
         {
