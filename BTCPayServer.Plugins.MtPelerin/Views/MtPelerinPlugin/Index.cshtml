@@ -40,11 +40,11 @@
     <div class="accordion-item">
         <h2 class="accordion-header" id="additional-htmlheader-header">
             <button class="accordion-button @(isModelKO ? "" : "collapsed")"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#mtpelerin-config"
-                    aria-expanded="@(isModelKO.ToString().ToLower())"
-                    aria-controls="mtpelerin-config">
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#mtpelerin-config"
+            aria-expanded="@(isModelKO.ToString().ToLower())"
+            aria-controls="mtpelerin-config">
                 <h4>Configuration</h4>
                 <svg role="img" class="icon icon-caret-down">
                     <use href="/img/icon-sprite.svg?v=zHetyUWwEcS2qGEsSu8P6l-mwsFkAqFbknsYrREYYvo#caret-down"></use>
@@ -201,13 +201,13 @@
             const sendSection = document.getElementById('sendSection');
 
             function setMtPelerinValues() {
-                const percent = parseFloat(percentToSend.value) || 0;
-                const isOnChain = document.getElementById('chkOnchain').checked;
-                const fiatBalance = isOnChain ? @walletConfig.OnChainFiatBalance : @walletConfig.OffChainFiatBalance;
-                const btcBalance = isOnChain ? @walletConfig.OnChainBalance : @walletConfig.OffChainBalance;
+            const percent = parseFloat(percentToSend.value) || 0;
+            const isOnChain = document.getElementById('chkOnchain').checked;
+            const fiatBalance = isOnChain ? @walletConfig.OnChainFiatBalance : @walletConfig.OffChainFiatBalance;
+            const btcBalance = isOnChain ? @walletConfig.OnChainBalance : @walletConfig.OffChainBalance;
 
-                lblToSendBTC.textContent = ((percent * btcBalance) / 100).toFixed(8);
-                lblToSendFiat.textContent = Math.round((percent * fiatBalance) / 100);
+            lblToSendBTC.textContent = ((percent * btcBalance) / 100).toFixed(8);
+            lblToSendFiat.textContent = Math.round((percent * fiatBalance) / 100);
             }
 
             function onMtPelerinAsk() {
@@ -223,7 +223,10 @@
 
                 iframeUrl.searchParams.append('_ctkn', '@MtPelerinSettings.ApiKey');
                 iframeUrl.searchParams.append('lang', '@Model.Lang');
-                iframeUrl.searchParams.append('_blgn', @(Model.UseBridgeApp ? 1 : 0));
+                @if(Model.UseBridgeApp)
+                {
+                    @:iframeUrl.searchParams.append('_blgn', 1);
+                }
                 iframeUrl.searchParams.append('phone', '@Model.PhoneInt');
                 iframeUrl.searchParams.append('snet', `${sNet}_mainnet`);
                 iframeUrl.searchParams.append('tabs', 'sell,swap');
