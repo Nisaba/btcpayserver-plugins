@@ -163,10 +163,20 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     StoreId = pp.StoreId
                 });
 
-                if (result.Result != ClaimRequest.ClaimResult.Ok)
+                switch (result.Result)
                 {
-                    throw new Exception("Error creating Claim");
-                }
+                    case ClaimRequest.ClaimResult.Duplicate:
+                        throw new Exception("Duplicate claim for pull payment");
+                    case ClaimRequest.ClaimResult.Expired:
+                        throw new Exception("Pull payment expired");
+                    case ClaimRequest.ClaimResult.Archived:
+                        throw new Exception("Pull payment archived");
+                    case ClaimRequest.ClaimResult.AmountTooLow:
+                        throw new Exception("Claim amount is too low");
+                    case ClaimRequest.ClaimResult.NotStarted:
+                        throw new Exception("Pull payment has not started yet");
+                };
+
             }
             catch (Exception e)
             {

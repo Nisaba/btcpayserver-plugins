@@ -250,18 +250,11 @@
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        window.location.reload();
-                    } else {
-                        alert(data.error || 'Failed to create payout');
-                    }
+                    window.location.reload();
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An error occurred while creating the payout');
+                    window.location.reload();
                 })
                 .finally(() => {
                     btnSend.disabled = false;

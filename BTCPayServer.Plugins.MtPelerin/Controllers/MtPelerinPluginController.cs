@@ -56,18 +56,23 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
             {
                 var settings = await _pluginService.GetStoreSettings(storeId);
                 if (settings == null)
-                    return Json(new { success = false, error = "Store settings not found" });
+                {
+                    TempData[WellKnownTempData.ErrorMessage] = "Store settings not found";
+                    return RedirectToAction("Index");
+                }
 
                 await _pluginService.CreatePayout(
                     settings.StoreId,
                     amount,
                     isOnChain);
 
-                return Json(new { success = true });
+                TempData[WellKnownTempData.SuccessMessage] = "Payout and claim successfully created.";
+                return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, error = ex.Message });
+                TempData[WellKnownTempData.ErrorMessage] = $"Error: {ex.Message}";
+                return RedirectToAction("Index");
             }
         }
 
