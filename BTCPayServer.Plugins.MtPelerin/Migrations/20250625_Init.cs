@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace BTCPayServer.Plugins.MtPelerin.Migrations
 {
     [DbContext(typeof(MtPelerinPluginDbContext))]
-    [Migration("20250624_Init")]
+    [Migration("20250625_Init")]
     public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,6 +21,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Migrations
                 {
                     StoreId = table.Column<string>(nullable: false),
                     Lang = table.Column<string>(nullable: false),
+                    UseBridgeApp = table.Column<bool>(nullable: false),
                     Phone = table.Column<string>(nullable: true),
                 },
                 constraints: table =>

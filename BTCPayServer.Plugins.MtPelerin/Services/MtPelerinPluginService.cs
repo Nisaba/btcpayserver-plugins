@@ -85,7 +85,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 var settings = await _context.MtPelerinSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
-                    settings = new MtPelerinSettings { StoreId = storeId, Lang = "en", Phone = string.Empty };
+                    settings = new MtPelerinSettings { StoreId = storeId, Lang = "en", Phone = string.Empty, UseBridgeApp = false };
                 }
                 return settings;
 
@@ -109,6 +109,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 else
                 {
                     dbSettings.Lang = settings.Lang;
+                    dbSettings.UseBridgeApp = settings.UseBridgeApp;
                     dbSettings.Phone = settings.Phone;
                     _context.MtPelerinSettings.Update(dbSettings);
                 }
@@ -133,7 +134,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
 
                 var ppRequest = new CreatePullPayment
                 {
-                    Name = "Mt Pelerin 2",
+                    Name = "Mt Pelerin",
                     Description = "",
                     Amount = amount,
                     Currency = "BTC",

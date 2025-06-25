@@ -32,6 +32,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
         {
             if (!ModelState.IsValid)
             {
+                TempData[WellKnownTempData.ErrorMessage] = $"Error in data";
                 return View(model);
             }
             if (command == "save")

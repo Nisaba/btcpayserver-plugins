@@ -24,6 +24,9 @@ namespace BTCPayServer.Plugins.MtPelerin.Migrations
                 b.Property<string>("StoreId")
                     .HasColumnType("text");
 
+                b.Property<string>("UseBridgeApp")
+                    .HasColumnType("bit");
+
                 b.Property<string>("Lang")
                     .HasColumnType("text");
 

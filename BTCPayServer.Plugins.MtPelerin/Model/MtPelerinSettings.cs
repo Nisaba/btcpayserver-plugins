@@ -11,7 +11,7 @@ public class MtPelerinSettings
 
     public const string ApiKey = "746407c5-5986-44bf-8c7f-b36c6f180207";
 
-    //public const string BtcDestAdress = "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
+    // public const string BtcDestAdress = "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
     public const string BtcDestAdress = "3LgdKdB9x42m4ujae78NcwUXjYW3z45KrX";
 
     [Key]
@@ -20,9 +20,22 @@ public class MtPelerinSettings
     [Display(Name = "Display language")]
     public string Lang { get; set; }
 
-    [Required]
-    [Display(Name = "Your phone (numbers only)")]
+    [Display(Name = "Use Bridge Wallet App to connect")]
+    public bool UseBridgeApp { get; set; }
+
+    [Display(Name = "Use your phone (numbers only) to connect")]
+    [Phone(ErrorMessage = "Please enter a valid phone number")]
     public string Phone { get; set; }
+
+
+    [NotMapped]
+    public bool isConfigured
+    {
+        get
+        {
+            return UseBridgeApp || !string.IsNullOrEmpty(Phone);
+        }
+    }
 
     [NotMapped]
     public ulong PhoneInt
