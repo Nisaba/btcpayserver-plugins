@@ -198,53 +198,51 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
 
         public async Task<MtPelerinSigningInfo> GetSigningAdressInfo(string storeId)
         {
+            var signInfo = new MtPelerinSigningInfo
+            {
+                Code = 0,
+                Signature = string.Empty,
+                SenderBtcAddress = string.Empty
+            };
+
             try
             {
                 var store = await _storeRepository.FindStore(storeId);
-                if (store == null)
-                    return null;
+
                 var walletId = new WalletId(store.Id, "BTC");
                 var derivationScheme = store.GetDerivationSchemeSettings(_handlers, walletId.CryptoCode);
                 if (derivationScheme == null)
-                    return null;
+                    return signInfo;
 
                 var btcNetwork = _networkProvider.DefaultNetwork as BTCPayNetwork;
                 if (btcNetwork == null)
-                    return null;
+                    return signInfo;
 
                 using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
                 var wallet = _walletProvider.GetWallet(btcNetwork);
                 var utxos = await wallet.GetUnspentCoins(derivationScheme.AccountDerivation);
                 if (utxos.Length == 0)
-                    return null;
+                    return signInfo;
 
                 var utxo = utxos.OrderByDescending(u => u.Value).FirstOrDefault();
                 var address = btcNetwork.NBXplorerNetwork.CreateAddress(derivationScheme.AccountDerivation, utxo.KeyPath, utxo.ScriptPubKey);
+                signInfo.SenderBtcAddress = address.ToString();
 
                 var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
-
                 var privateKeyStr = await explorer.GetMetadataAsync<string>(
                     derivationScheme.AccountDerivation,
                     WellknownMetadataKeys.MasterHDKey);
 
 
-                var code = new Random().Next(1000, 9999);
-                /*  var key = Key.Parse(privateKeyStr, Network.Main);
-                var signature = key.SignMessageBitcoin("MtPelerin-" + code, Network.Main); */
-                var signature = "lkjkljlkjlkjlkjlkjl";
-
-                return new MtPelerinSigningInfo
-                {
-                    SenderBtcAddress = address.ToString(),
-                    Code = code,
-                    Signature = signature
-                };
+                signInfo.Code = new Random().Next(1000, 9999);
+                var key = Key.Parse(privateKeyStr, Network.Main);
+                signInfo.Signature = key.SignMessageBitcoin("MtPelerin-" + signInfo.Code, Network.Main);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "MtPelerinPlugin:GetSigningAdressInfo()");
-                throw;
             }
+            return signInfo;
         }
 
 
