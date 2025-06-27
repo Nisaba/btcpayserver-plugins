@@ -7,7 +7,7 @@
 @inject BTCPayServer.Plugins.MtPelerin.Services.MtPelerinPluginService MtPelerinPluginService
 @inject DisplayFormatter DisplayFormatter
 
-@model BTCPayServer.Plugins.MtPelerin.Model.MtPelerinSettings
+@model BTCPayServer.Plugins.MtPelerin.Model.MtPelerinModel
 @{
     ViewData.SetActivePage(PluginNavPages.Index, "Mt Pelerin plugin");
 }
@@ -32,7 +32,7 @@
 
 <partial name="_StatusMessage" />
 @{
-    var isModelKO = !Model.isConfigured || !ViewData.ModelState.IsValid;
+    var isModelKO = !Model.Settings.isConfigured || !ViewData.ModelState.IsValid;
 }
 <div permission="@Policies.CanModifyStoreSettings">
     <br />
@@ -55,32 +55,32 @@
             <div class="accordion-body">
                 <br />
                 <form method="post" autocomplete="off">
-                    <input asp-for="StoreId" type="hidden" />
+                    <input asp-for="Settings.StoreId" type="hidden" />
                     <table class="table table-sm mt-0 mx-0">
                         <tr>
                             <td width="100">
-                                <label asp-for="Phone" class="form-label"></label>
+                                <label asp-for="Settings.Phone" class="form-label"></label>
                             </td>
                             <td width="300" class="border-0 ps-0 align-middle">
-                                <input asp-for="Phone" data-fill="port" class="form-control"/>
-                                <span asp-validation-for="Phone" class="text-danger"></span>
+                                <input asp-for="Settings.Phone" data-fill="port" class="form-control" />
+                                <span asp-validation-for="Settings.Phone" class="text-danger"></span>
                             </td>
                         </tr>
                         <tr>
                             <td width="100">
-                                <label asp-for="UseBridgeApp" class="form-label"></label>
+                                <label asp-for="Settings.UseBridgeApp" class="form-label"></label>
                             </td>
                             <td width="300" class="border-0 ps-0 align-middle">
-                                <input asp-for="UseBridgeApp" class="form-check-input" type="checkbox" />
-                                <span asp-validation-for="UseBridgeApp" class="text-danger"></span>
+                                <input asp-for="Settings.UseBridgeApp" class="form-check-input" type="checkbox" />
+                                <span asp-validation-for="Settings.UseBridgeApp" class="text-danger"></span>
                             </td>
                         </tr>
                         <tr>
                             <td width="100">
-                                <label asp-for="Lang" class="form-label"></label>
+                                <label asp-for="Settings.Lang" class="form-label"></label>
                             </td>
                             <td width="300" class="border-0 ps-0 align-middle">
-                                <select asp-for="Lang" class="form-select">
+                                <select asp-for="Settings.Lang" class="form-select">
                                     <option value="en">English</option>
                                     <option value="fr">Français</option>
                                     <option value="de">Deutsch</option>
@@ -88,7 +88,7 @@
                                     <option value="es">Español</option>
                                     <option value="pt">Português</option>
                                 </select>
-                                <span asp-validation-for="Lang" class="text-danger"></span>
+                                <span asp-validation-for="Settings.Lang" class="text-danger"></span>
                             </td>
                         </tr>
                         <tr>
@@ -115,7 +115,7 @@
         </p>
     } else
     {
-        var walletConfig = await MtPelerinPluginService.GetBalances(Model.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
+        var walletConfig = await MtPelerinPluginService.GetBalances(Model.Settings.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
 
         <table class="table table-sm mt-0 mx-0">
             <tr>
@@ -169,7 +169,8 @@
             <td width="25" />
             <td><button id="btSend" class="btn btn-primary" onclick="onMtPelerinAsk()">Ask to Mt Pelerin</button></td>
         </table>
-
+        <br />
+        <i>Please check that there is no previous pending Mt Pelerin payout in BTCPay before placing another order.</i>
         <br />
         <div id="frmMtPelerin" style="display:none">
             <div class="mt-3">
@@ -188,19 +189,28 @@
             </div>
         </div>
 
+        @if (Model.IsPayoutCreated)
+        {
+            <div>
+                <strong>Success!</strong> Your payout has been created.<br />
+                If you have set an automatic payout processor, the payment will be sent automatically to Mt Pelerin.<br/>
+                Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.
+            </div>
+        }
+
         <script type="text/javascript">
-            const OnChainBalance = @walletConfig.OnChainBalance;
-            const OffChainBalance = @walletConfig.OffChainBalance;
+        const OnChainBalance = @walletConfig.OnChainBalance;
+        const OffChainBalance = @walletConfig.OffChainBalance;
 
-            const lblToSendBTC = document.getElementById('lblToSendBTC');
-            const lblToSendFiat = document.getElementById('lblToSendFiat');
-            const percentToSend = document.getElementById('percentToSend');
-            const chkOnchain = document.getElementById('chkOnchain');
-            const frmMtPelerin = document.getElementById('frmMtPelerin');
-            const confirmMtPelerin = document.getElementById('confirmMtPelerin');
-            const sendSection = document.getElementById('sendSection');
+        const lblToSendBTC = document.getElementById('lblToSendBTC');
+        const lblToSendFiat = document.getElementById('lblToSendFiat');
+        const percentToSend = document.getElementById('percentToSend');
+        const chkOnchain = document.getElementById('chkOnchain');
+        const frmMtPelerin = document.getElementById('frmMtPelerin');
+        const confirmMtPelerin = document.getElementById('confirmMtPelerin');
+        const sendSection = document.getElementById('sendSection');
 
-            function setMtPelerinValues() {
+        function setMtPelerinValues() {
             const percent = parseFloat(percentToSend.value) || 0;
             const isOnChain = document.getElementById('chkOnchain').checked;
             const fiatBalance = isOnChain ? @walletConfig.OnChainFiatBalance : @walletConfig.OffChainFiatBalance;
@@ -208,77 +218,93 @@
 
             lblToSendBTC.textContent = ((percent * btcBalance) / 100).toFixed(8);
             lblToSendFiat.textContent = Math.round((percent * fiatBalance) / 100);
+        }
+
+        function onMtPelerinAsk() {
+            const percent = parseFloat(percentToSend.value) || 0;
+            const isOnChain = chkOnchain.checked;
+            const balance = isOnChain ? OnChainBalance : OffChainBalance;
+            const amountToSend = (percent * balance) / 100;
+
+            if (amountToSend <= 0) return;
+
+            const sNet = isOnChain ? 'bitcoin' : 'lightning';
+            const iframeUrl = new URL('https://widget.mtpelerin.com/');
+
+            iframeUrl.searchParams.append('_ctkn', '@MtPelerinSettings.ApiKey');
+            iframeUrl.searchParams.append('lang', '@Model.Settings.Lang');
+            @if (Model.Settings.UseBridgeApp)
+            {
+                @:iframeUrl.searchParams.append('_blgn', 1);
             }
+            iframeUrl.searchParams.append('phone', '@Model.Settings.PhoneInt');
+            iframeUrl.searchParams.append('snet', `${sNet}_mainnet`);
+            iframeUrl.searchParams.append('tabs', 'sell,swap');
+            iframeUrl.searchParams.append('tab', 'sell');
+            iframeUrl.searchParams.append('ssc', 'BTC');
+            iframeUrl.searchParams.append('sdc', '@walletConfig.FiatCurrency');
+            iframeUrl.searchParams.append('ssa', amountToSend.toString());
+            iframeUrl.searchParams.append('wsc', 'BTC');
+            iframeUrl.searchParams.append('wdc', '@(walletConfig.FiatCurrency == "EUR" ? "EURC" : "USDT")');
+            iframeUrl.searchParams.append('wsa', amountToSend.toString());
+            /*if (isOnChain) {
+                iframeUrl.searchParams.append('addr', '@Model.SigningInfo.SenderBtcAddress');
+                iframeUrl.searchParams.append('code', '@Model.SigningInfo.Code');
+                iframeUrl.searchParams.append('hash', '@Model.SigningInfo.Signature');
+            }*/
 
-            function onMtPelerinAsk() {
-                const percent = parseFloat(percentToSend.value) || 0;
-                const isOnChain = chkOnchain.checked;
-                const balance = isOnChain ? OnChainBalance : OffChainBalance;
-                const amountToSend = (percent * balance) / 100;
+            window.addEventListener('message', handleMtPelerinMessage, false);
+            window.open(iframeUrl.toString(), 'mtp', 'width=570,height=745,scrollbars=yes,resizable=yes');
+            amountToSendConfirm.textContent = amountToSend.toString()
+            frmMtPelerin.style.display = '';
+        }
 
-                if (amountToSend <= 0) return;
+        function handleMtPelerinMessage(event) {
+            console.log(event);
+            if (event.origin !== 'https://widget.mtpelerin.com') return;
 
-                const sNet = isOnChain ? 'bitcoin' : 'lightning';
-                const iframeUrl = new URL('https://widget.mtpelerin.com/');
+            if (event.data.type === 'paymentSubmitted') {
+                sendToMtPelerin();
+                window.removeEventListener('message', handleMtPelerinMessage);
+            }
+        }
 
-                iframeUrl.searchParams.append('_ctkn', '@MtPelerinSettings.ApiKey');
-                iframeUrl.searchParams.append('lang', '@Model.Lang');
-                @if(Model.UseBridgeApp)
-                {
-                    @:iframeUrl.searchParams.append('_blgn', 1);
+        function onConfirmChange() {
+            sendSection.style.display = confirmMtPelerin.checked ? 'block' : 'none';
+        }
+
+        function sendToMtPelerin() {
+            const percent = parseFloat(percentToSend.value) || 0;
+            const isOnChain = chkOnchain.checked;
+            const amountBtc = parseFloat(lblToSendBTC.textContent);
+            const btnSend = document.getElementById('btnSendToMtPelerin');
+            btnSend.disabled = true;
+
+            const formData = new FormData();
+            formData.append('amount', amountBtc);
+            formData.append('isOnChain', isOnChain);
+
+            fetch('MtPelerin/createpayout', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
-                iframeUrl.searchParams.append('phone', '@Model.PhoneInt');
-                iframeUrl.searchParams.append('snet', `${sNet}_mainnet`);
-                iframeUrl.searchParams.append('tabs', 'sell,swap');
-                iframeUrl.searchParams.append('tab', 'sell');
-                iframeUrl.searchParams.append('ssc', 'BTC');
-                iframeUrl.searchParams.append('sdc', '@walletConfig.FiatCurrency');
-                iframeUrl.searchParams.append('ssa', amountToSend.toString());
-                iframeUrl.searchParams.append('wsc', 'BTC');
-                iframeUrl.searchParams.append('wdc', '@(walletConfig.FiatCurrency == "EUR" ? "EURC" : "USDT")');
-                iframeUrl.searchParams.append('wsa', amountToSend.toString());
-
-                window.open(iframeUrl.toString(), 'mtp', 'width=570,height=745,scrollbars=yes,resizable=yes');
-                amountToSendConfirm.textContent = amountToSend.toString()
-                frmMtPelerin.style.display = '';    
-            }
-
-            function onConfirmChange() {
-                sendSection.style.display = confirmMtPelerin.checked ? 'block' : 'none';
-            }
-
-            function sendToMtPelerin() {
-                const percent = parseFloat(percentToSend.value) || 0;
-                const isOnChain = chkOnchain.checked;
-                const amountBtc = parseFloat(lblToSendBTC.textContent);
-                const btnSend = document.getElementById('btnSendToMtPelerin');
-                btnSend.disabled = true;
-
-                const formData = new FormData();
-                formData.append('amount', amountBtc);
-                formData.append('isOnChain', isOnChain);
-
-                fetch('MtPelerin/createpayout', {
-                    method: 'POST',
-                    headers: {
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    },
-                    body: formData
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    window.location.reload();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    window.location.reload();
-                })
-                .finally(() => {
-                    btnSend.disabled = false;
-                });
-            }
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.location.reload();
+            })
+            .finally(() => {
+                btnSend.disabled = false;
+            });
+        }
         </script>
     }
 </div>

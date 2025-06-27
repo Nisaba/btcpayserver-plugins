@@ -18,15 +18,19 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
 using NBitcoin.Protocol;
+using NBXplorer;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using NBitcoin;
 using PayoutData = BTCPayServer.Data.PayoutData;
 using PullPaymentData = BTCPayServer.Data.PullPaymentData;
+using static QRCoder.PayloadGenerator;
 
 namespace BTCPayServer.Plugins.MtPelerin.Services
 {
@@ -46,6 +50,8 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
         private readonly ApplicationDbContextFactory _btcPayDbContextFactory;
         private readonly PayoutMethodHandlerDictionary _payoutHandlers;
         private readonly PullPaymentHostedService _pullPaymentHostedService;
+        private readonly ExplorerClientProvider _explorerClientProvider;
+
 
         public MtPelerinPluginService(MtPelerinPluginDbContextFactory pluginDbContextFactory,
                                       StoreRepository storeRepository,
@@ -60,7 +66,8 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                                       PaymentMethodHandlerDictionary handlers,
                                       ApplicationDbContextFactory btcPayDbContextFactory,
                                       PayoutMethodHandlerDictionary payoutHandlers,
-                                      PullPaymentHostedService pullPaymentHostedService)
+                                      PullPaymentHostedService pullPaymentHostedService,
+                                      ExplorerClientProvider explorerClientProvider)
         {
             _logger = logger;
             _context = pluginDbContextFactory.CreateContext();
@@ -76,6 +83,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
             _btcPayDbContextFactory = btcPayDbContextFactory;
             _payoutHandlers = payoutHandlers;
             _pullPaymentHostedService = pullPaymentHostedService;
+            _explorerClientProvider = explorerClientProvider;
         }
 
         public async Task<MtPelerinSettings> GetStoreSettings(string storeId)
@@ -161,7 +169,8 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     PullPaymentId = ppId,
                     ClaimedAmount = amount,
                     PayoutMethodId = payoutMethodId,
-                    StoreId = pp.StoreId
+                    StoreId = pp.StoreId,
+                    PreApprove = true,
                 });
 
                 switch (result.Result)
@@ -187,6 +196,56 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
 
         }
 
+        public async Task<MtPelerinSigningInfo> GetSigningAdressInfo(string storeId)
+        {
+            try
+            {
+                var store = await _storeRepository.FindStore(storeId);
+                if (store == null)
+                    return null;
+                var walletId = new WalletId(store.Id, "BTC");
+                var derivationScheme = store.GetDerivationSchemeSettings(_handlers, walletId.CryptoCode);
+                if (derivationScheme == null)
+                    return null;
+
+                var btcNetwork = _networkProvider.DefaultNetwork as BTCPayNetwork;
+                if (btcNetwork == null)
+                    return null;
+
+                using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
+                var wallet = _walletProvider.GetWallet(btcNetwork);
+                var utxos = await wallet.GetUnspentCoins(derivationScheme.AccountDerivation);
+                if (utxos.Length == 0)
+                    return null;
+
+                var utxo = utxos.OrderByDescending(u => u.Value).FirstOrDefault();
+                var address = btcNetwork.NBXplorerNetwork.CreateAddress(derivationScheme.AccountDerivation, utxo.KeyPath, utxo.ScriptPubKey);
+
+                var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
+
+                var privateKeyStr = await explorer.GetMetadataAsync<string>(
+                    derivationScheme.AccountDerivation,
+                    WellknownMetadataKeys.MasterHDKey);
+
+
+                var code = new Random().Next(1000, 9999);
+                /*  var key = Key.Parse(privateKeyStr, Network.Main);
+                var signature = key.SignMessageBitcoin("MtPelerin-" + code, Network.Main); */
+                var signature = "lkjkljlkjlkjlkjlkjl";
+
+                return new MtPelerinSigningInfo
+                {
+                    SenderBtcAddress = address.ToString(),
+                    Code = code,
+                    Signature = signature
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "MtPelerinPlugin:GetSigningAdressInfo()");
+                throw;
+            }
+        }
 
 
         public async Task<StoreWalletConfig> GetBalances(string storeId, string BaseUrl)

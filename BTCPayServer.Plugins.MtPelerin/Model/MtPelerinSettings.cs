@@ -11,8 +11,11 @@ public class MtPelerinSettings
 
     public const string ApiKey = "746407c5-5986-44bf-8c7f-b36c6f180207";
 
-    // public const string BtcDestAdress = "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
-    public const string BtcDestAdress = "3LgdKdB9x42m4ujae78NcwUXjYW3z45KrX";
+    #if DEBUG
+        public const string BtcDestAdress = "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
+    #else
+        public const string BtcDestAdress = "3LgdKdB9x42m4ujae78NcwUXjYW3z45KrX";
+    #endif
 
     [Key]
     public string StoreId { get; set; }

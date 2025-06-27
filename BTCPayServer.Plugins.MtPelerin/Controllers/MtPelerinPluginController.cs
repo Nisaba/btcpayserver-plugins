@@ -23,12 +23,21 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
         {
-            var model = await _pluginService.GetStoreSettings(storeId);
+            var model = new MtPelerinModel()
+            {
+                Settings = await _pluginService.GetStoreSettings(storeId),
+                IsPayoutCreated = (TempData[WellKnownTempData.SuccessMessage] ?? "").ToString() == "Payout created!"
+            };
+            if (model.Settings.isConfigured)
+            {
+                model.SigningInfo = await _pluginService.GetSigningAdressInfo(storeId); ;
+            }
+           
             return View(model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Index(MtPelerinSettings model, string command)
+        public async Task<IActionResult> Index(MtPelerinModel model, string command)
         {
             if (!ModelState.IsValid)
             {
@@ -39,7 +48,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
             {
                 try
                 {
-                    await _pluginService.UpdateSettings(model);
+                    await _pluginService.UpdateSettings(model.Settings);
                     TempData[WellKnownTempData.SuccessMessage] = "Settings successfuly saved";
                 }
                 catch (Exception ex)
@@ -67,7 +76,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
                     amount,
                     isOnChain);
 
-                TempData[WellKnownTempData.SuccessMessage] = "Payout and claim successfully created.";
+                TempData[WellKnownTempData.SuccessMessage] = "Payout created!";
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
