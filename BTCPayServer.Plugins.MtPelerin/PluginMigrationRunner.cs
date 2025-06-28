@@ -22,17 +22,20 @@ public class PluginMigrationRunner : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var settings = await _settingsRepository.GetSettingAsync<PluginDataMigrationHistory>() ??
-                       new PluginDataMigrationHistory();
-        await using var ctx = _pluginDbContextFactory.CreateContext();
-        await ctx.Database.MigrateAsync(cancellationToken);
-
-        // settings migrations
-        if (!settings.UpdatedSomething)
+        try
         {
-            settings.UpdatedSomething = true;
-            await _settingsRepository.UpdateSetting(settings);
-        }
+            var settings = await _settingsRepository.GetSettingAsync<PluginDataMigrationHistory>() ??
+                       new PluginDataMigrationHistory();
+            await using var ctx = _pluginDbContextFactory.CreateContext();
+            await ctx.Database.MigrateAsync(cancellationToken);
+
+            // settings migrations
+            if (!settings.UpdatedSomething)
+            {
+                settings.UpdatedSomething = true;
+                await _settingsRepository.UpdateSetting(settings);
+            }
+        } catch { }
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
