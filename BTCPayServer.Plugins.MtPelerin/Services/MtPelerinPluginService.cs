@@ -17,20 +17,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
-using NBitcoin.Protocol;
 using NBXplorer;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using NBitcoin;
-using PayoutData = BTCPayServer.Data.PayoutData;
-using PullPaymentData = BTCPayServer.Data.PullPaymentData;
-using static QRCoder.PayloadGenerator;
 
 namespace BTCPayServer.Plugins.MtPelerin.Services
 {
@@ -133,7 +127,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
             }
         }
 
-        public async Task CreatePayout(string storeId, decimal amount, bool isOnChain, CancellationToken cancellationToken = default)
+        public async Task CreatePayout(string storeId, decimal amount, bool isOnChain, string mtPelerinId, CancellationToken cancellationToken = default)
         {
             try { 
                 var payoutMethodId = isOnChain ?
@@ -142,7 +136,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
 
                 var ppRequest = new CreatePullPayment
                 {
-                    Name = "Mt Pelerin",
+                    Name = "Mt Pelerin - " + mtPelerinId,
                     Description = "",
                     Amount = amount,
                     Currency = "BTC",

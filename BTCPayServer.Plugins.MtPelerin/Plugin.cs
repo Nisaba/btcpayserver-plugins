@@ -20,13 +20,13 @@ public class Plugin : BaseBTCPayServerPlugin
         
         services.AddHostedService<ApplicationPartsLogger>();
         services.AddHostedService<PluginMigrationRunner>();
-        services.AddSingleton<MtPelerinPluginService>();
         services.AddSingleton<MtPelerinPluginDbContextFactory>();
         services.AddDbContext<MtPelerinPluginDbContext>((provider, o) =>
         {
             var factory = provider.GetRequiredService<MtPelerinPluginDbContextFactory>();
             factory.ConfigureBuilder(o);
         });
+        services.AddSingleton<MtPelerinPluginService>();
 
     }
 

@@ -7,7 +7,7 @@
 	<!-- Plugin specific properties -->
 	<PropertyGroup>
 		<Product>MtPelerin</Product>
-		<Description>Allows you to forward received funds to MtPelerin, a Swiss offramp provider, and get funds in EUR, CHF or other currencies.</Description>
+		<Description>Allows you to forward received funds to MtPelerin, a Swiss offramp provider. Get funds in fiat (EUR, CHF or other currencies) or make a swap to the crypto you want.</Description>
 		<Version>1.0.1</Version>
 	</PropertyGroup>
 

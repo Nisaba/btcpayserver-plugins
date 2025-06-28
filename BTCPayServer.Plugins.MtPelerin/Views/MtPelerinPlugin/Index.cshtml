@@ -24,7 +24,7 @@
             <h2>@ViewData["Title"]</h2>
             <br />
             <p>
-                Allows you to forward received funds to MtPelerin, a Swiss offramp provider, and get funds in EUR, CHF or other currencies.
+                Allows you to forward received funds to MtPelerin, a Swiss offramp provider. Get funds in fiat (EUR, CHF or other currencies) or make a swap to the crypto you want.
             </p>
         </td>
     </tr></table>
@@ -192,10 +192,12 @@
 
         @if (Model.IsPayoutCreated)
         {
+            <br />
             <div>
                 <strong>Success!</strong> Your payout has been created.<br />
                 If you have set an automatic payout processor, the payment will be sent automatically to Mt Pelerin.<br/>
-                Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.
+                Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.<br />
+                If an issue arises, please contact hello@mtpelerin.com.
             </div>
         }
 
@@ -252,7 +254,7 @@
             iframeUrl.searchParams.append('wsc', 'BTC');
             iframeUrl.searchParams.append('wdc', '@(walletConfig.FiatCurrency == "EUR" ? "EURC" : "USDT")');
             iframeUrl.searchParams.append('wsa', amountToSend.toString());
-            if (isOnChain && @(Model.SigningInfo.SenderBtcAddress != "")) {
+            if (isOnChain && @((Model.SigningInfo.SenderBtcAddress != "").ToString().ToLower())) {
                 iframeUrl.searchParams.append('addr', '@Model.SigningInfo.SenderBtcAddress');
                 if ('@Model.SigningInfo.Signature' !== '') {
                     iframeUrl.searchParams.append('code', '@Model.SigningInfo.Code');
@@ -267,11 +269,10 @@
         }
 
         function handleMtPelerinMessage(event) {
-            console.log(event);
             if (event.origin !== 'https://widget.mtpelerin.com') return;
 
             if (event.data.type === 'paymentSubmitted') {
-                sendToMtPelerin();
+                sendToMtPelerin(event.data.data.paymentId);
                 window.removeEventListener('message', handleMtPelerinMessage);
             }
         }
@@ -280,7 +281,7 @@
             sendSection.style.display = confirmMtPelerin.checked ? 'block' : 'none';
         }
 
-        function sendToMtPelerin() {
+        function sendToMtPelerin(payId) {
             const percent = parseFloat(percentToSend.value) || 0;
             const isOnChain = chkOnchain.checked;
             const amountBtc = parseFloat(lblToSendBTC.textContent);
@@ -289,6 +290,7 @@
 
             const formData = new FormData();
             formData.append('amount', amountBtc);
+            formData.append('mtPelerinId', payId);
             formData.append('isOnChain', isOnChain);
 
             fetch('MtPelerin/createpayout', {
