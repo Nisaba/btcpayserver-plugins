@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace BTCPayServer.Plugins.MtPelerin.Migrations
 {
     [DbContext(typeof(MtPelerinPluginDbContext))]
-    [Migration("20250629_Init")]
+    [Migration("20250630_Init")]
     public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
