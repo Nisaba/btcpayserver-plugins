@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace BTCPayServer.Plugins.Exolix.Model;
 
@@ -19,6 +21,15 @@ public class ExolixSettings
 
     [Display(Name = "Allow customer to specify a refund address if the swap fails")]
     public bool AllowRefundAddress { get; set; }
+
+    [NotMapped]
+    public bool isConfigured
+    {
+        get
+        {
+            return AcceptedCryptos.Any() && Enabled;
+        }
+    }
 
     public static readonly IReadOnlyDictionary<string, string> AvailableCryptos = new ReadOnlyDictionary<string, string>(
         new Dictionary<string, string>

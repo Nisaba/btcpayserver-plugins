@@ -4,7 +4,7 @@
 @using BTCPayServer.Client
 @using BTCPayServer.Services
 
-@inject BTCPayServer.Plugins.Exolix.Services.ExolixService ExolixPluginService
+@inject BTCPayServer.Plugins.Exolix.Services.ExolixPluginService ExolixPluginService
 @inject DisplayFormatter DisplayFormatter
 
 @model BTCPayServer.Plugins.Exolix.Model.ExolixModel
@@ -22,6 +22,7 @@
             <br />
             <p>
                 Allows your customers to pay with altcoins that are not supported by BTCPay Server, using<br/><a href="https://exolix.com?ref=F782BF2EAB748E0419F6CF993005341E" target="_blank">Exolix service</a>, in a seamless way.<br/>
+                You can also swap you BTC onchain to altcoins using this plugin.<br />
                 Please read our documentation <a href="https://github.com/Nisaba/btcpayserver-plugins/blob/master/BTCPayServer.Plugins.Exolix/README.md" target="_blank">here</a>.
             </p>
         </td>
@@ -31,119 +32,246 @@
 
 <partial name="_StatusMessage" />
 <br />
-
-<div class="row" permission="@Policies.CanModifyStoreSettings">
-    <div class="col-md-10">
-        <form method="post">
-            <input asp-for="Settings.StoreId" type="hidden" />
-            <div class="form-group">
-                <table>
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <input asp-for="@Model.Settings.Enabled" type="checkbox" class="btcpay-toggle me-3" />
-                                <label asp-for="@Model.Settings.Enabled" class="form-check-label"></label>
-                            </div>
-                        </td>
-                        <td width="100%" align="right">
-                            <button name="command" type="submit" value="save" class="btn btn-primary">Save</button>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            <!--            <div class="form-group">
-                <div class="d-flex align-items-center">
-                    <input asp-for="@Model.Settings.IsEmailToCustomer" type="checkbox" class="btcpay-toggle me-3" />
-                    <label asp-for="@Model.Settings.IsEmailToCustomer" class="form-check-label"></label>
+@{
+    var isModelKO = !Model.Settings.isConfigured || !ViewData.ModelState.IsValid;
+}
+<div class="accordion-item" permission="@Policies.CanModifyStoreSettings">
+    <h2 class="accordion-header" id="additional-configheader-header">
+        <button class="accordion-button @(isModelKO ? "" : "collapsed")"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#exolix-config"
+        aria-expanded="@(isModelKO.ToString().ToLower())"
+        aria-controls="exolix-config">
+            <h4>Configuration</h4>
+            <svg role="img" class="icon icon-caret-down">
+                <use href="/img/icon-sprite.svg?v=zHetyUWwEcS2qGEsSu8P6l-mwsFkAqFbknsYrREYYvo#caret-down"></use>
+            </svg>
+        </button>
+    </h2>
+    <div id="exolix-config" class="accordion-collapse collapse @(isModelKO ? "show" : "")" aria-labelledby="additional-configheader-header" style="">
+        <div class="accordion-body">
+            <br />
+            <form method="post">
+                <input asp-for="Settings.StoreId" type="hidden" />
+                <div class="form-group">
+                    <table>
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <input asp-for="@Model.Settings.Enabled" type="checkbox" class="btcpay-toggle me-3" />
+                                    <label asp-for="@Model.Settings.Enabled" class="form-check-label"></label>
+                                </div>
+                            </td>
+                            <td width="100%" align="right">
+                                <button name="command" type="submit" value="save" class="btn btn-primary">Save</button>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
-            </div>
-           <div class="form-group">
+                <!--            <div class="form-group">
                 <div class="d-flex align-items-center">
-                    <input asp-for="@Model.Settings.AllowRefundAddress" type="checkbox" class="btcpay-toggle me-3" />
-                    <label asp-for="@Model.Settings.AllowRefundAddress" class="form-check-label"></label>
+                <input asp-for="@Model.Settings.IsEmailToCustomer" type="checkbox" class="btcpay-toggle me-3" />
+                <label asp-for="@Model.Settings.IsEmailToCustomer" class="form-check-label"></label>
                 </div>
-                       </div> -->
+                </div>
+                <div class="form-group">
+                <div class="d-flex align-items-center">
+                <input asp-for="@Model.Settings.AllowRefundAddress" type="checkbox" class="btcpay-toggle me-3" />
+                <label asp-for="@Model.Settings.AllowRefundAddress" class="form-check-label"></label>
+                </div>
+                </div> -->
 
-            <div class="form-group">
-                <label class="form-label" asp-for="@Model.Settings.AcceptedCryptos">
-                    Accepted Cryptos (press Control to select multi values):
-                </label>
-                <select asp-for="@Model.Settings.AcceptedCryptos" class="form-select w-auto" id="default-payment-method" size="25">
-                    @foreach (var crypto in ExolixSettings.AvailableCryptos)
-                    {
-                        <option value="@crypto.Key">@crypto.Value</option>
-                    }
-                </select>
-            </div>
-            
-        </form>
+                <div class="form-group">
+                    <label class="form-label" asp-for="@Model.Settings.AcceptedCryptos">
+                        Accepted Cryptos (press Control to select multi values):
+                    </label>
+                    <select asp-for="@Model.Settings.AcceptedCryptos" class="form-select w-auto" id="default-payment-method" size="25">
+                        @foreach (var crypto in ExolixSettings.AvailableCryptos)
+                        {
+                            <option value="@crypto.Key">@crypto.Value</option>
+                        }
+                    </select>
+                </div>
+
+            </form>
+        </div>
     </div>
 
 </div>
 
-<div class="row" permission="@Policies.CanViewInvoices">
-    <div style="height:20px"></div>
-    <h4>Eolix Transactions</h4>
-    @if (Model.Transactions.Any())
-    {
-        var page = Context.Request.Query["page"].Count > 0 ? int.Parse(Context.Request.Query["page"]) : 1;
-        var pageSize = 20;
-        var totalItems = Model.Transactions.Count();
-        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-        var pagedTransactions = Model.Transactions
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-
-        <div class="table-responsive">
-            <table class="table table-hover mass-action">
-                <thead class="mass-action-head">
-                    <tr>
-                        <th class="text-nowrap">Swap Id</th>
-                        <th class="text-nowrap">Date</th>
-                        <th class="text-nowrap">Altcoin</th>
-                        <th class="text-nowrap">Amount (BTC)</th>
-                        <th class="text-nowrap">Invoice</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in pagedTransactions)
-                    {
-                        <tr class="mass-action-row item">
-                            <td class="text-break align-middle invoiceId-col">
-                                <a href="https://exolix.com/api/v2/transactions/@item.TxID" target="_blank" class="invoice-details-link">@item.TxID</a>
-                            </td>
-                            <td>@item.DateT</td>
-                            <td class="align-center">
-                                <div class="badge badge-expired">
-                                    @item.AltcoinFrom
-                                </div>
-                            </td>
-                            <td class="align-right">@item.BTCAmount</td>
-                            <td class="text-break align-middle invoiceId-col">
-                                <a asp-controller="UIInvoice" asp-action="Invoice" asp-route-invoiceId="@item.BTCPayInvoiceId" class="text-break">@item.BTCPayInvoiceId</a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-        <nav aria-label="Page navigation" class="mt-3">
-            <ul class="pagination justify-content-center">
-                <li class="page-item @(page == 1 ? "disabled" : "")">
-                    <a class="page-link" href="?page=@(page - 1)" tabindex="-1">Previous</a>
-                </li>
-                @for (var i = 1; i <= totalPages; i++)
+<div class="accordion-item" permission="@Policies.CanCreateNonApprovedPullPayments,@Policies.CanManagePayouts">
+    <h2 class="accordion-header" id="additional-configheader-header">
+        <button class="accordion-button @(isModelKO ? "" : "collapsed")"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#exolix-payouts"
+        aria-expanded="true"
+        aria-controls="exolix-payouts">
+            <h4>New Payout</h4>
+            <svg role="img" class="icon icon-caret-down">
+                <use href="/img/icon-sprite.svg?v=zHetyUWwEcS2qGEsSu8P6l-mwsFkAqFbknsYrREYYvo#caret-down"></use>
+            </svg>
+        </button>
+    </h2>
+    <div id="exolix-payouts" class="accordion-collapse collapse show" aria-labelledby="additional-htmlheader-header" style="">
+        <div class="accordion-body">
+            <br />
+            @if (isModelKO)
+            {
+                <p>
+                    <i>Exolix settings not set for this store...</i>
+                </p>
+            } else
+            {
+                var walletConfig = await ExolixPluginService.GetBalances(Model.Settings.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
+                @if (walletConfig.OnChainEnabled)
                 {
-                    <li class="page-item @(i == page ? "active" : "")">
-                        <a class="page-link" href="?page=@i">@i</a>
-                    </li>
+                    <p><b>Onchain Balance</b>: @walletConfig.OnChainBalance BTC  ~ @DisplayFormatter.Currency(walletConfig.OnChainFiatBalance, walletConfig.FiatCurrency)</p>
                 }
-                <li class="page-item @(page == totalPages ? "disabled" : "")">
-                    <a class="page-link" href="?page=@(page + 1)">Next</a>
-                </li>
-            </ul>
-        </nav>
+                else
+                {
+                    <p>On Chain wallet not configured</p>
+                }
+                @if (walletConfig.OnChainBalance == 0)
+                {
+                    <p>No bitcoins available for sale</p>
+                }
+                <table>
+                    <td>
+                        Percent to sale/swap:&nbsp;
+                        <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setExolixValues()" />
+                        <br />
+                    </td>
+                    <td width="25" />
+                    <td>
+                        <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
+                        <label id="lblToSendFiat">@((int)walletConfig.OnChainFiatBalance)</label>&nbsp; @walletConfig.FiatCurrency
+                    </td>
+                    <td width="25" />
+                    <td><button id="btSend" class="btn btn-primary" onclick="onExolixSwap()">ExolixSwap</button></td>
+                </table>
 
-    }
+                <script type="text/javascript">
+                    const OnChainBalance = @walletConfig.OnChainBalance;
+
+                    const lblToSendBTC = document.getElementById('lblToSendBTC');
+                    const lblToSendFiat = document.getElementById('lblToSendFiat');
+                    const percentToSend = document.getElementById('percentToSend');
+
+                    function setExolixValues() {
+                        const percent = parseFloat(percentToSend.value) || 0;
+                        const fiatBalance = @walletConfig.OnChainFiatBalance;
+                        const btcBalance = @walletConfig.OnChainBalance;
+
+                        lblToSendBTC.textContent = ((percent * btcBalance) / 100).toFixed(8);
+                        lblToSendFiat.textContent = Math.round((percent * fiatBalance) / 100);
+                    }
+
+                    function onExolixSwap() {
+                        const percent = parseFloat(percentToSend.value) || 0;
+                        const fiatBalance = @walletConfig.OnChainFiatBalance;
+                        const btcBalance = @walletConfig.OnChainBalance;
+                        if (percent <= 0 || percent > 100) {
+                            alert("Please enter a valid percentage between 1 and 100.");
+                            return;
+                        }
+                        const amountToSendBTC = ((percent * btcBalance) / 100).toFixed(8);
+                        const amountToSendFiat = Math.round((percent * fiatBalance) / 100);
+                        if (confirm(`Are you sure you want to swap ${amountToSendBTC} BTC for approximately ${amountToSendFiat} ${@walletConfig.FiatCurrency}?`)) {
+                           // window.location.href = `@Url.Action("ExolixSwap", "UIInvoice")?amount=${amountToSendBTC}&fiatAmount=${amountToSendFiat}`;
+                        }
+                    }
+                </script>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="accordion-item" permission="@Policies.CanViewInvoices">
+    <div style="height:20px"></div>
+    <h2 class="accordion-header" id="additional-txheader-header">
+        <button class="accordion-button @(isModelKO ? "" : "collapsed")"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#exolix-tx"
+        aria-expanded="true"
+        aria-controls="exolix-tx">
+            <h4>Exolix Customers Transactions</h4>
+            <svg role="img" class="icon icon-caret-down">
+                <use href="/img/icon-sprite.svg?v=zHetyUWwEcS2qGEsSu8P6l-mwsFkAqFbknsYrREYYvo#caret-down"></use>
+            </svg>
+        </button>
+    </h2>
+    <div id="exolix-tx" class="accordion-collapse collapse show" aria-labelledby="additional-htmlheader-header" style="">
+        <div class="accordion-body">
+            <br />
+            @if (!Model.Transactions.Any())
+            {
+                <p>
+                    <i>No Exolix transactions for this store...</i>
+                </p>
+            } else {
+                var page = Context.Request.Query["page"].Count > 0 ? int.Parse(Context.Request.Query["page"]) : 1;
+                var pageSize = 20;
+                var totalItems = Model.Transactions.Count();
+                var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+                var pagedTransactions = Model.Transactions
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                <div class="table-responsive">
+                    <table class="table table-hover mass-action">
+                        <thead class="mass-action-head">
+                            <tr>
+                                <th class="text-nowrap">Swap Id</th>
+                                <th class="text-nowrap">Date</th>
+                                <th class="text-nowrap">Altcoin</th>
+                                <th class="text-nowrap">Amount (BTC)</th>
+                                <th class="text-nowrap">Invoice</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in pagedTransactions)
+                            {
+                                <tr class="mass-action-row item">
+                                    <td class="text-break align-middle invoiceId-col">
+                                        <a href="https://exolix.com/api/v2/transactions/@item.TxID" target="_blank" class="invoice-details-link">@item.TxID</a>
+                                    </td>
+                                    <td>@item.DateT</td>
+                                    <td class="align-center">
+                                        <div class="badge badge-expired">
+                                            @item.AltcoinFrom
+                                        </div>
+                                    </td>
+                                    <td class="align-right">@item.BTCAmount</td>
+                                    <td class="text-break align-middle invoiceId-col">
+                                        <a asp-controller="UIInvoice" asp-action="Invoice" asp-route-invoiceId="@item.BTCPayInvoiceId" class="text-break">@item.BTCPayInvoiceId</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <nav aria-label="Page navigation" class="mt-3">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(page == 1 ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(page - 1)" tabindex="-1">Previous</a>
+                        </li>
+                        @for (var i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == page ? "active" : "")">
+                                <a class="page-link" href="?page=@i">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(page == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(page + 1)">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+
+            }
+        </div>
+    </div>
 </div>
