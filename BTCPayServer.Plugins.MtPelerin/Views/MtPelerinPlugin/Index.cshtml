@@ -273,10 +273,9 @@
         }
 
         function sendToMtPelerin(createdOrderData) {
-            var i = 0;
             const percent = parseFloat(percentToSend.value) || 0;
             const isOnChain = chkOnchain.checked;
-            const amountBtc = parseFloat(createdOrderData.valueIn);
+            var amountBtc = parseFloat(createdOrderData.valueIn);
 
             if(!isOnChain) {
                 amountBtc /= 100000000;
