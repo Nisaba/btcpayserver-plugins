@@ -12,8 +12,13 @@
         {
             byte[] messageBytes = FormatMessageForSigning(message);
             var hash = Hashes.DoubleSHA256(messageBytes);
-            var sig = key.SignCompact(hash, key.PubKey.IsCompressed);
-            return Convert.ToBase64String(sig.Signature);  
+            var compactSig = key.SignCompact(hash, key.PubKey.IsCompressed);
+
+            byte[] signatureBytes = new byte[65];
+            signatureBytes[0] = (byte)(27 + compactSig.RecoveryId + (key.PubKey.IsCompressed ? 4 : 0));
+            Array.Copy(compactSig.Signature, 0, signatureBytes, 1, 64);
+
+            return Convert.ToBase64String(signatureBytes);
         }
 
         private static byte[] FormatMessageForSigning(string message)
