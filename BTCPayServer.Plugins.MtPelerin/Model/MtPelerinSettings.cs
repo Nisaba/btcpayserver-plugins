@@ -14,8 +14,9 @@ public class MtPelerinSettings
     #if DEBUG
         public const string BtcDestAdress = "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
     #else
-        public const string BtcDestAdress = "3LgdKdB9x42m4ujae78NcwUXjYW3z45KrX";
+            public const string BtcDestAdress = "3LgdKdB9x42m4ujae78NcwUXjYW3z45KrX";
     #endif
+    public const string LnAddress = "mtpelerin@ln.mtpelerin.com";
 
     [Key]
     public string StoreId { get; set; }

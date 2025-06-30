@@ -18,10 +18,10 @@
 
         private static byte[] FormatMessageForSigning(string message)
         {
-           // var magic = "Bitcoin Signed Message:\n";
+            var magic = "Bitcoin Signed Message:\n";
             var ms = new MemoryStream();
             var writer = new BinaryWriter(ms);
-           // WriteVarString(writer, magic);
+            WriteVarString(writer, magic);
             WriteVarString(writer, message);
             return ms.ToArray();
         }

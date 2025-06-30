@@ -60,7 +60,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
         }
 
         [HttpPost("createpayout")]
-        public async Task<IActionResult> CreatePayout([FromRoute] string storeId, [FromForm] decimal amount, [FromForm] string mtPelerinId, [FromForm] bool isOnChain)
+        public async Task<IActionResult> CreatePayout([FromRoute] string storeId, [FromBody] MtPelerinOperation operation)
         {
             try
             {
@@ -73,11 +73,9 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
 
                 await _pluginService.CreatePayout(
                     settings.StoreId,
-                    amount,
-                    isOnChain,
-                    mtPelerinId);
+                    operation);
 
-                TempData[WellKnownTempData.SuccessMessage] = $"Payout created! Mt Pelerin ID: {mtPelerinId}";
+                TempData[WellKnownTempData.SuccessMessage] = $"Payout created! Mt Pelerin ID: {operation.MtPelerinId}";
                 return RedirectToAction("Index");
             }
             catch (Exception ex)

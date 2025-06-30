@@ -17,12 +17,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
+using NBitcoin.Crypto;
+using NBitcoin.Protocol;
 using NBXplorer;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -127,18 +131,18 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
             }
         }
 
-        public async Task CreatePayout(string storeId, decimal amount, bool isOnChain, string mtPelerinId, CancellationToken cancellationToken = default)
+        public async Task CreatePayout(string storeId, MtPelerinOperation operation, CancellationToken cancellationToken = default)
         {
             try { 
-                var payoutMethodId = isOnChain ?
+                var payoutMethodId = operation.IsOnChain ?
                                         PayoutMethodId.TryParse("BTC-CHAIN") :
                                         PayoutMethodId.TryParse("BTC-LN");
 
                 var ppRequest = new CreatePullPayment
                 {
-                    Name = "Mt Pelerin - " + mtPelerinId,
+                    Name = $"Mt Pelerin {operation.Type} {operation.MtPelerinId}",
                     Description = "",
-                    Amount = amount,
+                    Amount = operation.Amount,
                     Currency = "BTC",
                     StoreId = storeId,
                     PayoutMethods = new[] { payoutMethodId },
@@ -154,14 +158,18 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 var payoutHandler = _payoutHandlers.TryGet(payoutMethodId);
                 string error = null;
 
+                var sDest = operation.IsOnChain
+                    ? MtPelerinSettings.BtcDestAdress
+                    : operation.LnInvoice;
+
                 IClaimDestination mtPelerinDestination = null;
-                (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(MtPelerinSettings.BtcDestAdress, ppBlob, cancellationToken);
+                (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, ppBlob, cancellationToken);
 
                 var result = await _pullPaymentHostedService.Claim(new ClaimRequest
                 {
                     Destination = mtPelerinDestination,
                     PullPaymentId = ppId,
-                    ClaimedAmount = amount,
+                    ClaimedAmount = operation.Amount,
                     PayoutMethodId = payoutMethodId,
                     StoreId = pp.StoreId,
                     PreApprove = true,
@@ -219,18 +227,25 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     return signInfo;
 
                 var utxo = utxos.OrderByDescending(u => u.Value).FirstOrDefault();
-                var address = btcNetwork.NBXplorerNetwork.CreateAddress(derivationScheme.AccountDerivation, utxo.KeyPath, utxo.ScriptPubKey);
+                //var address = btcNetwork.NBXplorerNetwork.CreateAddress(derivationScheme.AccountDerivation, utxo.KeyPath, utxo.ScriptPubKey);
+                var address = utxo.Address;
                 signInfo.SenderBtcAddress = address.ToString();
 
                 var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
-                var privateKeyStr = await explorer.GetMetadataAsync<string>(
+                var masterKeyString = await explorer.GetMetadataAsync<string>(
                     derivationScheme.AccountDerivation,
                     WellknownMetadataKeys.MasterHDKey);
 
+                if (!string.IsNullOrEmpty(masterKeyString))
+                {
+                    var masterExtKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
+                    var childExtKey = masterExtKey.Derive(utxo.KeyPath);
+                    var privateKeyForSigning = childExtKey.PrivateKey;
 
-                signInfo.Code = new Random().Next(1000, 9999);
-                var key = Key.Parse(privateKeyStr, Network.Main);
-                signInfo.Signature = key.SignMessageBitcoin("MtPelerin-" + signInfo.Code, Network.Main);
+                    signInfo.Code = new Random().Next(1000, 9999);
+                    var messageToSign = "MtPelerin-" + signInfo.Code;
+                    signInfo.Signature = BitcoinMessageSigner.SignMessageBitcoin(privateKeyForSigning, messageToSign, btcNetwork.NBitcoinNetwork);
+                }
             }
             catch (Exception e)
             {

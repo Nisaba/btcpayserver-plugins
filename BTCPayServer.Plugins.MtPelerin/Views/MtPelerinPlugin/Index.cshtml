@@ -172,24 +172,10 @@
             <td><button id="btSend" class="btn btn-primary" onclick="onMtPelerinAsk()">Ask to Mt Pelerin</button></td>
         </table>
         <br />
-        <i><small>Please check that there is no previous pending Mt Pelerin payout in BTCPay before placing another order.</small></i>
+            <i><small>Please check that there is no previous pending Mt Pelerin payout in BTCPay before placing another order.<br />
+                Mt Pelerin requires a minimum amount for a transaction, usually a few dozen CHF.
+            </small></i>
         <br />
-        <div id="frmMtPelerin" style="display:none">
-            <div class="mt-3">
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="confirmMtPelerin" onchange="onConfirmChange()"/>
-                    <label class="form-check-label" for="confirmMtPelerin">
-                        I confirm that I have submitted my request to Mt Pelerin
-                    </label>
-                </div>
-                <div id="sendSection" class="mt-3" style="display:none">
-                    <p>Amount to send: <strong><span id="amountToSendConfirm"></span> BTC</strong></p>
-                    <button id="btnSendToMtPelerin" class="btn btn-primary" onclick="sendToMtPelerin()">
-                        Send To Mt Pelerin
-                    </button>
-                </div>
-            </div>
-        </div>
 
         @if (Model.IsPayoutCreated)
         {
@@ -210,7 +196,6 @@
         const lblToSendFiat = document.getElementById('lblToSendFiat');
         const percentToSend = document.getElementById('percentToSend');
         const chkOnchain = document.getElementById('chkOnchain');
-        const frmMtPelerin = document.getElementById('frmMtPelerin');
         const confirmMtPelerin = document.getElementById('confirmMtPelerin');
         const sendSection = document.getElementById('sendSection');
 
@@ -249,31 +234,36 @@
             iframeUrl.searchParams.append('snet', `${sNet}_mainnet`);
             iframeUrl.searchParams.append('tabs', 'sell,swap');
             iframeUrl.searchParams.append('tab', 'sell');
-            iframeUrl.searchParams.append('ssc', 'BTC');
             iframeUrl.searchParams.append('sdc', '@walletConfig.FiatCurrency');
-            iframeUrl.searchParams.append('ssa', amountToSend.toString());
-            iframeUrl.searchParams.append('wsc', 'BTC');
             iframeUrl.searchParams.append('wdc', '@(walletConfig.FiatCurrency == "EUR" ? "EURC" : "USDT")');
-            iframeUrl.searchParams.append('wsa', amountToSend.toString());
-            if (isOnChain && @((Model.SigningInfo.SenderBtcAddress != "").ToString().ToLower())) {
-                iframeUrl.searchParams.append('addr', '@Model.SigningInfo.SenderBtcAddress');
-                if ('@Model.SigningInfo.Signature' !== '') {
-                    iframeUrl.searchParams.append('code', '@Model.SigningInfo.Code');
-                    iframeUrl.searchParams.append('hash', '@Model.SigningInfo.Signature');
+            let vAmount, vCurrency
+            if (isOnChain) {
+                vCurrency = 'BTC';
+                vAmount = amountToSend.toString();
+                if (@((Model.SigningInfo.SenderBtcAddress != "").ToString().ToLower())) {
+                    iframeUrl.searchParams.append('addr', '@Model.SigningInfo.SenderBtcAddress');
+                    if ('@Model.SigningInfo.Signature' !== '') {
+                        iframeUrl.searchParams.append('code', '@Model.SigningInfo.Code');
+                        iframeUrl.searchParams.append('hash', '@Model.SigningInfo.Signature');
+                    }
                 }
+            } else {
+                vAmount = (amountToSend * 100000000).toFixed(0);
+                vCurrency = 'SAT';
             }
+            iframeUrl.searchParams.append('ssc', vCurrency);
+            iframeUrl.searchParams.append('ssa', vAmount);
+            iframeUrl.searchParams.append('wsc', vCurrency);
+            iframeUrl.searchParams.append('wsa', vAmount);
 
             window.addEventListener('message', handleMtPelerinMessage, false);
             window.open(iframeUrl.toString(), 'mtp', 'width=570,height=745,scrollbars=yes,resizable=yes');
-            amountToSendConfirm.textContent = amountToSend.toString()
-            frmMtPelerin.style.display = '';
         }
 
         function handleMtPelerinMessage(event) {
             if (event.origin !== 'https://widget.mtpelerin.com') return;
-
-            if (event.data.type === 'paymentSubmitted') {
-                sendToMtPelerin(event.data.data.paymentId);
+            if (event.data.type === 'orderCreated') {
+                sendToMtPelerin(event.data.data);
                 window.removeEventListener('message', handleMtPelerinMessage);
             }
         }
@@ -282,37 +272,43 @@
             sendSection.style.display = confirmMtPelerin.checked ? 'block' : 'none';
         }
 
-        function sendToMtPelerin(payId) {
+        function sendToMtPelerin(createdOrderData) {
+            var i = 0;
             const percent = parseFloat(percentToSend.value) || 0;
             const isOnChain = chkOnchain.checked;
-            const amountBtc = parseFloat(lblToSendBTC.textContent);
-            const btnSend = document.getElementById('btnSendToMtPelerin');
-            btnSend.disabled = true;
+            const amountBtc = parseFloat(createdOrderData.valueIn);
 
-            const formData = new FormData();
-            formData.append('amount', amountBtc);
-            formData.append('mtPelerinId', payId);
-            formData.append('isOnChain', isOnChain);
+            if(!isOnChain) {
+                amountBtc /= 100000000;
+            }
+            const MtPelerinOperation = {
+                type: createdOrderData.type,
+                amount: amountBtc,
+                isOnChain: isOnChain,
+                lnInvoice: isOnChain ? 'none' : createdOrderData.lnInvoice,
+                mtPelerinId: createdOrderData.id
+            };
 
             fetch('MtPelerin/createpayout', {
                 method: 'POST',
                 headers: {
+                        'Content-Type': 'application/json',
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                 },
-                body: formData
+                body: JSON.stringify(MtPelerinOperation)
             })
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-                window.location.reload();
+                   window.location.reload();
             })
             .catch(error => {
                 console.error('Error:', error);
-                window.location.reload();
+                    alert (2);
+                    window.location.reload();
             })
             .finally(() => {
-                btnSend.disabled = false;
             });
         }
         </script>
