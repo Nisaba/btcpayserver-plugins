@@ -201,7 +201,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 SenderBtcAddress = string.Empty
             };
 
-            try
+           /*   try
             {
                 var store = await _storeRepository.FindStore(storeId);
 
@@ -224,7 +224,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 var address = utxo.Address;
                 signInfo.SenderBtcAddress = address.ToString();
 
-              /*  var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
+              var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
                 var masterKeyString = await explorer.GetMetadataAsync<string>(
                     derivationScheme.AccountDerivation,
                     WellknownMetadataKeys.MasterHDKey);
@@ -239,12 +239,12 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
                     signInfo.Signature = privateKeyForSigning.SignMessageBitcoin(messageToSign, btcNetwork.NBitcoinNetwork);
-                }*/
+                }
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "MtPelerinPlugin:GetSigningAdressInfo()");
-            }
+            }*/
             return signInfo;
         }
 
