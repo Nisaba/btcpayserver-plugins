@@ -22,9 +22,9 @@ From there, you can follow the Mt Pelerin process to sell or exchange your bitco
 Note: For on-chain transactions, Mt Pelerin requires that the sending address be certified to facilitate the process. To do this, the plugin uses the address with the highest UTXO value in your wallet to sign a message. This is done automatically, but you'll need to ensure that this UTXO will be used in the sending transaction.<br/>
 If this fails, you can manually perform this process via the widget.
 
-## Payouts
+## Onchain Payouts
 
-The plugin detects automatically when you have finished the process in the widget. (If not, check the box "I confirm that I have submitted my request to Mt Pelerin").
+The plugin detects automatically when you have finished the process in the widget.
 So, a BTCPay payout is automatically created.
 ![image](https://github.com/user-attachments/assets/190e2229-44a1-4d67-b288-c8b9976a89d6)
 
@@ -33,3 +33,15 @@ All you have to do now is go to the BTCPay payouts page to send the payment.
 
 Note: to avoid any issue, please check that there is no previous pending Mt Pelerin payout in BTCPay before placing another order. Each Mt Pelerin payout must be processed before submitting another.
 
+## Lightning Payouts
+
+The plugin detects automatically when you have finished the process in the widget.
+So, a BTCPay Lightning payout is automatically created.
+
+If you have this error, so your store settings must be updated :
+![image](https://github.com/user-attachments/assets/fb5634e8-05a9-49e3-81fe-d9b5178c4885)
+
+Go to the store settings, and set the "Minimum acceptable expiration time for BOLT11 for refunds to 0
+![image](https://github.com/user-attachments/assets/43087738-a092-4fea-97a6-ca2b64526a4d)
+
+So, the payout can be created by BTCPay. You can pay the Lightning invoice with BTCPay or with your wallet and mark the payout as paid.
