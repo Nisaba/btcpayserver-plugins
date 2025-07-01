@@ -235,7 +235,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     var masterExtKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
                     var childExtKey = masterExtKey.Derive(utxo.KeyPath);
                     var privateKeyForSigning = childExtKey.PrivateKey;
-                    _logger.LogInformation("Private key for signing: {PrivateKey}", privateKeyForSigning. .GetWif(btcNetwork.NBitcoinNetwork).ToString());
+                    _logger.LogInformation("Private key for signing: {PrivateKey}", privateKeyForSigning.GetWif(btcNetwork.NBitcoinNetwork).ToString());
 
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
