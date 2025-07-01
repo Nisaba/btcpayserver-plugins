@@ -231,14 +231,17 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
 
                 if (!string.IsNullOrEmpty(masterKeyString) && utxo.KeyPath != null)
                 {
-                    var accountExtKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
-                    var signingKey = accountExtKey.Derive(utxo.KeyPath).PrivateKey;
-                    _logger.LogInformation(storeId + " - MtPelerinPlugin:GetSigningAdressInfo() - Signing key: {0}", signingKey.GetWif(btcNetwork.NBitcoinNetwork));
+                    var extKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
+
+                    var derivedKey = extKey.Derive(utxo.KeyPath);
+                    var privateKeyForSigning = derivedKey.PrivateKey;
+                    _logger.LogInformation("MtPelerinPlugin:GetSigningAdressInfo() - Using private key for signing: {PrivateKey}", privateKeyForSigning.GetWif(btcNetwork.NBitcoinNetwork).ToString());
+
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
-
-                    signInfo.Signature = signingKey.SignMessageBitcoin(messageToSign, btcNetwork.NBitcoinNetwork);
-                    _logger.LogInformation(storeId + " - MtPelerinPlugin:GetSigningAdressInfo() - Signature: {0}", signInfo.Signature);
+                    _logger.LogInformation("MtPelerinPlugin:GetSigningAdressInfo() - Signing message: {Message}", messageToSign);
+                    signInfo.Signature = privateKeyForSigning.SignMessageBitcoin(messageToSign, btcNetwork.NBitcoinNetwork);
+                    _logger.LogInformation("MtPelerinPlugin:GetSigningAdressInfo() - Generated signature: {Signature}", signInfo.Signature);
                 }
             }
             catch (Exception e)
