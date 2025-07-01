@@ -17,16 +17,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
-using NBitcoin.Crypto;
-using NBitcoin.Protocol;
 using NBXplorer;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -49,7 +45,6 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
         private readonly PayoutMethodHandlerDictionary _payoutHandlers;
         private readonly PullPaymentHostedService _pullPaymentHostedService;
         private readonly ExplorerClientProvider _explorerClientProvider;
-
 
         public MtPelerinPluginService(MtPelerinPluginDbContextFactory pluginDbContextFactory,
                                       StoreRepository storeRepository,
@@ -130,31 +125,31 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 throw;
             }
         }
-
         public async Task CreatePayout(string storeId, MtPelerinOperation operation, CancellationToken cancellationToken = default)
         {
-            try { 
+            try
+            {
                 var payoutMethodId = operation.IsOnChain ?
-                                        PayoutMethodId.TryParse("BTC-CHAIN") :
-                                        PayoutMethodId.TryParse("BTC-LN");
+                                        PayoutMethodId.Parse("BTC-CHAIN") :
+                                        PayoutMethodId.Parse("BTC-LN");
 
-                var ppRequest = new CreatePullPayment
+                var ppRequest = new CreatePullPaymentRequest
                 {
                     Name = $"Mt Pelerin {operation.Type} {operation.MtPelerinId}",
                     Description = "",
                     Amount = operation.Amount,
                     Currency = "BTC",
-                    StoreId = storeId,
-                    PayoutMethods = new[] { payoutMethodId },
                     ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
+                    PayoutMethods = new[] { payoutMethodId.ToString() }
                 };
-            
-                var ppId = await _pullPaymentService.CreatePullPayment(ppRequest);
-            
-                var btcPayCtx = _btcPayDbContextFactory.CreateContext();
-                var pp = await btcPayCtx.PullPayments.FindAsync(ppId);
 
-                var ppBlob = pp.GetBlob();
+                var store = await _storeRepository.FindStore(storeId);
+                var ppId = await _pullPaymentService.CreatePullPayment(store, ppRequest);
+
+                await using var btcPayCtx = _btcPayDbContextFactory.CreateContext();
+                var pp = await btcPayCtx.PullPayments.FindAsync(ppId);
+                var blob = pp.GetBlob();
+
                 var payoutHandler = _payoutHandlers.TryGet(payoutMethodId);
                 string error = null;
 
@@ -162,8 +157,8 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     ? MtPelerinSettings.BtcDestAdress
                     : operation.LnInvoice;
 
-                IClaimDestination mtPelerinDestination = null;
-                (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, ppBlob, cancellationToken);
+                IClaimDestination mtPelerinDestination;
+                (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, blob, cancellationToken);
 
                 var result = await _pullPaymentHostedService.Claim(new ClaimRequest
                 {
@@ -171,7 +166,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     PullPaymentId = ppId,
                     ClaimedAmount = operation.Amount,
                     PayoutMethodId = payoutMethodId,
-                    StoreId = pp.StoreId,
+                    StoreId = storeId,
                     PreApprove = true,
                 });
 
@@ -187,15 +182,14 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                         throw new Exception("Claim amount is too low");
                     case ClaimRequest.ClaimResult.NotStarted:
                         throw new Exception("Pull payment has not started yet");
-                };
-
+                }
+                ;
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "MtPelerinPlugin:CreatePayout()");
                 throw;
             }
-
         }
 
         public async Task<MtPelerinSigningInfo> GetSigningAdressInfo(string storeId)
