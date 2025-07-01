@@ -151,13 +151,20 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 var blob = pp.GetBlob();
 
                 var payoutHandler = _payoutHandlers.TryGet(payoutMethodId);
-                string error = null;
+                if (payoutHandler == null)
+                    throw new Exception($"No payout handler found for {payoutMethodId}");
 
+                string error = null;
                 var sDest = operation.IsOnChain
                     ? MtPelerinSettings.BtcDestAdress
                     : operation.LnInvoice;
-
                 IClaimDestination mtPelerinDestination;
+
+                (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, blob, cancellationToken);
+
+                if (mtPelerinDestination == null)
+                    throw new Exception($"Destination parsing failed: {error ?? "Unknown error"}");
+
                 (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, blob, cancellationToken);
 
                 var result = await _pullPaymentHostedService.Claim(new ClaimRequest
