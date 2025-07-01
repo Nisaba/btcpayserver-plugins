@@ -221,7 +221,6 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     return signInfo;
 
                 var utxo = utxos.OrderByDescending(u => u.Value).FirstOrDefault();
-                //var address = btcNetwork.NBXplorerNetwork.CreateAddress(derivationScheme.AccountDerivation, utxo.KeyPath, utxo.ScriptPubKey);
                 var address = utxo.Address;
                 signInfo.SenderBtcAddress = address.ToString();
 
@@ -230,20 +229,16 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     derivationScheme.AccountDerivation,
                     WellknownMetadataKeys.MasterHDKey);
 
-                if (!string.IsNullOrEmpty(masterKeyString))
+                if (!string.IsNullOrEmpty(masterKeyString) && utxo.KeyPath != null)
                 {
-                    var masterExtKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
-                    var childExtKey = masterExtKey.Derive(utxo.KeyPath);
-                    var privateKeyForSigning = childExtKey.PrivateKey;
-                    _logger.LogInformation("Private key for signing: {PrivateKey}", privateKeyForSigning.GetWif(btcNetwork.NBitcoinNetwork).ToString());
-
+                    var accountExtKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
+                    var signingKey = accountExtKey.Derive(utxo.KeyPath).PrivateKey;
+                    _logger.LogInformation(storeId + " - MtPelerinPlugin:GetSigningAdressInfo() - Signing key: {0}", signingKey.GetWif(btcNetwork.NBitcoinNetwork));
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
-                    signInfo.Signature = BitcoinMessageSigner.SignMessageBitcoin(privateKeyForSigning, messageToSign, btcNetwork.NBitcoinNetwork);
-                    _logger.LogInformation("Message to sign: {Message}, Signature: {Signature}", messageToSign, signInfo.Signature);
-                    signInfo.Signature = privateKeyForSigning.SignMessageBitcoin(messageToSign, btcNetwork.NBitcoinNetwork);
-                    _logger.LogInformation("Message to sign 2: {Message}, Signature: {Signature}", messageToSign, signInfo.Signature);
 
+                    signInfo.Signature = signingKey.SignMessageBitcoin(messageToSign, btcNetwork.NBitcoinNetwork);
+                    _logger.LogInformation(storeId + " - MtPelerinPlugin:GetSigningAdressInfo() - Signature: {0}", signInfo.Signature);
                 }
             }
             catch (Exception e)
