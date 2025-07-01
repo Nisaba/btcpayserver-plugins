@@ -261,29 +261,22 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
             StoreWalletConfig cnfg = new StoreWalletConfig();
             try
             {
-                var i = 0;
-                _logger.LogInformation($"MtPelerin.GetBalances1({i.ToString()})");
                 var store = await _storeRepository.FindStore(storeId);
                 var blob = store.GetStoreBlob();
 
-                _logger.LogInformation($"MtPelerin.GetBalances2({i.ToString()})");
                 cnfg.FiatCurrency = blob.DefaultCurrency;
-                _logger.LogInformation($"MtPelerin.GetBalances3({i.ToString()})");
                 if (_networkProvider.DefaultNetwork.IsBTC)
                 {
                     getPaymentMethods(store, blob,
                         out var derivationSchemes, out var lightningNodes);
 
-                    _logger.LogInformation($"MtPelerin.GetBalances4({i.ToString()})");
                     cnfg.OffChainEnabled = lightningNodes.Any(ln => !string.IsNullOrEmpty(ln.Address) && ln.Enabled);
                     cnfg.OnChainEnabled = derivationSchemes.Any(scheme => !string.IsNullOrEmpty(scheme.Value) && scheme.Enabled);
 
-                    _logger.LogInformation($"MtPelerin.GetBalances5({i.ToString()})");
                     if (cnfg.OnChainEnabled)
                     {
                         var walletId = new WalletId(store.Id, "BTC");
                         var data = await _walletHistogramService.GetHistogram(store, walletId, HistogramType.Week);
-                        _logger.LogInformation($"MtPelerin.GetBalances6({i.ToString()})");
                         if (data != null)
                         {
                             cnfg.OnChainBalance = data.Balance;
@@ -300,17 +293,14 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                                 cnfg.OnChainBalance = balance.Available.GetValue(network);
                             }
                         }
-                        _logger.LogInformation($"MtPelerin.GetBalances7({i.ToString()})");
                     }
 
                     if (cnfg.OffChainEnabled)
                     {
-                        _logger.LogInformation($"MtPelerin.GetBalances8({i.ToString()})");
                         var lightningClient = GetLightningClient(store);
                         var balance = await lightningClient.GetBalance();
                         cnfg.OffChainBalance = (balance.OffchainBalance != null
                                                ? (balance.OffchainBalance.Local ?? 0) : 0).ToDecimal(LightMoneyUnit.BTC);
-                        _logger.LogInformation($"MtPelerin.GetBalances9({i.ToString()})");
                         try
                         {
                             var info = await lightningClient.GetInfo();
@@ -322,10 +312,8 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                             }
                         }
                         catch { }
-                        _logger.LogInformation($"MtPelerin.GetBalances10({i.ToString()})");
                     }
 
-                    _logger.LogInformation($"MtPelerin.GetBalances11({i.ToString()})");
                     if (cnfg.OnChainBalance > 0 || cnfg.OffChainBalance > 0)
                     {
                         if (_httpClient2.BaseAddress == null)
@@ -346,7 +334,6 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                         cnfg.OnChainFiatBalance = cnfg.Rate * cnfg.OnChainBalance;
 
                     }
-                    _logger.LogInformation($"MtPelerin.GetBalances12({i.ToString()})");
 
                 }
                 else
@@ -354,7 +341,6 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     cnfg.OffChainEnabled = false;
                     cnfg.OnChainEnabled = false;
                 }
-                _logger.LogInformation($"MtPelerin.GetBalances(Fin)");
             }
             catch (Exception e)
             {
