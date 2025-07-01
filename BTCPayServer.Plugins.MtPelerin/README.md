@@ -39,9 +39,11 @@ The plugin detects automatically when you have finished the process in the widge
 So, a BTCPay Lightning payout is automatically created.
 
 If you have this error, so your store settings must be updated :
+
 ![image](https://github.com/user-attachments/assets/fb5634e8-05a9-49e3-81fe-d9b5178c4885)
 
 Go to the store settings, and set the "Minimum acceptable expiration time for BOLT11 for refunds to 0
+
 ![image](https://github.com/user-attachments/assets/43087738-a092-4fea-97a6-ca2b64526a4d)
 
 So, the payout can be created by BTCPay. You can pay the Lightning invoice with BTCPay or with your wallet and mark the payout as paid.
