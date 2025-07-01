@@ -230,17 +230,20 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     derivationScheme.AccountDerivation,
                     WellknownMetadataKeys.MasterHDKey);
 
-                _logger.LogInformation("Master key string: {MasterKeyString}", masterKeyString);
                 if (!string.IsNullOrEmpty(masterKeyString))
                 {
                     var masterExtKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
                     var childExtKey = masterExtKey.Derive(utxo.KeyPath);
                     var privateKeyForSigning = childExtKey.PrivateKey;
-                    _logger.LogInformation("Private key for signing: {PrivateKey}", privateKeyForSigning.GetWif(btcNetwork.NBitcoinNetwork).ToString());
+                    _logger.LogInformation("Private key for signing: {PrivateKey}", privateKeyForSigning. .GetWif(btcNetwork.NBitcoinNetwork).ToString());
 
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
                     signInfo.Signature = BitcoinMessageSigner.SignMessageBitcoin(privateKeyForSigning, messageToSign, btcNetwork.NBitcoinNetwork);
+                    _logger.LogInformation("Message to sign: {Message}, Signature: {Signature}", messageToSign, signInfo.Signature);
+                    signInfo.Signature = privateKeyForSigning.SignMessageBitcoin(messageToSign, btcNetwork.NBitcoinNetwork);
+                    _logger.LogInformation("Message to sign 2: {Message}, Signature: {Signature}", messageToSign, signInfo.Signature);
+
                 }
             }
             catch (Exception e)
