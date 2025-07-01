@@ -224,7 +224,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 var address = utxo.Address;
                 signInfo.SenderBtcAddress = address.ToString();
 
-                var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
+              /*  var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
                 var masterKeyString = await explorer.GetMetadataAsync<string>(
                     derivationScheme.AccountDerivation,
                     WellknownMetadataKeys.MasterHDKey);
@@ -235,14 +235,11 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
 
                     var derivedKey = extKey.Derive(utxo.KeyPath);
                     var privateKeyForSigning = derivedKey.PrivateKey;
-                    _logger.LogInformation("MtPelerinPlugin:GetSigningAdressInfo() - Using private key for signing: {PrivateKey}", privateKeyForSigning.GetWif(btcNetwork.NBitcoinNetwork).ToString());
 
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
-                    _logger.LogInformation("MtPelerinPlugin:GetSigningAdressInfo() - Signing message: {Message}", messageToSign);
                     signInfo.Signature = privateKeyForSigning.SignMessageBitcoin(messageToSign, btcNetwork.NBitcoinNetwork);
-                    _logger.LogInformation("MtPelerinPlugin:GetSigningAdressInfo() - Generated signature: {Signature}", signInfo.Signature);
-                }
+                }*/
             }
             catch (Exception e)
             {
