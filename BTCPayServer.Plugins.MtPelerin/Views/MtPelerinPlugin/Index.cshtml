@@ -117,6 +117,7 @@
     } else
     {
         var walletConfig = await MtPelerinPluginService.GetBalances(Model.Settings.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
+        var signingInfo = await MtPelerinPluginService.GetSigningAdressInfo(Model.Settings.StoreId); ;
 
         <table class="table table-sm mt-0 mx-0">
             <tr>
@@ -173,7 +174,7 @@
         </table>
         <br />
             <i><small>Please check that there is no previous pending Mt Pelerin payout in BTCPay before placing another order.<br />
-                Mt Pelerin requires a minimum amount for a transaction, usually a few dozen CHF.
+                For a sell, Mt Pelerin requires a minimum amount for a transaction, equivalent to 50 CHF (1 CHF for a swap).
             </small></i>
         <br />
 
@@ -191,6 +192,7 @@
         <script type="text/javascript">
         const OnChainBalance = @walletConfig.OnChainBalance;
         const OffChainBalance = @walletConfig.OffChainBalance;
+        const ChfRate = @walletConfig.ChfRate;
 
         const lblToSendBTC = document.getElementById('lblToSendBTC');
         const lblToSendFiat = document.getElementById('lblToSendFiat');
@@ -198,6 +200,7 @@
         const chkOnchain = document.getElementById('chkOnchain');
         const confirmMtPelerin = document.getElementById('confirmMtPelerin');
         const sendSection = document.getElementById('sendSection');
+        var popupMtPelerin;
 
         function setMtPelerinValues() {
             const percent = parseFloat(percentToSend.value) || 0;
@@ -240,11 +243,11 @@
             if (isOnChain) {
                 vCurrency = 'BTC';
                 vAmount = amountToSend.toString();
-                if (@((Model.SigningInfo.SenderBtcAddress != "").ToString().ToLower())) {
-                    iframeUrl.searchParams.append('addr', '@Model.SigningInfo.SenderBtcAddress');
-                    if ('@Model.SigningInfo.Signature' !== '') {
-                        iframeUrl.searchParams.append('code', '@Model.SigningInfo.Code');
-                        iframeUrl.searchParams.append('hash', '@Model.SigningInfo.Signature');
+                    if (@((signingInfo.SenderBtcAddress != "").ToString().ToLower())) {
+                    iframeUrl.searchParams.append('addr', '@signingInfo.SenderBtcAddress');
+                    if ('@signingInfo.Signature' !== '') {
+                        iframeUrl.searchParams.append('code', '@signingInfo.Code');
+                        iframeUrl.searchParams.append('hash', '@signingInfo.Signature');
                     }
                 }
             } else {
@@ -257,7 +260,7 @@
             iframeUrl.searchParams.append('wsa', vAmount);
 
             window.addEventListener('message', handleMtPelerinMessage, false);
-            window.open(iframeUrl.toString(), 'mtp', 'width=570,height=745,scrollbars=yes,resizable=yes');
+            popupMtPelerin = window.open(iframeUrl.toString(), 'mtp', 'width=570,height=745,scrollbars=yes,resizable=yes');
         }
 
         function handleMtPelerinMessage(event) {
@@ -297,14 +300,16 @@
                 body: JSON.stringify(MtPelerinOperation)
             })
             .then(response => {
-                if (!response.ok) {
+                if (response.ok) {
                     throw new Error('Network response was not ok');
+                } else {
+                    popupMtPelerin.close();
                 }
-                   window.location.reload();
+                window.location.reload();
             })
             .catch(error => {
                 console.error('Error:', error);
-                    window.location.reload();
+                window.location.reload();
             })
             .finally(() => {
             });

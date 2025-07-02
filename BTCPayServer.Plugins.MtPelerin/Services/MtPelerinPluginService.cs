@@ -333,6 +333,20 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                         cnfg.OffChainFiatBalance = cnfg.Rate * cnfg.OffChainBalance;
                         cnfg.OnChainFiatBalance = cnfg.Rate * cnfg.OnChainBalance;
 
+                        /*if (cnfg.FiatCurrency == "CHF")
+                        {
+                            cnfg.ChfRate = cnfg.Rate;
+                        } else
+                        {
+                            using (var rep = await _httpClient2.GetAsync($"rates?storeId={storeId}&currencyPairs=BTC_CHF"))
+                            {
+                                rep.EnsureSuccessStatusCode();
+                                sRep = await rep.Content.ReadAsStringAsync();
+                            }
+                            dynamic JsonRep2 = JsonConvert.DeserializeObject<dynamic>(sRep);
+                            string rate2 = JsonRep[0].rate;
+                            cnfg.ChfRate = decimal.Parse(rate);
+                        }*/
                     }
 
                 }

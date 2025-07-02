@@ -12,6 +12,9 @@
         public decimal OffChainFiatBalance { get; set; }
 
         public decimal Rate { get; set; }
+        // public decimal ChfRate { get; set; }
+
+        public MtPelerinSigningInfo SigningInfo { get; set; }
 
     }
 }
