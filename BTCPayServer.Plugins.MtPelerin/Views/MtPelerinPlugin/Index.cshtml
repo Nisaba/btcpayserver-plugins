@@ -302,7 +302,8 @@
                 if (response.ok) {
                     throw new Error('Network response was not ok');
                 } else {
-                    popupMtPelerin.close();
+                    if (isOnChain)
+                        popupMtPelerin.close();
                 }
                 window.location.reload();
             })
