@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1.Cms;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -42,6 +43,21 @@ namespace BTCPayServer.Plugins.Peach.Services
                     return await DoGetBidsListAsync(req);
                 });
             return Bids;
+        }
+
+        public async Task<string> GetToken(string pubKey, bool isRegistred)
+        {
+            string sRep = "";
+            try
+            {
+                var dto = new DateTimeOffset(DateTime.UtcNow);
+                var sMsg = $"Peach registration {dto.ToUnixTimeMilliseconds().ToString()}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"PeachPlugin.GetToken(): {ex.Message} - {sRep}");
+            }
+
         }
 
         public async Task<List<PeachBid>> DoGetBidsListAsync(PeachRequest req)

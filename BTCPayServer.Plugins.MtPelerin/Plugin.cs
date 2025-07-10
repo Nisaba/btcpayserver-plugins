@@ -16,7 +16,7 @@ public class Plugin : BaseBTCPayServerPlugin
 
     public override void Execute(IServiceCollection services)
     {
-        services.AddUIExtension("header-nav", "MtPelerinPluginHeaderNav");
+        services.AddUIExtension("store-wallets-nav", "MtPelerinPluginHeaderNav");
         
         services.AddHostedService<ApplicationPartsLogger>();
         services.AddHostedService<PluginMigrationRunner>();
