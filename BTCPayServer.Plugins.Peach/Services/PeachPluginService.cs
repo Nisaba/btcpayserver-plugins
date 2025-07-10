@@ -1,22 +1,16 @@
 ﻿using BTCPayServer.Client.Models;
-using BTCPayServer.Configuration;
 using BTCPayServer.Data;
 using BTCPayServer.HostedServices;
-using BTCPayServer.Lightning;
 using BTCPayServer.Models.StoreViewModels;
-using BTCPayServer.Payments;
 using BTCPayServer.Payments.Bitcoin;
 using BTCPayServer.Payouts;
 using BTCPayServer.Plugins.Peach.Model;
-using BTCPayServer.Services;
 using BTCPayServer.Services.Invoices;
 using BTCPayServer.Services.Stores;
 using BTCPayServer.Services.Wallets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using NBitcoin;
-using NBXplorer;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -37,10 +31,7 @@ namespace BTCPayServer.Plugins.Peach.Services
         private readonly BTCPayWalletProvider _walletProvider;
         private readonly PaymentMethodHandlerDictionary _handlers;
         private readonly HttpClient _httpClient2;
-        private readonly LightningClientFactoryService _lightningClientFactory;
-        private readonly IOptions<LightningNetworkOptions> _lightningNetworkOptions;
         private readonly PullPaymentHostedService _pullPaymentService;
-        private readonly ApplicationDbContextFactory _btcPayDbContextFactory;
         private readonly PayoutMethodHandlerDictionary _payoutHandlers;
         private readonly PullPaymentHostedService _pullPaymentHostedService;
         private readonly ExplorerClientProvider _explorerClientProvider;
@@ -52,11 +43,8 @@ namespace BTCPayServer.Plugins.Peach.Services
                                       WalletHistogramService walletHistogramService,
                                       ILogger<PeachPluginService> logger,
                                       HttpClient httpClient2,
-                                      LightningClientFactoryService lightningClientFactory,
-                                      IOptions<LightningNetworkOptions> lightningNetworkOptions,
                                       PullPaymentHostedService pullPaymentService,
                                       PaymentMethodHandlerDictionary handlers,
-                                      ApplicationDbContextFactory btcPayDbContextFactory,
                                       PayoutMethodHandlerDictionary payoutHandlers,
                                       PullPaymentHostedService pullPaymentHostedService,
                                       ExplorerClientProvider explorerClientProvider)
@@ -69,10 +57,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             _walletProvider = walletProvider;
             _handlers = handlers;
             _httpClient2 = httpClient2;
-            _lightningClientFactory = lightningClientFactory;
-            _lightningNetworkOptions = lightningNetworkOptions;
             _pullPaymentService = pullPaymentService;
-            _btcPayDbContextFactory = btcPayDbContextFactory;
             _payoutHandlers = payoutHandlers;
             _pullPaymentHostedService = pullPaymentHostedService;
             _explorerClientProvider = explorerClientProvider;
@@ -85,7 +70,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 var settings = await _context.PeachSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
-                    settings = new PeachSettings { StoreId = storeId, Lang = "en", Phone = string.Empty, UseBridgeApp = false };
+                    settings = new PeachSettings { StoreId = storeId, IsRegistered = false, PrivateKey = string.Empty, PublicKey = string.Empty };
                 }
                 return settings;
 
@@ -108,9 +93,9 @@ namespace BTCPayServer.Plugins.Peach.Services
                 }
                 else
                 {
-                    dbSettings.Lang = settings.Lang;
-                    dbSettings.UseBridgeApp = settings.UseBridgeApp;
-                    dbSettings.Phone = settings.Phone;
+                    dbSettings.PublicKey = settings.PublicKey;
+                    dbSettings.PrivateKey = settings.PrivateKey;
+                    dbSettings.IsRegistered = settings.IsRegistered;
                     _context.PeachSettings.Update(dbSettings);
                 }
 
@@ -124,80 +109,6 @@ namespace BTCPayServer.Plugins.Peach.Services
                 throw;
             }
         }
-        public async Task CreatePayout(string storeId, PeachRequest operation, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var payoutMethodId = operation.IsOnChain ?
-                                        PayoutMethodId.Parse("BTC-CHAIN") :
-                                        PayoutMethodId.Parse("BTC-LN");
-
-                var ppRequest = new CreatePullPaymentRequest
-                {
-                    Name = $"Mt Pelerin {operation.Type} {operation.PeachId}",
-                    Description = "",
-                    Amount = operation.Amount,
-                    Currency = "BTC",
-                    ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
-                    PayoutMethods = new[] { payoutMethodId.ToString() }
-                };
-
-                var store = await _storeRepository.FindStore(storeId);
-                var ppId = await _pullPaymentService.CreatePullPayment(store, ppRequest);
-
-                await using var btcPayCtx = _btcPayDbContextFactory.CreateContext();
-                var pp = await btcPayCtx.PullPayments.FindAsync(ppId);
-                var blob = pp.GetBlob();
-
-                var payoutHandler = _payoutHandlers.TryGet(payoutMethodId);
-                if (payoutHandler == null)
-                    throw new Exception($"No payout handler found for {payoutMethodId}");
-
-                string error = null;
-                var sDest = operation.IsOnChain
-                    ? PeachSettings.BtcDestAdress
-                    : operation.LnInvoice;
-                IClaimDestination PeachDestination;
-
-                (PeachDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, blob, cancellationToken);
-
-                if (PeachDestination == null)
-                    throw new Exception($"Destination parsing failed: {error ?? "Unknown error"}");
-
-                (PeachDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, blob, cancellationToken);
-
-                var result = await _pullPaymentHostedService.Claim(new ClaimRequest
-                {
-                    Destination = PeachDestination,
-                    PullPaymentId = ppId,
-                    ClaimedAmount = operation.Amount,
-                    PayoutMethodId = payoutMethodId,
-                    StoreId = storeId,
-                    PreApprove = true,
-                });
-
-                switch (result.Result)
-                {
-                    case ClaimRequest.ClaimResult.Duplicate:
-                        throw new Exception("Duplicate claim for pull payment");
-                    case ClaimRequest.ClaimResult.Expired:
-                        throw new Exception("Pull payment expired");
-                    case ClaimRequest.ClaimResult.Archived:
-                        throw new Exception("Pull payment archived");
-                    case ClaimRequest.ClaimResult.AmountTooLow:
-                        throw new Exception("Claim amount is too low");
-                    case ClaimRequest.ClaimResult.NotStarted:
-                        throw new Exception("Pull payment has not started yet");
-                }
-                ;
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "PeachPlugin:CreatePayout()");
-                throw;
-            }
-        }
-
         public async Task<StoreWalletConfig> GetBalances(string storeId, string BaseUrl)
         {
             StoreWalletConfig cnfg = new StoreWalletConfig();

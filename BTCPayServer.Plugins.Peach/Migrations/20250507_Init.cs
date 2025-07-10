@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace BTCPayServer.Plugins.Peach.Migrations
 {
     [DbContext(typeof(PeachPluginDbContext))]
-    [Migration("20250630_Init")]
+    [Migration("20250507_Init")]
     public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -20,9 +20,9 @@ namespace BTCPayServer.Plugins.Peach.Migrations
                 columns: table => new
                 {
                     StoreId = table.Column<string>(nullable: false),
-                    Lang = table.Column<string>(nullable: false),
-                    UseBridgeApp = table.Column<bool>(nullable: false),
-                    Phone = table.Column<string>(nullable: true),
+                    PublicKey = table.Column<string>(nullable: false),
+                    PrivateKey = table.Column<string>(nullable: false),
+                    IsRegistered = table.Column<bool>(nullable: false),
                 },
                 constraints: table =>
                 {

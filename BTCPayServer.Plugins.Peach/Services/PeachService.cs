@@ -51,9 +51,10 @@ namespace BTCPayServer.Plugins.Peach.Services
             try
             {
 
+                float vBtcAmount = Convert.ToSingle(req.BtcAmount) * 100000000;
                 dynamic peachRequest = new ExpandoObject();
                 peachRequest.type = "bid";
-                //if (req.Amount > 0) peachRequest.amount = req.Amount;
+                peachRequest.amount = vBtcAmount;
 
                 var peachJson = JsonConvert.SerializeObject(peachRequest, Formatting.None);
 
@@ -73,41 +74,49 @@ namespace BTCPayServer.Plugins.Peach.Services
                 }
 
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
-                float vRate = Convert.ToSingle(req.Rate);
-                float vBtcAmount = Convert.ToSingle(req.BtcAmount);
+                var vRate = Convert.ToSingle(req.Rate) / 100000000;
                 foreach (dynamic PeachTrade in JsonRep.offers)
                 {
                     //if (PeachTrade.prices[req.CurrencyCode] != null)
                     if (PeachTrade.meansOfPayment[req.CurrencyCode] != null)
                     {
-                        float vMin = Convert.ToSingle(PeachTrade.amount[0] * 100000000) ;
-                        float vMax = Convert.ToSingle(PeachTrade.amount[1] * 100000000);
-                        if (vMin <= vBtcAmount && vBtcAmount <= vMax)
+                        float vMin, vMax;
+                        if (PeachTrade.amount is Newtonsoft.Json.Linq.JArray)
                         {
-                            var ofr = new PeachBid()
-                            {
-                                ID = PeachTrade.id,
-                                CountryCode = PeachTrade.countryCode,
-                                MinAmount = vMin,
-                                MaxAmount = vMax,
-                                PaymentMethods = PeachTrade.meansOfPayment[req.CurrencyCode],
-                                User = new PeachUser()
-                                {
-                                    Id = PeachTrade.user.id,
-                                    NbTrades = PeachTrade.user.trades,
-                                    OpenedTrades = PeachTrade.user.openedTrades,
-                                    CanceledTrades = PeachTrade.user.canceledTrades,
-                                    Rating = PeachTrade.user.rating,
-                                    RatingCount = PeachTrade.user.ratingCount,
-                                    Medals = PeachTrade.user.medals,
-                                    OpenedDisputes = PeachTrade.user.disputes.opened,
-                                    WonDisputes = PeachTrade.user.disputes.won,
-                                    LostDisputes = PeachTrade.user.disputes.lost,
-                                    ResolvedDisputes = PeachTrade.user.disputes.resolved
-                                },
-                            };
-                            Bids.Add(ofr);
+                            vMin = Convert.ToSingle(PeachTrade.amount[0]);
+                            vMax = Convert.ToSingle(PeachTrade.amount[1]);
                         }
+                        else
+                        {
+                            vMin = vMax = Convert.ToSingle(PeachTrade.amount);
+                        }
+                        //                 if (vMin <= vBtcAmount && vBtcAmount <= vMax)
+                        //                 {
+                        var ofr = new PeachBid()
+                        {
+                            Id = PeachTrade.id,
+                            MinAmount = vMin,
+                            MaxAmount = vMax,
+                            PaymentMethods = ((Newtonsoft.Json.Linq.JArray)PeachTrade.meansOfPayment[req.CurrencyCode]).ToObject<List<string>>(),
+                            User = new PeachUser()
+                            {
+                                Id = PeachTrade.user.id,
+                                NbTrades = PeachTrade.user.trades,
+                                OpenedTrades = PeachTrade.user.openedTrades,
+                                CanceledTrades = PeachTrade.user.canceledTrades,
+                                Rating = PeachTrade.user.rating,
+                                RatingCount = PeachTrade.user.ratingCount,
+                                Medals = ((Newtonsoft.Json.Linq.JArray)PeachTrade.user.medals).ToObject<List<string>>(),
+                                OpenedDisputes = PeachTrade.user.disputes.opened,
+                                WonDisputes = PeachTrade.user.disputes.won,
+                                LostDisputes = PeachTrade.user.disputes.lost,
+                                ResolvedDisputes = PeachTrade.user.disputes.resolved
+                            },
+                           // IsOnline = PeachTrade.online,
+                            MinFiatAmount = vMin * vRate,
+                            MaxFiatAmount = vMax * vRate
+                        };
+                        Bids.Add(ofr);
                     }
                 }
             }

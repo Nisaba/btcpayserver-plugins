@@ -1,0 +1,112 @@
+@using BTCPayServer.Services
+@using System.Security.Cryptography
+@model BTCPayServer.Plugins.Peach.Model.PeachResult
+@inject DisplayFormatter DisplayFormatter
+
+@if (!string.IsNullOrEmpty(Model.ErrorMsg))
+{
+    <p><b>Error: </b>@Model.ErrorMsg</p>
+}
+@if (Model.Bids.Any())
+{
+    var currentID = RandomNumberGenerator.GetInt32(10000);
+    <div class="table-responsive">
+        <table id="offers@(currentID)" class="table table-hover mass-action">
+            <thead class="mass-action-head">
+                <tr>
+                    <th class="mass-action-select-col only-for-js">
+                        <input type="checkbox" class="form-check-input mass-action-select-all" />
+                    </th>
+                    <th class="text-nowrap">Id</th>
+                    <th class="text-nowrap">Amount</th>
+                    <th class="text-nowrap">Buyer</th>
+                    <th class="text-nowrap">Payment Method</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <thead class="mass-action-actions">
+                <tr>
+                    <th class="mass-action-select-col only-for-js">
+                        <input type="checkbox" class="form-check-input mass-action-select-all" />
+                    </th>
+                    <th colspan="5">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div>
+                                <strong class="mass-action-selected-count">0</strong>
+                                <span>selected</span>
+                            </div>
+                            <div class="d-inline-flex align-items-center gap-3">
+                                <button type="submit" name="command" value="archive" id="ArchiveSelected" class="btn btn-link">
+                                    <vc:icon symbol="actions-send" />
+                                    <span>Bid</span>
+                                </button>
+                            </div>
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var item in Model.Bids)
+                {
+                    var detailsId = $"bidDetails_{item.Id}";
+                    <tr class="mass-action-row item">
+                        <td class="only-for-js align-middle">
+                            <input name="selectedItems" type="checkbox" class="form-check-input mass-action-select" value="@item.Id" />
+                        </td>
+                        <td align="left">
+                            <vc:truncate-center text="@item.Id" classes="truncate-center-id" />
+                        </td>
+                        <td align="left">
+                            @if (item.MinFiatAmount == item.MaxAmount)
+                            {
+                                <span data-sensitive>@DisplayFormatter.Currency((decimal)item.MinFiatAmount, Model.CurrencyCode)</span>
+                            }
+                            else
+                            {
+                                <span data-sensitive>@DisplayFormatter.Currency((decimal)item.MinFiatAmount, Model.CurrencyCode, DisplayFormatter.CurrencyFormat.None)</span>
+                                <span data-sensitive>&nbsp;-&nbsp;@DisplayFormatter.Currency((decimal)item.MaxFiatAmount, Model.CurrencyCode)</span>
+                            }
+                        </td>
+                        <td align="left">
+                            @item.User.NbTrades trades&nbsp;
+                            @foreach (var mdl in item.User.Medals)
+                            {
+                                <div class="badge badge-expired">
+                                    @mdl
+                                </div>
+                            }
+                        </td>
+                        <td align="left">
+                            @foreach (var pay in item.PaymentMethods)
+                            {
+                                <div class="badge badge-expired">
+                                    @pay
+                                </div>
+                            }
+                        </td>
+                        <td class="align-middle text-end">
+                            <div class="d-inline-flex align-items-center gap-2">
+                                <button class="accordion-button collapsed only-for-js ms-0 d-inline-block" type="button" data-bs-toggle="collapse" data-bs-target="#@detailsId" aria-expanded="false" aria-controls="@detailsId">
+                                    <vc:icon symbol="caret-down" />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr id="@detailsId" class="invoice-details-row collapse">
+                        <td colspan="6" class="border-top-0">
+                            <b>Buyer:</b><br />
+                            <ul>
+                                <li>@item.User.NbTrades Trade(s) <div class="badge badge-expired">@item.User.OpenedTrades opened</div>&nbsp;<div class="badge badge-expired">@item.User.CanceledTrades canceled)</div></li>
+                                <li>Rating: @(item.User.Rating * 10)/10 <div class="badge badge-expired">@item.User.RatingCount review(s)</div></li>
+                                <li>@item.User.OpenedDisputes Dispute(s) <div class="badge badge-expired">@item.User.ResolvedDisputes resolved</div>&nbsp<div class="badge badge-expired">@item.User.WonDisputes won</div>&nbsp<div class="badge badge-expired">@item.User.LostDisputes lost</div></li>
+                            </ul>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!--<vc:pager view-model="Model" />-->
+}

@@ -18,43 +18,55 @@ namespace BTCPayServer.Plugins.Peach.Controllers
         private readonly PeachPluginService _pluginService = pluginService;
         private readonly PeachService _peachService = peachService;
 
-        [HttpGet]
+        [HttpGet, HttpPost]
         [Authorize(Policy = Policies.CanModifyStoreSettings, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
         [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
         [Authorize(Policy = Policies.CanManagePayouts, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
-        public async Task<IActionResult> Index([FromRoute] string storeId)
+        public async Task<IActionResult> Index([FromRoute] string storeId, [FromForm] string? peachMsg)
         {
             var model = new PeachViewModel()
             {
                 Settings = await _pluginService.GetStoreSettings(storeId),
-                IsPayoutCreated = (TempData[WellKnownTempData.SuccessMessage] ?? "").ToString().Contains("Payout created!")
+                IsPayoutCreated = false
             };
-           
+            if (!string.IsNullOrEmpty(peachMsg))
+            {
+                if (peachMsg.Contains("Error", StringComparison.OrdinalIgnoreCase))
+                {
+                    TempData[WellKnownTempData.ErrorMessage] = peachMsg;
+                }
+                else
+                {
+                    TempData[WellKnownTempData.SuccessMessage] = peachMsg;
+                }
+            }
+
             return View(model);
         }
 
         [HttpPost]
         [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanModifyStoreSettings)]
-        public async Task<IActionResult> Index(PeachViewModel model, string command)
+        [Route("UpdSettings")]
+        public async Task<IActionResult> UpdSettings([FromBody] PeachSettings settings)
         {
+            string sMsg = "";
             if (!ModelState.IsValid)
             {
-                TempData[WellKnownTempData.ErrorMessage] = $"Error in data";
-                return View(model);
-            }
-            if (command == "save")
-            {
+                sMsg = "Error in data";
+            } 
+            else 
+            { 
                 try
                 {
-                    await _pluginService.UpdateSettings(model.Settings);
-                    TempData[WellKnownTempData.SuccessMessage] = "Settings successfuly saved";
+                    await _pluginService.UpdateSettings(settings);
+                    sMsg = "Settings successfuly saved";
                 }
                 catch (Exception ex)
                 {
-                    TempData[WellKnownTempData.ErrorMessage] = $"Error: {ex.Message}";
+                    sMsg = $"Error: {ex.Message}";
                 }
-           }
-            return RedirectToAction("Index");
+            }
+            return Json(new { msg = sMsg });
         }
 
 
@@ -64,7 +76,7 @@ namespace BTCPayServer.Plugins.Peach.Controllers
         [Route("GetPartialResult")]
         public async Task<IActionResult> GetPartialResult([FromBody] PeachRequest req)
         {
-            var model = new PeachResult();
+            var model = new PeachResult { CurrencyCode = req.CurrencyCode };
             try
             {
 

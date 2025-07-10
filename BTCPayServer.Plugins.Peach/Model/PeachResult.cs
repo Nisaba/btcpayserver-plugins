@@ -6,6 +6,8 @@ namespace BTCPayServer.Plugins.Peach.Model
     {
         public string ErrorMsg { get; set; }
 
+        public string CurrencyCode { get; set; }
+
         public List<PeachBid> Bids { get; set; }
     }
 }

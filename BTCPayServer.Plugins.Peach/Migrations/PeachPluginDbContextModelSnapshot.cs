@@ -24,14 +24,14 @@ namespace BTCPayServer.Plugins.Peach.Migrations
                 b.Property<string>("StoreId")
                     .HasColumnType("text");
 
-                b.Property<string>("UseBridgeApp")
+                b.Property<string>("PublicKey")
+                    .HasColumnType("text");
+
+                b.Property<string>("PrivateKey")
+                    .HasColumnType("text");
+
+                b.Property<string>("IsRegistered")
                     .HasColumnType("bit");
-
-                b.Property<string>("Lang")
-                    .HasColumnType("text");
-
-                b.Property<string>("Phone")
-                    .HasColumnType("text");
 
                 b.HasKey("StoreId");
 

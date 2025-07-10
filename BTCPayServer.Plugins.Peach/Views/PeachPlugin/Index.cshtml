@@ -10,6 +10,7 @@
 @model BTCPayServer.Plugins.Peach.Model.PeachViewModel
 @{
     ViewData.SetActivePage(PluginNavPages.Index, "Peach plugin");
+    var IsConfigured = Model.Settings.isConfigured;
 }
 
 
@@ -30,43 +31,144 @@
 <br />
 
 <partial name="_StatusMessage" />
-@{
-    var isModelKO = !Model.Settings.isConfigured || !ViewData.ModelState.IsValid;
-}
 <div permission="@Policies.CanModifyStoreSettings">
     <br />
-
+    <script src="/Resources/js/crypto-js.min.js"></script>
     <div class="accordion-item">
         <h2 class="accordion-header" id="additional-htmlheader-header">
-            <button class="accordion-button @(isModelKO ? "" : "collapsed")"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#peach-config"
-                    aria-expanded="@(isModelKO.ToString().ToLower())"
-                    aria-controls="peach-config">
+            <button class="accordion-button @(IsConfigured ? "collapsed" : "")"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#peach-config"
+            aria-expanded="@(IsConfigured.ToString().ToLower())"
+            aria-controls="peach-config">
                 <h4>Configuration</h4>
                 <svg role="img" class="icon icon-caret-down">
                     <use href="/img/icon-sprite.svg?v=zHetyUWwEcS2qGEsSu8P6l-mwsFkAqFbknsYrREYYvo#caret-down"></use>
                 </svg>
             </button>
         </h2>
-        <div id="peach-config" class="accordion-collapse collapse @(isModelKO ? "show" : "")" aria-labelledby="additional-htmlheader-header" style="">
+        <div id="peach-config" class="accordion-collapse collapse @(IsConfigured ? "" : "show")" aria-labelledby="additional-htmlheader-header" style="">
             <div class="accordion-body">
                 <br />
-                CONFIG
+                <div class="mb-4">
+                    <label class="form-label" for="encryptedFile">Import your Peach backup file</label>
+                    <div class="input-group">
+                        <input type="file" id="encryptedFile" accept=".json" class="form-control"
+                        onchange="handleFileSelect(event)"
+                        pattern="peach-account-.*\.json" />
+                    </div>
+                </div>
+
+                <div class="mb-4 password-container" id="passwordContainer" style="display: none;">
+                    <label class="form-label" for="decryptPassword">Enter password to decrypt file</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="decryptPassword" autocomplete="off" />
+                        <button class="btn btn-primary" type="button" onclick="decryptFile()">Decrypt</button>
+                    </div>
+                </div>
             </div>
+            @if (IsConfigured)
+            {
+                <table class="table table-sm mt-0 mx-0">
+                    <tr>
+                        <td width="100">
+                            <label asp-for="Settings.PublicKey" class="form-label"></label>
+                        </td>
+                        <td width="300" class="border-0 ps-0 align-middle">
+                            <input asp-for="Settings.PublicKey" data-fill="port" class="form-control readonly-input" readonly />
+                        </td>
+                    </tr>
+                </table>
+            }
         </div>
     </div>
+    <script type="text/javascript">
+        let selectedFile = null;
+
+        async function handleFileSelect(event) {
+            const file = event.target.files[0];
+
+            if (!file.name.match(/^peach-account-.*\.json$/)) {
+                alert("File name format must be: peach-account-xxxxxxxx.json");
+                return;
+            }
+
+            selectedFile = file;
+            document.getElementById('passwordContainer').style.display = 'block';
+            document.getElementById('decryptPassword').focus();
+        }
+
+        async function decryptFile() {
+            if (!selectedFile) return;
+
+            const password = document.getElementById('decryptPassword').value;
+            if (!password) {
+                alert("Please enter a password");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const encryptedText = e.target.result;
+                    const decryptedBytes = CryptoJS.AES.decrypt(encryptedText, password);
+                    const decryptedText = decryptedBytes.toString(CryptoJS.enc.Utf8);
+
+                    if (!decryptedText) {
+                        throw new Error("Decrypt failed - incorrect password");
+                    }
+
+                    document.getElementById('decryptPassword').value = '';
+                    document.getElementById('passwordContainer').style.display = 'none';
+
+                    const decryptedData = JSON.parse(decryptedText);
+                    let PeachSettings = {
+                        storeId: '@Model.Settings.StoreId',
+                        publicKey: decryptedData.publicKey,
+                        privateKey: decryptedData.privKey,
+                        isRegistered: false
+                    };
+
+                    const response = await fetch('Peach/UpdSettings', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(PeachSettings)
+                    });
+                    const result = await response.json();
+
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = window.location.pathname;
+
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'peachMsg';
+                    input.value = result.msg;
+
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+
+                } catch (error) {
+                    alert("Decrypt error: " + error.message);
+                }
+            };
+            reader.readAsText(selectedFile);
+        }
+    </script>
 </div>
 
 <div permission="@Policies.CanCreateNonApprovedPullPayments,@Policies.CanManagePayouts">
         <br />
     <h4>Operations</h4>
     <br />
-    @if (isModelKO)
+    @if (!IsConfigured)
     {
         <p>
-            <i>Mt Pelerin settings not set for this store...</i>
+            <i>Peach settings not set for this store...</i>
         </p>
     } else
     {
@@ -87,81 +189,26 @@
             <script type="text/javascript">
                 var tblOfrs = [];
 
-                function GetPartial(reqData, container, bt) {
-                    $(container).html('<div style="display: flex; justify-content: center;"><img src="/Resources/img/Loading_icon.gif"/></div>');
-                    $(bt).hide();
+                function GetPartial(reqData) {
+                    $('#containerPeach').html('<div style="display: flex; justify-content: center;"><img src="/Resources/img/Loading_icon.gif"/></div>');
+                    $('#btSend').hide();
                     $.ajax({
-                        url: 'peach/GetPartialB2PResult',
+                        url: 'peach/GetPartialResult',
                         type: 'POST',
                         contentType: "application/json; charset=utf-8",
                         data: JSON.stringify(reqData),
                         success: function(result) {
                             tblOfrs = [];
-                            $(container).html(result);
-                            $("[id^='sortLink']").each(function () {
-                                var $this = $(this);
-                                if (!$._data(this, "events") || !$._data(this, "events").click) {
-                                    $this.on("click", function (event) {
-                                        event.preventDefault();
-                                        var param1 = $(this).data('param1');
-                                        if (tblOfrs.length == 0) {
-                                            var param2Str = $(this).attr('data-param2');
-                                            tblOfrs = JSON.parse(param2Str);
-                                        }
-                                        SortHtmlTable(param1);
-                                    });
-                                }
-                            });
-                            $(bt).show();
+                            $('#containerPeach').html(result);
+                            $('#btSend').show();
                         },
                         error: function (xhr, status, error) {
-                            $(container).html("Error: " + error + "<br/>" + xhr.responseText);
-                            $(bt).show();
+                            $('#containerPeach').html("Error: " + error + "<br/>" + xhr.responseText);
+                            $('#btSend').show();
                         }
                     });
                 }
 
-                function SortHtmlTable(currentID) {
-                    var table, rows, switching, i, xTbl1, xTbl2, shouldSwitch, dir, switchcount = 0;
-                    table = document.getElementById("offers" + currentID);
-                    switching = true;
-                    dir = "asc";
-
-                    while (switching) {
-                        switching = false;
-                        rows = table.rows;
-                        for (i = 1; i < (rows.length - 2); i += 2) {
-                            shouldSwitch = false;
-                            xTbl1 = (i - 1) / 2;
-                            xTbl2 = xTbl1 + 1;
-                            if (dir == "asc") {
-                                if (tblOfrs[xTbl1] > tblOfrs[xTbl2]) {
-                                    shouldSwitch = true;
-                                    break;
-                                }
-                            } else if (dir == "desc") {
-                                if (tblOfrs[xTbl1] < tblOfrs[xTbl2]) {
-                                    shouldSwitch = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (shouldSwitch) {
-                            rows[i].parentNode.insertBefore(rows[i + 2], rows[i]);
-                            rows[i].parentNode.insertBefore(rows[i + 3], rows[i + 1]);
-                            var v = tblOfrs[xTbl1];
-                            tblOfrs[xTbl1] = tblOfrs[xTbl2];
-                            tblOfrs[xTbl2] = v;
-                            switching = true;
-                            switchcount++;
-                        } else {
-                            if (switchcount == 0 && dir == "asc") {
-                                dir = "desc";
-                                switching = true;
-                            }
-                        }
-                    }
-                }
             </script>
             <table>
                 <tr>
@@ -180,6 +227,9 @@
                 </tr>
             </table>
 
+            <br/>
+            <div id="containerPeach"></div>
+
             <script type="text/javascript">
                 const lblToSendBTC = document.getElementById('lblToSendBTC');
                 const lblToSendFiat = document.getElementById('lblToSendFiat');
@@ -191,6 +241,15 @@
                     lblToSendFiat.textContent = Math.round((percent *  @walletConfig.OnChainFiatBalance) / 100);
                 }
 
+                function onPeachSearch() {
+                    const percent = parseFloat(percentToSend.value);
+                    const reqData = {
+                        currencyCode: '@walletConfig.FiatCurrency',
+                        btcAmount: lblToSendBTC.textContent,
+                        rate: @walletConfig.Rate
+                    };
+                    GetPartial(reqData);
+                }
             </script>
         }
     }
