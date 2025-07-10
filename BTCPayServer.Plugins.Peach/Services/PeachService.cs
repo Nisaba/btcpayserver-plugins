@@ -1,17 +1,17 @@
 ﻿using BTCPayServer.Plugins.Peach.Model;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using NBitcoin;
+using NBitcoin.Crypto;
+using NBitcoin.DataEncoders;
 using Newtonsoft.Json;
-using Org.BouncyCastle.Asn1.Cms;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 namespace BTCPayServer.Plugins.Peach.Services
 {
@@ -45,17 +45,42 @@ namespace BTCPayServer.Plugins.Peach.Services
             return Bids;
         }
 
-        public async Task<string> GetToken(string pubKey, bool isRegistred)
+        public async Task<string> GetToken(PeachSettings peachSettings)
         {
             string sRep = "";
             try
             {
                 var dto = new DateTimeOffset(DateTime.UtcNow);
-                var sMsg = $"Peach registration {dto.ToUnixTimeMilliseconds().ToString()}";
+                var sMsg = $"Peach Registration {dto.ToUnixTimeMilliseconds().ToString()}";
+
+                dynamic peachRequest = new ExpandoObject();
+                peachRequest.publicKey = peachSettings.PublicKey;
+                peachRequest.message = sMsg;
+                peachRequest.signature = SignMessage(sMsg, peachSettings.PrivateKey);
+                peachRequest.uniqueId = "btcpay";
+
+                var peachJson = JsonConvert.SerializeObject(peachRequest, Formatting.None);
+                var webRequest = new HttpRequestMessage(HttpMethod.Post, $"user/{(peachSettings.IsRegistered ? "auth" : "register")}")
+                {
+                    Content = new StringContent(peachJson, Encoding.UTF8, "application/json"),
+                };
+                using (var rep = await _httpClient.SendAsync(webRequest))
+                {
+                    using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
+                    {
+                        sRep = await rdr.ReadToEndAsync();
+                    }
+                    rep.EnsureSuccessStatusCode();
+                }
+                dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
+                string sToken = JsonRep.accessToken;
+                return sToken;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"PeachPlugin.GetToken(): {ex.Message} - {sRep}");
+                var sError = $"{ex.Message} - {sRep}";
+                _logger.LogError($"PeachPlugin.GetToken(): sError");
+                throw new Exception(sError);
             }
 
         }
@@ -143,6 +168,25 @@ namespace BTCPayServer.Plugins.Peach.Services
 
             return Bids;
 
+        }
+
+        private string SignMessage(string message, string hexPrivateKey)
+        {
+            byte[] privKeyBytes = Encoders.Hex.DecodeData(hexPrivateKey);
+
+            if (privKeyBytes.Length != 32)
+            {
+                throw new ArgumentException("Private key must have exactly 32 bytes (64 chars hex).", nameof(hexPrivateKey));
+            }
+
+            var privKey = new Key(privKeyBytes);
+
+            byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+            byte[] hash = Hashes.SHA256(messageBytes);
+
+            var signatureBytes = privKey.Sign(new uint256(hash)).ToCompact();
+
+            return Encoders.Hex.EncodeData(signatureBytes);
         }
 
     }

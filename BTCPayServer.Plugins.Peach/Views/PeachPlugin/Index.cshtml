@@ -147,8 +147,14 @@
                     input.type = 'hidden';
                     input.name = 'peachMsg';
                     input.value = result.msg;
-
                     form.appendChild(input);
+
+                    const input2 = document.createElement('input');
+                    input2.type = 'hidden';
+                    input2.name = 'peachToken';
+                    input2.value = result.token;
+                    form.appendChild(input2);
+
                     document.body.appendChild(form);
                     form.submit();
 

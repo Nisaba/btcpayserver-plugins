@@ -22,7 +22,7 @@ namespace BTCPayServer.Plugins.Peach.Controllers
         [Authorize(Policy = Policies.CanModifyStoreSettings, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
         [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
         [Authorize(Policy = Policies.CanManagePayouts, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
-        public async Task<IActionResult> Index([FromRoute] string storeId, [FromForm] string? peachMsg)
+        public async Task<IActionResult> Index([FromRoute] string storeId, [FromForm] string? peachMsg, [FromForm] string? peachToken)
         {
             var model = new PeachViewModel()
             {
@@ -40,6 +40,14 @@ namespace BTCPayServer.Plugins.Peach.Controllers
                     TempData[WellKnownTempData.SuccessMessage] = peachMsg;
                 }
             }
+            if (!string.IsNullOrEmpty(peachToken))
+            {
+                model.PeachToken = peachToken;
+            }
+            else
+            {
+                model.PeachToken = model.Settings.IsRegistered ? await _peachService.GetToken(model.Settings) : string.Empty;
+            }
 
             return View(model);
         }
@@ -50,6 +58,7 @@ namespace BTCPayServer.Plugins.Peach.Controllers
         public async Task<IActionResult> UpdSettings([FromBody] PeachSettings settings)
         {
             string sMsg = "";
+            string sToken = "";
             if (!ModelState.IsValid)
             {
                 sMsg = "Error in data";
@@ -58,15 +67,19 @@ namespace BTCPayServer.Plugins.Peach.Controllers
             { 
                 try
                 {
+                    sToken = await _peachService.GetToken(settings);
+                    sMsg = "Peach token received successfully... ";
+                    settings.IsRegistered = true;
+
                     await _pluginService.UpdateSettings(settings);
-                    sMsg = "Settings successfuly saved";
+                    sMsg += "Settings successfuly saved";
                 }
                 catch (Exception ex)
                 {
-                    sMsg = $"Error: {ex.Message}";
+                    sMsg += $"Error: {ex.Message}";
                 }
             }
-            return Json(new { msg = sMsg });
+            return Json(new { msg = sMsg, token = sToken });
         }
 
 
