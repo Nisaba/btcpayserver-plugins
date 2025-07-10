@@ -170,6 +170,76 @@ namespace BTCPayServer.Plugins.Peach.Services
 
         }
 
+        public async Task<List<string>>GetUserPaymentMethods(string token)
+        {
+            var paymentMethods = new List<string>();
+            string sRep = "";
+            try
+            {
+                var webRequest = new HttpRequestMessage(HttpMethod.Get, $"user/me/paymentMethods");
+                webRequest.Headers.Add("Authorization", $"Bearer {token}");
+                using (var rep = await _httpClient.SendAsync(webRequest))
+                {
+                    using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
+                    {
+                        sRep = await rdr.ReadToEndAsync();
+                    }
+                    rep.EnsureSuccessStatusCode();
+                }
+                dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
+                foreach (var method in JsonRep.paymentMethods.sell)
+                {
+                    paymentMethods.Add(method.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"PeachPlugin.GetUserPaymentMethods(): {ex.Message} - {sRep}");
+            }
+            return paymentMethods;
+        }
+
+        public async Task<string> MatchOffer(PeachMatchOfferRequest req)
+        {
+            string sRep = "";
+            try
+            {
+                dynamic peachRequest = new ExpandoObject();
+                peachRequest.matchingOfferId = req.MatchingOfferId;
+                peachRequest.currency = req.Currency;
+                peachRequest.paymentMethod = req.PaymentMethod;
+                peachRequest.price = req.Price;
+                peachRequest.premium = req.Premium;
+
+                string peachJson = JsonConvert.SerializeObject(peachRequest, Formatting.None);
+
+                peachRequest.paymentDataEncrypted = "";
+                peachRequest.paymentDataSignature = SignMessage(peachJson, req.PeachToken);
+
+
+                var webRequest = new HttpRequestMessage(HttpMethod.Post, $"offer/{req.OfferId}/match")
+                {
+                    Content = new StringContent(peachJson, Encoding.UTF8, "application/json"),
+                };
+                webRequest.Headers.Add("Authorization", $"Bearer {req.PeachToken}");
+
+                using (var rep = await _httpClient.SendAsync(webRequest))
+                {
+                    using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
+                    {
+                        sRep = await rdr.ReadToEndAsync();
+                    }
+                    rep.EnsureSuccessStatusCode();
+                }
+                return sRep;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"PeachPlugin.MatchOffer(): {ex.Message} - {sRep}");
+                throw;
+            }
+        }
+
         private string SignMessage(string message, string hexPrivateKey)
         {
             byte[] privKeyBytes = Encoders.Hex.DecodeData(hexPrivateKey);

@@ -5,6 +5,7 @@
 @using BTCPayServer.Services
 
 @inject BTCPayServer.Plugins.Peach.Services.PeachPluginService PeachPluginService
+@inject BTCPayServer.Plugins.Peach.Services.PeachService PeachService
 @inject DisplayFormatter DisplayFormatter
 
 @model BTCPayServer.Plugins.Peach.Model.PeachViewModel
@@ -191,8 +192,9 @@
         {
             <p>No bitcoins available for sale</p>
         } else {
+            //var lstPayments = await PeachService.GetUserPaymentMethods(Model.PeachToken);
 
-            <script type="text/javascript">
+            <script type = "text/javascript" >
                 var tblOfrs = [];
 
                 function GetPartial(reqData) {
