@@ -1,0 +1,197 @@
+﻿@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.Peach.Views
+@using BTCPayServer.Client
+@using BTCPayServer.Plugins.Peach.Model
+@using BTCPayServer.Services
+
+@inject BTCPayServer.Plugins.Peach.Services.PeachPluginService PeachPluginService
+@inject DisplayFormatter DisplayFormatter
+
+@model BTCPayServer.Plugins.Peach.Model.PeachViewModel
+@{
+    ViewData.SetActivePage(PluginNavPages.Index, "Peach plugin");
+}
+
+
+<table><tr>
+        <td>
+            <a href="https://peachbitcoin.com/referral/?code=PRF4BC" target="pch">
+                <img src="/Resources/img/Peach.webp" />
+            </a>
+        </td>
+        <td width="20" />
+        <td>
+            <p>
+                Allows you to forward received funds to <a href="https://peachbitcoin.com/referral/?code=PRF4BC" target="pch">Peach bitcoin</a><br />
+                Please read our documentation <a href="https://github.com/Nisaba/btcpayserver-plugins/blob/master/BTCPayServer.Plugins.Peach/README.md" target="_blank">here</a>.
+            </p>
+        </td>
+    </tr></table>
+<br />
+
+<partial name="_StatusMessage" />
+@{
+    var isModelKO = !Model.Settings.isConfigured || !ViewData.ModelState.IsValid;
+}
+<div permission="@Policies.CanModifyStoreSettings">
+    <br />
+
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="additional-htmlheader-header">
+            <button class="accordion-button @(isModelKO ? "" : "collapsed")"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#peach-config"
+                    aria-expanded="@(isModelKO.ToString().ToLower())"
+                    aria-controls="peach-config">
+                <h4>Configuration</h4>
+                <svg role="img" class="icon icon-caret-down">
+                    <use href="/img/icon-sprite.svg?v=zHetyUWwEcS2qGEsSu8P6l-mwsFkAqFbknsYrREYYvo#caret-down"></use>
+                </svg>
+            </button>
+        </h2>
+        <div id="peach-config" class="accordion-collapse collapse @(isModelKO ? "show" : "")" aria-labelledby="additional-htmlheader-header" style="">
+            <div class="accordion-body">
+                <br />
+                CONFIG
+            </div>
+        </div>
+    </div>
+</div>
+
+<div permission="@Policies.CanCreateNonApprovedPullPayments,@Policies.CanManagePayouts">
+        <br />
+    <h4>Operations</h4>
+    <br />
+    @if (isModelKO)
+    {
+        <p>
+            <i>Mt Pelerin settings not set for this store...</i>
+        </p>
+    } else
+    {
+        var walletConfig = await PeachPluginService.GetBalances(Model.Settings.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
+        @if (walletConfig.OnChainEnabled)
+        {
+            <p><b>On Chain Balance</b>: @walletConfig.OnChainBalance BTC  ~ @DisplayFormatter.Currency(walletConfig.OnChainFiatBalance, walletConfig.FiatCurrency)</p>
+        }
+        else
+        {
+            <p>On Chain wallet not configured</p>
+        }
+        @if (walletConfig.OnChainBalance == 0)
+        {
+            <p>No bitcoins available for sale</p>
+        } else {
+
+            <script type="text/javascript">
+                var tblOfrs = [];
+
+                function GetPartial(reqData, container, bt) {
+                    $(container).html('<div style="display: flex; justify-content: center;"><img src="/Resources/img/Loading_icon.gif"/></div>');
+                    $(bt).hide();
+                    $.ajax({
+                        url: 'peach/GetPartialB2PResult',
+                        type: 'POST',
+                        contentType: "application/json; charset=utf-8",
+                        data: JSON.stringify(reqData),
+                        success: function(result) {
+                            tblOfrs = [];
+                            $(container).html(result);
+                            $("[id^='sortLink']").each(function () {
+                                var $this = $(this);
+                                if (!$._data(this, "events") || !$._data(this, "events").click) {
+                                    $this.on("click", function (event) {
+                                        event.preventDefault();
+                                        var param1 = $(this).data('param1');
+                                        if (tblOfrs.length == 0) {
+                                            var param2Str = $(this).attr('data-param2');
+                                            tblOfrs = JSON.parse(param2Str);
+                                        }
+                                        SortHtmlTable(param1);
+                                    });
+                                }
+                            });
+                            $(bt).show();
+                        },
+                        error: function (xhr, status, error) {
+                            $(container).html("Error: " + error + "<br/>" + xhr.responseText);
+                            $(bt).show();
+                        }
+                    });
+                }
+
+                function SortHtmlTable(currentID) {
+                    var table, rows, switching, i, xTbl1, xTbl2, shouldSwitch, dir, switchcount = 0;
+                    table = document.getElementById("offers" + currentID);
+                    switching = true;
+                    dir = "asc";
+
+                    while (switching) {
+                        switching = false;
+                        rows = table.rows;
+                        for (i = 1; i < (rows.length - 2); i += 2) {
+                            shouldSwitch = false;
+                            xTbl1 = (i - 1) / 2;
+                            xTbl2 = xTbl1 + 1;
+                            if (dir == "asc") {
+                                if (tblOfrs[xTbl1] > tblOfrs[xTbl2]) {
+                                    shouldSwitch = true;
+                                    break;
+                                }
+                            } else if (dir == "desc") {
+                                if (tblOfrs[xTbl1] < tblOfrs[xTbl2]) {
+                                    shouldSwitch = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (shouldSwitch) {
+                            rows[i].parentNode.insertBefore(rows[i + 2], rows[i]);
+                            rows[i].parentNode.insertBefore(rows[i + 3], rows[i + 1]);
+                            var v = tblOfrs[xTbl1];
+                            tblOfrs[xTbl1] = tblOfrs[xTbl2];
+                            tblOfrs[xTbl2] = v;
+                            switching = true;
+                            switchcount++;
+                        } else {
+                            if (switchcount == 0 && dir == "asc") {
+                                dir = "desc";
+                                switching = true;
+                            }
+                        }
+                    }
+                }
+            </script>
+            <table>
+                <tr>
+                    <td>
+                        Percent to sale/swap:&nbsp;
+                        <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setBalanceValues()" />
+                        <br />
+                    </td>
+                    <td width="25" />
+                    <td>
+                        <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
+                        <label id="lblToSendFiat">@((int)(walletConfig.OnChainFiatBalance * (decimal)0.95))</label>&nbsp; @walletConfig.FiatCurrency
+                    </td>
+                    <td width="25" />
+                    <td><button id="btSend" class="btn btn-primary" onclick="onPeachSearch()">Search</button></td>
+                </tr>
+            </table>
+
+            <script type="text/javascript">
+                const lblToSendBTC = document.getElementById('lblToSendBTC');
+                const lblToSendFiat = document.getElementById('lblToSendFiat');
+                const percentToSend = document.getElementById('percentToSend');
+
+                function setBalanceValues() {
+                    const percent = parseFloat(percentToSend.value) || 0;
+                    lblToSendBTC.textContent = ((percent *  @walletConfig.OnChainBalance) / 100).toFixed(8);
+                    lblToSendFiat.textContent = Math.round((percent *  @walletConfig.OnChainFiatBalance) / 100);
+                }
+
+            </script>
+        }
+    }
+</div>

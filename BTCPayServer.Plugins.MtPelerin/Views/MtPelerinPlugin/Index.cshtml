@@ -159,18 +159,20 @@
         </table>
 
         <table>
-            <td>
-                Percent to sale/swap:&nbsp;
-                <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setMtPelerinValues()" />
-                <br />
-            </td>
-            <td width="25" />
-            <td>
-                <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
-                <label id="lblToSendFiat">@((int)walletConfig.OnChainFiatBalance)</label>&nbsp; @walletConfig.FiatCurrency
-            </td>
-            <td width="25" />
-            <td><button id="btSend" class="btn btn-primary" onclick="onMtPelerinAsk()">Ask to Mt Pelerin</button></td>
+            <tr>
+                <td>
+                    Percent to sale/swap:&nbsp;
+                    <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setMtPelerinValues()" />
+                    <br />
+                </td>
+                <td width="25" />
+                <td>
+                    <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
+                    <label id="lblToSendFiat">@((int)(walletConfig.OnChainFiatBalance * (decimal)0.95))</label>&nbsp; @walletConfig.FiatCurrency
+                </td>
+                <td width="25" />
+                <td><button id="btSend" class="btn btn-primary" onclick="onMtPelerinAsk()">Ask to Mt Pelerin</button></td>
+            </tr>
         </table>
         <br />
             <i><small>Please check that there is no previous pending Mt Pelerin payout in BTCPay before placing another order.<br />
@@ -205,7 +207,7 @@
             const percent = parseFloat(percentToSend.value) || 0;
             const isOnChain = document.getElementById('chkOnchain').checked;
             const fiatBalance = isOnChain ? @walletConfig.OnChainFiatBalance : @walletConfig.OffChainFiatBalance;
-            const btcBalance = isOnChain ? @walletConfig.OnChainBalance : @walletConfig.OffChainBalance;
+            const btcBalance = isOnChain ? OnChainBalance : OffChainBalance;
 
             lblToSendBTC.textContent = ((percent * btcBalance) / 100).toFixed(8);
             lblToSendFiat.textContent = Math.round((percent * fiatBalance) / 100);
