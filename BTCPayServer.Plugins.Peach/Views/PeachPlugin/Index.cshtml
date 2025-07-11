@@ -96,14 +96,15 @@
             }
 
             selectedFile = file;
-            document.getElementById('passwordContainer').style.display = 'block';
-            document.getElementById('decryptPassword').focus();
+
+            $('#passwordContainer').css('display', 'block');
+            $('#decryptPassword').focus();
         }
 
         async function decryptFile() {
             if (!selectedFile) return;
 
-            const password = document.getElementById('decryptPassword').value;
+            const password = $('#decryptPassword').val();
             if (!password) {
                 alert("Please enter a password");
                 return;
@@ -120,8 +121,8 @@
                         throw new Error("Decrypt failed - incorrect password");
                     }
 
-                    document.getElementById('decryptPassword').value = '';
-                    document.getElementById('passwordContainer').style.display = 'none';
+                    $('#decryptPassword').val('');
+                    $('#passwordContainer').css('display', 'none');
 
                     const decryptedData = JSON.parse(decryptedText);
                     let PeachSettings = {
@@ -192,7 +193,7 @@
         {
             <p>No bitcoins available for sale</p>
         } else {
-            //var lstPayments = await PeachService.GetUserPaymentMethods(Model.PeachToken);
+            var lstPayments = await PeachService.GetUserPaymentMethods(Model.PeachToken);
 
             <script type = "text/javascript" >
                 var tblOfrs = [];
@@ -217,13 +218,28 @@
                     });
                 }
 
+                function setBalanceValues() {
+                    const percent = parseFloat($('#percentToSend').val());
+                    $('#lblToSendBTC').text(((percent *  @walletConfig.OnChainBalance) / 100).toFixed(8));
+                    $('#lblToSendFiat').text(Math.round((percent *  @walletConfig.OnChainFiatBalance) / 100));
+                }
+
+                function onPeachSearch() {
+                    const percent = parseFloat($('#percentToSend').val());
+                    const reqData = {
+                        token: '@Model.PeachToken',
+                        currencyCode: '@walletConfig.FiatCurrency',
+                        btcAmount: $('#lblToSendBTC').text(),
+                        rate: @walletConfig.Rate
+                    };
+                    GetPartial(reqData);
+                }
             </script>
             <table>
                 <tr>
                     <td>
-                        Percent to sale/swap:&nbsp;
+                        <b>Percent to sale:</b>&nbsp;
                         <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setBalanceValues()" />
-                        <br />
                     </td>
                     <td width="25" />
                     <td>
@@ -231,34 +247,15 @@
                         <label id="lblToSendFiat">@((int)(walletConfig.OnChainFiatBalance * (decimal)0.95))</label>&nbsp; @walletConfig.FiatCurrency
                     </td>
                     <td width="25" />
-                    <td><button id="btSend" class="btn btn-primary" onclick="onPeachSearch()">Search</button></td>
+                    <td rowspan="2" valign="middle"><button id="btSend" class="btn btn-primary" onclick="onPeachSearch()">Search</button></td>
+                </tr>
+                <tr>
+                    <td colspan="3"><b>Your means of payment: </b>@String.Join(", ", lstPayments)</td>
                 </tr>
             </table>
 
             <br/>
             <div id="containerPeach"></div>
-
-            <script type="text/javascript">
-                const lblToSendBTC = document.getElementById('lblToSendBTC');
-                const lblToSendFiat = document.getElementById('lblToSendFiat');
-                const percentToSend = document.getElementById('percentToSend');
-
-                function setBalanceValues() {
-                    const percent = parseFloat(percentToSend.value) || 0;
-                    lblToSendBTC.textContent = ((percent *  @walletConfig.OnChainBalance) / 100).toFixed(8);
-                    lblToSendFiat.textContent = Math.round((percent *  @walletConfig.OnChainFiatBalance) / 100);
-                }
-
-                function onPeachSearch() {
-                    const percent = parseFloat(percentToSend.value);
-                    const reqData = {
-                        currencyCode: '@walletConfig.FiatCurrency',
-                        btcAmount: lblToSendBTC.textContent,
-                        rate: @walletConfig.Rate
-                    };
-                    GetPartial(reqData);
-                }
-            </script>
         }
     }
 </div>

@@ -5,6 +5,7 @@ using NBitcoin;
 using NBitcoin.Crypto;
 using NBitcoin.DataEncoders;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -32,22 +33,22 @@ namespace BTCPayServer.Plugins.Peach.Services
             _cache = cache;
         }
 
-        public async Task<List<PeachBid>> GetBidsListAsync(PeachRequest req)
+        public async Task<string> GetToken(PeachSettings peachSettings)
         {
-            var cacheKey = $"{req.CurrencyCode}-{req.BtcAmount.ToString()}";
-            var Bids = await _cache.GetOrCreateAsync<List<PeachBid>>(cacheKey,
+            var cacheKey = $"Token-{peachSettings.StoreId}";
+            return await _cache.GetOrCreateAsync<string>(cacheKey,
                 async entry =>
                 {
                     entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
                     entry.SlidingExpiration = TimeSpan.FromMinutes(2);
-                    return await DoGetBidsListAsync(req);
+                    return await DoGetToken(peachSettings);
                 });
-            return Bids;
         }
 
-        public async Task<string> GetToken(PeachSettings peachSettings)
+        private async Task<string> DoGetToken(PeachSettings peachSettings)
         {
-            string sRep = "";
+            return "MY-TOKEN-XXX";
+            /* string sRep = "";
             try
             {
                 var dto = new DateTimeOffset(DateTime.UtcNow);
@@ -81,10 +82,24 @@ namespace BTCPayServer.Plugins.Peach.Services
                 var sError = $"{ex.Message} - {sRep}";
                 _logger.LogError($"PeachPlugin.GetToken(): sError");
                 throw new Exception(sError);
-            }
+            }*/
 
         }
 
+
+
+        public async Task<List<PeachBid>> GetBidsListAsync(PeachRequest req)
+        {
+            var cacheKey = $"{req.CurrencyCode}-{req.BtcAmount.ToString()}";
+            var Bids = await _cache.GetOrCreateAsync<List<PeachBid>>(cacheKey,
+                async entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                    entry.SlidingExpiration = TimeSpan.FromMinutes(2);
+                    return await DoGetBidsListAsync(req);
+                });
+            return Bids;
+        }
         public async Task<List<PeachBid>> DoGetBidsListAsync(PeachRequest req)
         {
             var Bids = new List<PeachBid>();
@@ -113,6 +128,8 @@ namespace BTCPayServer.Plugins.Peach.Services
                     }
                     rep.EnsureSuccessStatusCode();
                 }
+
+                var lstPaymentMethods = await GetUserPaymentMethods(req.Token);
 
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
                 var vRate = Convert.ToSingle(req.Rate) / 100000000;
@@ -157,7 +174,19 @@ namespace BTCPayServer.Plugins.Peach.Services
                             MinFiatAmount = vMin * vRate,
                             MaxFiatAmount = vMax * vRate
                         };
-                        Bids.Add(ofr);
+                        if (ofr.PaymentMethods != null && ofr.PaymentMethods.Count > 0)
+                        {
+                            bool hasCommonMethod = false;
+                            foreach (var method in ofr.PaymentMethods)
+                            {
+                                if (lstPaymentMethods.Contains(method))
+                                {
+                                    hasCommonMethod = true;
+                                    break;
+                                }
+                            }
+                            if (hasCommonMethod) Bids.Add(ofr);
+                        }
                     }
                 }
             }
@@ -170,10 +199,22 @@ namespace BTCPayServer.Plugins.Peach.Services
 
         }
 
-        public async Task<List<string>>GetUserPaymentMethods(string token)
+        public async Task<List<string>> GetUserPaymentMethods(string token)
         {
-            var paymentMethods = new List<string>();
-            string sRep = "";
+            var cacheKey = $"PaymentMethods-{token}";
+            return await _cache.GetOrCreateAsync<List<string>>(cacheKey,
+                async entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                    entry.SlidingExpiration = TimeSpan.FromMinutes(2);
+                    return await DoGetUserPaymentMethods(token);
+                });
+        }
+
+        private async Task<List<string>>DoGetUserPaymentMethods(string token)
+        {
+            var paymentMethods = new List<string>() { "paypal", "instantSepa", "wise" };
+            /*string sRep = "";
             try
             {
                 var webRequest = new HttpRequestMessage(HttpMethod.Get, $"user/me/paymentMethods");
@@ -195,49 +236,8 @@ namespace BTCPayServer.Plugins.Peach.Services
             catch (Exception ex)
             {
                 _logger.LogError($"PeachPlugin.GetUserPaymentMethods(): {ex.Message} - {sRep}");
-            }
+            }*/
             return paymentMethods;
-        }
-
-        public async Task<string> MatchOffer(PeachMatchOfferRequest req)
-        {
-            string sRep = "";
-            try
-            {
-                dynamic peachRequest = new ExpandoObject();
-                peachRequest.matchingOfferId = req.MatchingOfferId;
-                peachRequest.currency = req.Currency;
-                peachRequest.paymentMethod = req.PaymentMethod;
-                peachRequest.price = req.Price;
-                peachRequest.premium = req.Premium;
-
-                string peachJson = JsonConvert.SerializeObject(peachRequest, Formatting.None);
-
-                peachRequest.paymentDataEncrypted = "";
-                peachRequest.paymentDataSignature = SignMessage(peachJson, req.PeachToken);
-
-
-                var webRequest = new HttpRequestMessage(HttpMethod.Post, $"offer/{req.OfferId}/match")
-                {
-                    Content = new StringContent(peachJson, Encoding.UTF8, "application/json"),
-                };
-                webRequest.Headers.Add("Authorization", $"Bearer {req.PeachToken}");
-
-                using (var rep = await _httpClient.SendAsync(webRequest))
-                {
-                    using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
-                    {
-                        sRep = await rdr.ReadToEndAsync();
-                    }
-                    rep.EnsureSuccessStatusCode();
-                }
-                return sRep;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"PeachPlugin.MatchOffer(): {ex.Message} - {sRep}");
-                throw;
-            }
         }
 
         private string SignMessage(string message, string hexPrivateKey)

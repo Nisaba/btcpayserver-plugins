@@ -4,6 +4,6 @@
     {
         public PeachSettings Settings { get; set; }
         public bool IsPayoutCreated { get; set; } = false;
-        public string PeachToken { get; set; };
+        public string PeachToken { get; set; }
     }
 }
