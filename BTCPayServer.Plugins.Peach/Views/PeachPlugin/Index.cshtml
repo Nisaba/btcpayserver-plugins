@@ -253,6 +253,19 @@
                     <td colspan="3"><b>Your means of payment: </b>@String.Join(", ", lstPayments)</td>
                 </tr>
             </table>
+            <br />
+            <i><small>Please check that there is no previous pending Peach payout in BTCPay before placing another order</small></i>
+
+            @if (Model.IsPayoutCreated)
+            {
+                <br />
+                <div>
+                    <strong>Success!</strong> Your payout has been created.<br />
+                    If you have set an automatic payout processor, the payment will be sent automatically to Peach.<br />
+                    Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.<br />
+                    If an issue arises, please contact hello@peachbitcoin.com.
+                </div>
+            }
 
             <br/>
             <div id="containerPeach"></div>

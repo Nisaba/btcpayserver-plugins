@@ -86,8 +86,6 @@ namespace BTCPayServer.Plugins.Peach.Services
 
         }
 
-
-
         public async Task<List<PeachBid>> GetBidsListAsync(PeachRequest req)
         {
             var cacheKey = $"{req.CurrencyCode}-{req.BtcAmount.ToString()}";
@@ -238,6 +236,83 @@ namespace BTCPayServer.Plugins.Peach.Services
                 _logger.LogError($"PeachPlugin.GetUserPaymentMethods(): {ex.Message} - {sRep}");
             }*/
             return paymentMethods;
+        }
+
+        public async Task<string> PostSellOffer(PeachPostOfferRequest req)
+        {
+            /*string sRep = "";
+            try
+            {
+                dynamic peachRequest = new ExpandoObject();
+                peachRequest.type = "ask";
+                peachRequest.amount = Convert.ToSingle(req.Amount) * 100000000;
+                peachRequest.premium = req.Premium;
+                peachRequest.meansOfPayment = new Dictionary<string, List<string>> { [req.CurrencyCode] = req.MeansOfPayment };
+                peachRequest.returnAddress = req.ReturnAdress;
+
+                var peachJson = JsonConvert.SerializeObject(peachRequest, Formatting.None);
+                var webRequest = new HttpRequestMessage(HttpMethod.Post, "offer")
+                {
+                    Content = new StringContent(peachJson, Encoding.UTF8, "application/json"),
+                };
+                webRequest.Headers.Add("Authorization", $"Bearer {req.PeachToken}");
+                using (var rep = await _httpClient.SendAsync(webRequest))
+                {
+                    using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
+                    {
+                        sRep = await rdr.ReadToEndAsync();
+                    }
+                    rep.EnsureSuccessStatusCode();
+                }
+                dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
+                return JsonRep.id;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"PeachPlugin.PostSellOffer(): {ex.Message} - {sRep}");
+                throw;
+            } */
+            // Retourne une chaîne de caractères aléatoire fictive pour simuler la création d'une offre
+            var random = new Random();
+            var offerId = $"offer-{random.Next(1000, 9999)}-{DateTime.UtcNow.Ticks}";
+            return offerId;
+        }
+
+        public async Task<string> CreateEscrow(string token, string offerId, string pubKey)
+        {
+           /* string sRep = "";
+            try
+            {
+                dynamic peachRequest = new ExpandoObject();
+                peachRequest.publicKey = pubKey;
+
+                var peachJson = JsonConvert.SerializeObject(peachRequest, Formatting.None);
+                var webRequest = new HttpRequestMessage(HttpMethod.Post, $"offer/{offerId}/escrow")
+                {
+                    Content = new StringContent(peachJson, Encoding.UTF8, "application/json"),
+                };
+                webRequest.Headers.Add("Authorization", $"Bearer {token}");
+                using (var rep = await _httpClient.SendAsync(webRequest))
+                {
+                    using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
+                    {
+                        sRep = await rdr.ReadToEndAsync();
+                    }
+                    rep.EnsureSuccessStatusCode();
+                }
+                dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
+                return JsonRep.escrow;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"PeachPlugin.CreateEscrow(): {ex.Message} - {sRep}");
+                throw;
+            }*/
+#if DEBUG
+            return "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
+#else
+            return "bc1q75t28djzlpcm60jee4phtlvxh4uwj6fkyrnpxy";
+#endif
         }
 
         private string SignMessage(string message, string hexPrivateKey)

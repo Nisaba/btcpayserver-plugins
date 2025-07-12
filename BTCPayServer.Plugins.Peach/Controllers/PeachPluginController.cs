@@ -27,7 +27,7 @@ namespace BTCPayServer.Plugins.Peach.Controllers
             var model = new PeachViewModel()
             {
                 Settings = await _pluginService.GetStoreSettings(storeId),
-                IsPayoutCreated = false
+                IsPayoutCreated = (TempData[WellKnownTempData.SuccessMessage] ?? "").ToString().Contains("Payout created!")
             };
             if (!string.IsNullOrEmpty(peachMsg))
             {
@@ -101,6 +101,44 @@ namespace BTCPayServer.Plugins.Peach.Controllers
                 model.ErrorMsg = ex.Message;
             }
             return PartialView("_PeachResults", model);
+        }
+
+        [HttpPost]
+        [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
+        [Authorize(Policy = Policies.CanManagePayouts, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
+        [Route("CreateOffer")]
+        public async Task<IActionResult> CreateOffer([FromRoute] string storeId, [FromBody] PeachClientPostOfferRequest reqCient)
+        {
+            try
+            {
+                var model = new PeachViewModel()
+                {
+                    Settings = await _pluginService.GetStoreSettings(storeId),
+                    IsPayoutCreated = false
+                };
+                var req = new PeachPostOfferRequest
+                {
+                    PeachToken = reqCient.Token,
+                    Amount = reqCient.Amount,
+                    Premium = reqCient.Premium,
+                    CurrencyCode = reqCient.Currency,
+                    MeansOfPayment = await _peachService.GetUserPaymentMethods(reqCient.Token),
+                    ReturnAdress = await _pluginService.GetWalletBtcAddress(storeId)
+                };
+                var offerId = await _peachService.PostSellOffer(req);
+
+                var settings = await _pluginService.GetStoreSettings(storeId);
+                var btcEscrowAddress = await _peachService.CreateEscrow(reqCient.Token, offerId, settings.PublicKey) ;
+
+                await _pluginService.CreatePayout(storeId, offerId, btcEscrowAddress, reqCient.Amount);
+                model.IsPayoutCreated = true;
+                TempData[WellKnownTempData.SuccessMessage] = $"Payout created! Peach Offer ID: {offerId}";
+            }
+            catch (Exception ex)
+            {
+                TempData[WellKnownTempData.ErrorMessage] = ex.Message;
+            }
+            return RedirectToAction("Index");
         }
     }
 }

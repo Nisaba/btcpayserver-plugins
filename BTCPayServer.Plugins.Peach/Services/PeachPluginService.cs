@@ -35,6 +35,7 @@ namespace BTCPayServer.Plugins.Peach.Services
         private readonly PayoutMethodHandlerDictionary _payoutHandlers;
         private readonly PullPaymentHostedService _pullPaymentHostedService;
         private readonly ExplorerClientProvider _explorerClientProvider;
+        private readonly ApplicationDbContextFactory _btcPayDbContextFactory;
 
         public PeachPluginService(PeachPluginDbContextFactory pluginDbContextFactory,
                                       StoreRepository storeRepository,
@@ -47,7 +48,8 @@ namespace BTCPayServer.Plugins.Peach.Services
                                       PaymentMethodHandlerDictionary handlers,
                                       PayoutMethodHandlerDictionary payoutHandlers,
                                       PullPaymentHostedService pullPaymentHostedService,
-                                      ExplorerClientProvider explorerClientProvider)
+                                      ExplorerClientProvider explorerClientProvider,
+                                      ApplicationDbContextFactory btcPayDbContextFactory)
         {
             _logger = logger;
             _context = pluginDbContextFactory.CreateContext();
@@ -61,6 +63,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             _payoutHandlers = payoutHandlers;
             _pullPaymentHostedService = pullPaymentHostedService;
             _explorerClientProvider = explorerClientProvider;
+            _btcPayDbContextFactory = btcPayDbContextFactory;
         }
 
         public async Task<PeachSettings> GetStoreSettings(string storeId)
@@ -211,5 +214,106 @@ namespace BTCPayServer.Plugins.Peach.Services
                 }
             }
         }
+
+        public async Task<string> GetWalletBtcAddress(string storeId)
+        {
+            string sAddress = string.Empty;
+            try
+            {
+                var store = await _storeRepository.FindStore(storeId);
+
+                var walletId = new WalletId(store.Id, "BTC");
+                var derivationScheme = store.GetDerivationSchemeSettings(_handlers, walletId.CryptoCode);
+                if (derivationScheme == null)
+                    return sAddress;
+
+                var btcNetwork = _networkProvider.DefaultNetwork as BTCPayNetwork;
+                if (btcNetwork == null)
+                    return sAddress;
+
+                using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
+                var wallet = _walletProvider.GetWallet(btcNetwork);
+                var utxos = await wallet.GetUnspentCoins(derivationScheme.AccountDerivation);
+                if (utxos.Length == 0)
+                    return sAddress;
+
+                var utxo = utxos.FirstOrDefault();
+                sAddress = utxo.Address.ToString();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "PeachPlugin:GetWalletBtcAddress()");
+            }
+            return sAddress;
+        }
+
+        public async Task CreatePayout(string storeId, string offerId, string btcDest, decimal amount, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var payoutMethodId = PayoutMethodId.Parse("BTC-CHAIN");
+
+                var ppRequest = new CreatePullPaymentRequest
+                {
+                    Name = $"Peach sell offer {offerId}",
+                    Description = "",
+                    Amount = amount,
+                    Currency = "BTC",
+                    ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
+                    PayoutMethods = new[] { payoutMethodId.ToString() }
+                };
+
+                var store = await _storeRepository.FindStore(storeId);
+                var ppId = await _pullPaymentService.CreatePullPayment(store, ppRequest);
+
+                await using var btcPayCtx = _btcPayDbContextFactory.CreateContext();
+                var pp = await btcPayCtx.PullPayments.FindAsync(ppId);
+                var blob = pp.GetBlob();
+
+                var payoutHandler = _payoutHandlers.TryGet(payoutMethodId);
+                if (payoutHandler == null)
+                    throw new Exception($"No payout handler found for {payoutMethodId}");
+
+                string error = null;
+                IClaimDestination mtPelerinDestination;
+
+                (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(btcDest, blob, cancellationToken);
+
+                if (mtPelerinDestination == null)
+                    throw new Exception($"Destination parsing failed: {error ?? "Unknown error"}");
+
+                var result = await _pullPaymentHostedService.Claim(new ClaimRequest
+                {
+                    Destination = mtPelerinDestination,
+                    PullPaymentId = ppId,
+                    ClaimedAmount = amount,
+                    PayoutMethodId = payoutMethodId,
+                    StoreId = storeId,
+                    PreApprove = true,
+                });
+
+                switch (result.Result)
+                {
+                    case ClaimRequest.ClaimResult.Duplicate:
+                        throw new Exception("Duplicate claim for pull payment");
+                    case ClaimRequest.ClaimResult.Expired:
+                        throw new Exception("Pull payment expired");
+                    case ClaimRequest.ClaimResult.Archived:
+                        throw new Exception("Pull payment archived");
+                    case ClaimRequest.ClaimResult.AmountTooLow:
+                        throw new Exception("Claim amount is too low");
+                    case ClaimRequest.ClaimResult.NotStarted:
+                        throw new Exception("Pull payment has not started yet");
+                }
+                ;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "PeachPlugin:CreatePayout()");
+                throw;
+            }
+        }
+
+
     }
 }
