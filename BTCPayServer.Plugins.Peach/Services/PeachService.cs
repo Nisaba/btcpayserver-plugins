@@ -274,7 +274,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             } */
             // Retourne une chaîne de caractères aléatoire fictive pour simuler la création d'une offre
             var random = new Random();
-            var offerId = $"offer-{random.Next(1000, 9999)}-{DateTime.UtcNow.Ticks}";
+            var offerId = $"{random.Next(1000, 9999)}-{DateTime.UtcNow.Ticks}";
             return offerId;
         }
 

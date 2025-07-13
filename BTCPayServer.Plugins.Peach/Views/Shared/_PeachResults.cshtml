@@ -98,17 +98,17 @@
     </div>
     <!-- <vc:pager view-model="Model" /> -->
     <br />
-    @switch(Model.Bids.Count)
-    {
-        case 0:
-            <p class="text-center">No bids found. Create a sell offer now...</p>
-            break;
-        case 1:
-            <p class="text-center">1 bid found. To match with it, create a sell offer now...</p>
-            break;
-        default:
-            <p class="text-center">@Model.Bids.Count bids found. To match with one of them, create a sell offer now...</p>
-            break;
-    }
-
 }
+@switch (Model.Bids.Count)
+{
+    case 0:
+        <p class="text-center">No bids found. Create a sell offer now...</p>
+        break;
+    case 1:
+        <p class="text-center">1 bid found. To match with it, create a sell offer now...</p>
+        break;
+    default:
+        <p class="text-center">@Model.Bids.Count bids found. To match with one of them, create a sell offer now...</p>
+        break;
+}
+

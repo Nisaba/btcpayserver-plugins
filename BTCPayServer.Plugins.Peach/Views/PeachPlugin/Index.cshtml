@@ -201,6 +201,7 @@
                 function GetPartial(reqData) {
                     $('#containerPeach').html('<div style="display: flex; justify-content: center;"><img src="/Resources/img/Loading_icon.gif"/></div>');
                     $('#btSend').hide();
+                    $('#btCreate').hide();
                     $.ajax({
                         url: 'peach/GetPartialResult',
                         type: 'POST',
@@ -210,10 +211,12 @@
                             tblOfrs = [];
                             $('#containerPeach').html(result);
                             $('#btSend').show();
+                            $('#btCreate').show();
                         },
                         error: function (xhr, status, error) {
                             $('#containerPeach').html("Error: " + error + "<br/>" + xhr.responseText);
                             $('#btSend').show();
+                            $('#btCreate').show();
                         }
                     });
                 }
@@ -226,6 +229,10 @@
 
                 function onPeachSearch() {
                     const percent = parseFloat($('#percentToSend').val());
+                    if (percent == 100) {
+                        alert('You must keep some sats for the transaction fees... Please reduce the amount');
+                        return;
+                    }
                     const reqData = {
                         token: '@Model.PeachToken',
                         currencyCode: '@walletConfig.FiatCurrency',
@@ -234,23 +241,96 @@
                     };
                     GetPartial(reqData);
                 }
+
+                function onPeachCreate() {
+                    const percent = parseFloat($('#percentToSend').val());
+                    if (percent == 100) {
+                        alert('You must keep some sats for the transaction fees... Please reduce the amount');
+                        return;
+                    }
+                    const reqData = {
+                        token: '@Model.PeachToken',
+                        amount: $('#lblToSendBTC').text(),
+                        premium: parseFloat($('#premium').val()),
+                        currency: '@walletConfig.FiatCurrency'
+                    };
+
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = window.location.pathname + '/CreateOffer';
+
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'token';
+                    input.value = '@Model.PeachToken';
+                    form.appendChild(input);
+
+                    const input2 = document.createElement('input');
+                    input2.type = 'hidden';
+                    input2.name = 'amount';
+                    input2.value = parseFloat($('#lblToSendBTC').text());
+                    form.appendChild(input2);
+
+                    const input3 = document.createElement('input');
+                    input3.type = 'hidden';
+                    input3.name = 'premium';
+                    input3.value = parseFloat($('#premium').val());
+                    form.appendChild(input3);
+
+                    const input4 = document.createElement('input');
+                    input4.type = 'hidden';
+                    input4.name = 'currency';
+                    input4.value = '@walletConfig.FiatCurrency';
+                    form.appendChild(input4);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
             </script>
+
             <table>
                 <tr>
                     <td>
-                        <b>Percent to sale:</b>&nbsp;
-                        <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setBalanceValues()" />
+                        <table>
+                            <tr>
+                                <td>
+                                    <b>Percent to sale:</b>&nbsp;
+                                    <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setBalanceValues()" />
+                                </td>
+                                <td width="25" />
+                                <td>
+                                    <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
+                                    <label id="lblToSendFiat">@((int)(walletConfig.OnChainFiatBalance * (decimal)0.95))</label>&nbsp; @walletConfig.FiatCurrency
+                                </td>
+                                <td width="25" />
+                                <td rowspan="2" valign="middle">
+                                    <button id="btSend" class="btn btn-primary" onclick="onPeachSearch()">Search</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3"><b>Your means of payment: </b>@String.Join(", ", lstPayments)</td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td width="35" />
+                    <td>
+                        <table>
+                            <tr>
+                                <td>
+                                    <b>Your premium</b>:<br/>
+                                    (positive or negative)
+                                </td>
+                                    <td width="5" />
+                                <td valign="middle">
+                                    <input id="premium" type="number" min="-30" max="30" value="0" />
+                                </td>
+                            </tr>
+                        </table>                    
                     </td>
                     <td width="25" />
                     <td>
-                        <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
-                        <label id="lblToSendFiat">@((int)(walletConfig.OnChainFiatBalance * (decimal)0.95))</label>&nbsp; @walletConfig.FiatCurrency
+                        <button id="btCreate" class="btn btn-primary" onclick="onPeachCreate()">Create Sell Offer</button>
                     </td>
-                    <td width="25" />
-                    <td rowspan="2" valign="middle"><button id="btSend" class="btn btn-primary" onclick="onPeachSearch()">Search</button></td>
-                </tr>
-                <tr>
-                    <td colspan="3"><b>Your means of payment: </b>@String.Join(", ", lstPayments)</td>
                 </tr>
             </table>
             <br />
@@ -258,7 +338,7 @@
 
             @if (Model.IsPayoutCreated)
             {
-                <br />
+                <br /><br />
                 <div>
                     <strong>Success!</strong> Your payout has been created.<br />
                     If you have set an automatic payout processor, the payment will be sent automatically to Peach.<br />
@@ -269,6 +349,7 @@
 
             <br/>
             <div id="containerPeach"></div>
+
         }
     }
 </div>
