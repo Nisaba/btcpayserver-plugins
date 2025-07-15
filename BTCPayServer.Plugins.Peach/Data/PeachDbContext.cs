@@ -14,6 +14,7 @@ public class PeachPluginDbContext : DbContext
     }
 
     public DbSet<PeachSettings> PeachSettings { get; set; }
+    public DbSet<PeachMeanOfPayment> MeansOfPayments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

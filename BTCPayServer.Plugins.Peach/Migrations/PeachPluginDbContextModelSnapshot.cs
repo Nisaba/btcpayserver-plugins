@@ -38,6 +38,22 @@ namespace BTCPayServer.Plugins.Peach.Migrations
                 b.ToTable("PeachSettings", "BTCPayServer.Plugins.Peach");
             });
 
+            modelBuilder.Entity("BTCPayServer.Plugins.Peach.Model.MeansOfPayments", b =>
+            {
+                b.Property<string>("StoreId")
+                    .HasColumnType("text");
+
+                b.Property<string>("MoP")
+                    .HasColumnType("text");
+
+                b.Property<string>("HashPaymentData")
+                    .HasColumnType("text");
+
+                b.HasKey("StoreId", "MoP");
+
+                b.ToTable("MeansOfPayment", "BTCPayServer.Plugins.Peach");
+            });
+
         }
     }
 }

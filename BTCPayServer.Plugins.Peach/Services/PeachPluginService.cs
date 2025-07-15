@@ -18,6 +18,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using static Dapper.SqlMapper;
 
 namespace BTCPayServer.Plugins.Peach.Services
 {
@@ -109,6 +110,65 @@ namespace BTCPayServer.Plugins.Peach.Services
             catch (Exception e)
             {
                 _logger.LogError(e, "PeachPlugin:UpdateSettings()");
+                throw;
+            }
+        }
+
+        public async Task<List<PeachMeanOfPayment>> GetMeansOfPayments(string storeId)
+        {
+            try
+            {
+                var meansOfPayments = await _context.MeansOfPayments
+                    .Where(m => m.StoreId == storeId)
+                    .ToListAsync();
+                if (meansOfPayments == null)
+                {
+                    meansOfPayments = new List<PeachMeanOfPayment>();
+                }
+                return meansOfPayments;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "PeachPlugin:GetMeanOfPayments()");
+                throw;
+            }
+        }
+
+        public async Task<List<String>> GetMoPNames(string storeId)
+        {
+            try
+            {
+                var meansOfPayments = await _context.MeansOfPayments
+                    .Where(m => m.StoreId == storeId)
+                    .Select(m => m.MoP)
+                    .ToListAsync();
+                if (meansOfPayments == null)
+                {
+                    meansOfPayments = new List<String>();
+                }
+                return meansOfPayments;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "PeachPlugin:GetMeanOfPayments()");
+                throw;
+            }
+        }
+
+        public async Task UpdateMeansOfPayments(string StoreId, List<PeachMeanOfPayment> means) 
+        {
+            try
+            {
+                _context.MeansOfPayments.RemoveRange (_context.MeansOfPayments.Where(a => a.StoreId == StoreId));
+                await _context.MeansOfPayments.AddRangeAsync(means);
+
+                await _context.SaveChangesAsync();
+                return;
+
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "PeachPlugin:UpdateMeansOfPayments()");
                 throw;
             }
         }
@@ -275,16 +335,16 @@ namespace BTCPayServer.Plugins.Peach.Services
                     throw new Exception($"No payout handler found for {payoutMethodId}");
 
                 string error = null;
-                IClaimDestination mtPelerinDestination;
+                IClaimDestination peachDestination;
 
-                (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(btcDest, blob, cancellationToken);
+                (peachDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(btcDest, blob, cancellationToken);
 
-                if (mtPelerinDestination == null)
+                if (peachDestination == null)
                     throw new Exception($"Destination parsing failed: {error ?? "Unknown error"}");
 
                 var result = await _pullPaymentHostedService.Claim(new ClaimRequest
                 {
-                    Destination = mtPelerinDestination,
+                    Destination = peachDestination,
                     PullPaymentId = ppId,
                     ClaimedAmount = amount,
                     PayoutMethodId = payoutMethodId,
@@ -305,7 +365,6 @@ namespace BTCPayServer.Plugins.Peach.Services
                     case ClaimRequest.ClaimResult.NotStarted:
                         throw new Exception("Pull payment has not started yet");
                 }
-                ;
             }
             catch (Exception e)
             {

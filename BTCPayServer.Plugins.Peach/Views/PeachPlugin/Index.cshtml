@@ -67,6 +67,7 @@
                         <input type="password" class="form-control" id="decryptPassword" autocomplete="off" />
                         <button class="btn btn-primary" type="button" onclick="decryptFile()">Decrypt</button>
                     </div>
+                    <i>You will also need this password to access Peach functionnalities by the plugin</i>
                 </div>
             </div>
             @if (IsConfigured)
@@ -80,6 +81,14 @@
                             <input asp-for="Settings.PublicKey" data-fill="port" class="form-control readonly-input" readonly />
                         </td>
                     </tr>
+                    <tr>
+                        <td width="100">
+                            <label asp-for="MeansOfPayments" class="form-label"></label>
+                        </td>
+                        <td width="300" class="border-0 ps-0 align-middle">
+                            <input value="@String.Join(", ", Model.MeansOfPayments)" data-fill="port" class="form-control readonly-input" readonly />
+                        </td>
+                    </tr>
                 </table>
             }
         </div>
@@ -89,14 +98,11 @@
 
         async function handleFileSelect(event) {
             const file = event.target.files[0];
-
             if (!file.name.match(/^peach-account-.*\.json$/)) {
                 alert("File name format must be: peach-account-xxxxxxxx.json");
                 return;
             }
-
             selectedFile = file;
-
             $('#passwordContainer').css('display', 'block');
             $('#decryptPassword').focus();
         }
@@ -121,15 +127,16 @@
                         throw new Error("Decrypt failed - incorrect password");
                     }
 
-                    $('#decryptPassword').val('');
-                    $('#passwordContainer').css('display', 'none');
-
                     const decryptedData = JSON.parse(decryptedText);
-                    let PeachSettings = {
-                        storeId: '@Model.Settings.StoreId',
-                        publicKey: decryptedData.publicKey,
-                        privateKey: decryptedData.privKey,
-                        isRegistered: false
+                    let Request = {
+                        settings: {
+                            storeId: '@Model.Settings.StoreId',
+                            publicKey: decryptedData.publicKey,
+                            pwd: password,
+                            privKey: decryptedData.privKey,
+                            isRegistered: false
+                        },
+                        meansOfPayments: toMoPJSon(decryptedData.paymentData)
                     };
 
                     const response = await fetch('Peach/UpdSettings', {
@@ -137,7 +144,7 @@
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(PeachSettings)
+                        body: JSON.stringify(Request)
                     });
                     const result = await response.json();
 
@@ -166,11 +173,23 @@
             };
             reader.readAsText(selectedFile);
         }
+
+        function toMoPJSon(inputArray) {
+            return inputArray.map(item => {
+                const jsonStr = JSON.stringify(item);
+                const hash = CryptoJS.SHA256(jsonStr).toString(CryptoJS.enc.Hex);
+                return {
+                    storeId: '@Model.Settings.StoreId',
+                    moP: item.type,
+                    hashPaymentData: hash
+                };
+            });
+        }
     </script>
 </div>
 
 <div permission="@Policies.CanCreateNonApprovedPullPayments,@Policies.CanManagePayouts">
-        <br />
+    <br />
     <h4>Operations</h4>
     <br />
     @if (!IsConfigured)
@@ -193,8 +212,6 @@
         {
             <p>No bitcoins available for sale</p>
         } else {
-            var lstPayments = await PeachService.GetUserPaymentMethods(Model.PeachToken);
-
             <script type = "text/javascript" >
                 var tblOfrs = [];
 
@@ -286,6 +303,40 @@
                     document.body.appendChild(form);
                     form.submit();
                 }
+
+                async function GetToken() {
+                    let Request = {
+                        pwd: $('#pkPassword').val()
+                    };
+
+                    const response = await fetch('Peach/GetToken', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(Request)
+                    });
+                    const result = await response.json();
+
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = window.location.pathname;
+
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'peachMsg';
+                    input.value = result.msg;
+                    form.appendChild(input);
+
+                    const input2 = document.createElement('input');
+                    input2.type = 'hidden';
+                    input2.name = 'peachToken';
+                    input2.value = result.token;
+                    form.appendChild(input2);
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
             </script>
 
             <table>
@@ -308,29 +359,52 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="3"><b>Your means of payment: </b>@String.Join(", ", lstPayments)</td>
+                                <td colspan="3"><b>Your means of payment: </b>@String.Join(", ", Model.MeansOfPayments)</td>
                             </tr>
                         </table>
                     </td>
                     <td width="35" />
-                    <td>
-                        <table>
-                            <tr>
-                                <td>
-                                    <b>Your premium</b>:<br/>
-                                    (positive or negative)
-                                </td>
+                    @if (String.IsNullOrEmpty(Model.PeachToken))
+                    {
+                        <td>
+                            <table>
+                                <tr>
+                                    <td>
+                                        <b>Password</b>:<br />
+                                        (to post Peach offers)
+                                    </td>
                                     <td width="5" />
-                                <td valign="middle">
-                                    <input id="premium" type="number" min="-30" max="30" value="0" />
-                                </td>
-                            </tr>
-                        </table>                    
-                    </td>
-                    <td width="25" />
-                    <td>
-                        <button id="btCreate" class="btn btn-primary" onclick="onPeachCreate()">Create Sell Offer</button>
-                    </td>
+                                    <td valign="middle">
+                                        <input type="password" class="form-control" id="pkPassword" autocomplete="off" />
+                                    </td>
+                                    <td width="5" />
+                                    <td valign="middle">
+                                        <button class="btn btn-primary" type="button" onclick="GetToken()">OK</button>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    } else
+                    {
+                        <td>
+                            <table>
+                                <tr>
+                                    <td>
+                                        <b>Your premium</b>:<br />
+                                        (positive or negative)
+                                    </td>
+                                    <td width="5" />
+                                    <td valign="middle">
+                                        <input id="premium" type="number" min="-30" max="30" value="0" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td width="25" />
+                        <td>
+                            <button id="btCreate" class="btn btn-primary" onclick="onPeachCreate()">Create Sell Offer</button>
+                        </td>
+                    }
                 </tr>
             </table>
             <br />

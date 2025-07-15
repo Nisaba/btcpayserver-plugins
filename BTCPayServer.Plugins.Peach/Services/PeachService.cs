@@ -35,6 +35,9 @@ namespace BTCPayServer.Plugins.Peach.Services
 
         public async Task<string> GetToken(PeachSettings peachSettings)
         {
+            if (string.IsNullOrEmpty(peachSettings.Pwd))
+                return string.Empty;
+
             var cacheKey = $"Token-{peachSettings.StoreId}";
             return await _cache.GetOrCreateAsync<string>(cacheKey,
                 async entry =>
@@ -86,7 +89,7 @@ namespace BTCPayServer.Plugins.Peach.Services
 
         }
 
-        public async Task<List<PeachBid>> GetBidsListAsync(PeachRequest req)
+        public async Task<List<PeachBid>> GetBidsListAsync(PeachRequest req, List<string> lstPaymentMethods)
         {
             var cacheKey = $"{req.CurrencyCode}-{req.BtcAmount.ToString()}";
             var Bids = await _cache.GetOrCreateAsync<List<PeachBid>>(cacheKey,
@@ -94,11 +97,11 @@ namespace BTCPayServer.Plugins.Peach.Services
                 {
                     entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
                     entry.SlidingExpiration = TimeSpan.FromMinutes(2);
-                    return await DoGetBidsListAsync(req);
+                    return await DoGetBidsListAsync(req, lstPaymentMethods);
                 });
             return Bids;
         }
-        public async Task<List<PeachBid>> DoGetBidsListAsync(PeachRequest req)
+        public async Task<List<PeachBid>> DoGetBidsListAsync(PeachRequest req, List<string> lstPaymentMethods)
         {
             var Bids = new List<PeachBid>();
             string sRep = "";
@@ -126,8 +129,6 @@ namespace BTCPayServer.Plugins.Peach.Services
                     }
                     rep.EnsureSuccessStatusCode();
                 }
-
-                var lstPaymentMethods = await GetUserPaymentMethods(req.Token);
 
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
                 var vRate = Convert.ToSingle(req.Rate) / 100000000;
@@ -195,47 +196,6 @@ namespace BTCPayServer.Plugins.Peach.Services
 
             return Bids;
 
-        }
-
-        public async Task<List<string>> GetUserPaymentMethods(string token)
-        {
-            var cacheKey = $"PaymentMethods-{token}";
-            return await _cache.GetOrCreateAsync<List<string>>(cacheKey,
-                async entry =>
-                {
-                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
-                    entry.SlidingExpiration = TimeSpan.FromMinutes(2);
-                    return await DoGetUserPaymentMethods(token);
-                });
-        }
-
-        private async Task<List<string>>DoGetUserPaymentMethods(string token)
-        {
-            var paymentMethods = new List<string>() { "paypal", "instantSepa", "wise" };
-            /*string sRep = "";
-            try
-            {
-                var webRequest = new HttpRequestMessage(HttpMethod.Get, $"user/me/paymentMethods");
-                webRequest.Headers.Add("Authorization", $"Bearer {token}");
-                using (var rep = await _httpClient.SendAsync(webRequest))
-                {
-                    using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
-                    {
-                        sRep = await rdr.ReadToEndAsync();
-                    }
-                    rep.EnsureSuccessStatusCode();
-                }
-                dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
-                foreach (var method in JsonRep.paymentMethods.sell)
-                {
-                    paymentMethods.Add(method.ToString());
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"PeachPlugin.GetUserPaymentMethods(): {ex.Message} - {sRep}");
-            }*/
-            return paymentMethods;
         }
 
         public async Task<string> PostSellOffer(PeachPostOfferRequest req)

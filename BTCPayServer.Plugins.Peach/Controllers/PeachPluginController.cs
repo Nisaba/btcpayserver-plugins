@@ -27,6 +27,7 @@ namespace BTCPayServer.Plugins.Peach.Controllers
             var model = new PeachViewModel()
             {
                 Settings = await _pluginService.GetStoreSettings(storeId),
+                MeansOfPayments = await _pluginService.GetMoPNames(storeId),
                 IsPayoutCreated = (TempData[WellKnownTempData.SuccessMessage] ?? "").ToString().Contains("Payout created!")
             };
             if (!string.IsNullOrEmpty(peachMsg))
@@ -55,7 +56,7 @@ namespace BTCPayServer.Plugins.Peach.Controllers
         [HttpPost]
         [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanModifyStoreSettings)]
         [Route("UpdSettings")]
-        public async Task<IActionResult> UpdSettings([FromBody] PeachSettings settings)
+        public async Task<IActionResult> UpdSettings([FromBody] UpdateRequest req)
         {
             string sMsg = "";
             string sToken = "";
@@ -67,12 +68,15 @@ namespace BTCPayServer.Plugins.Peach.Controllers
             { 
                 try
                 {
-                    sToken = await _peachService.GetToken(settings);
-                    sMsg = "Peach token received successfully... ";
-                    settings.IsRegistered = true;
+                    sToken = await _peachService.GetToken(req.Settings);
+                    sMsg = "Peach token received, ";
+                    req.Settings.IsRegistered = true;
 
-                    await _pluginService.UpdateSettings(settings);
-                    sMsg += "Settings successfuly saved";
+                    await _pluginService.UpdateSettings(req.Settings);
+                    sMsg += "Settings saved, ";
+
+                    await _pluginService.UpdateMeansOfPayments(req.Settings.StoreId, req.MeansOfPayments);
+                    sMsg += "Means of Payments saved... Success";
                 }
                 catch (Exception ex)
                 {
@@ -83,17 +87,40 @@ namespace BTCPayServer.Plugins.Peach.Controllers
         }
 
 
+
+        [HttpPost]
+        [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
+        [Authorize(Policy = Policies.CanManagePayouts, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
+        [Route("GetToken")]
+        public async Task<IActionResult> GetToken([FromRoute] string storeId, [FromBody] dynamic req)
+        {
+            string sMsg = "";
+            string sToken = "";
+            try
+            {
+                var settings = await _pluginService.GetStoreSettings(storeId);
+                settings.Pwd = req["pwd"];
+                sToken = await _peachService.GetToken(settings);
+                sMsg = "Peach token received";
+            }
+            catch (Exception ex)
+            {
+                sMsg += $"Error: {ex.Message}";
+            }
+            return Json(new { msg = sMsg, token = sToken });
+        }
+
         [HttpPost]
         [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
         [Authorize(Policy = Policies.CanManagePayouts, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
         [Route("GetPartialResult")]
-        public async Task<IActionResult> GetPartialResult([FromBody] PeachRequest req)
+        public async Task<IActionResult> GetPartialResult([FromRoute] string storeId, [FromBody] PeachRequest req)
         {
             var model = new PeachResult { CurrencyCode = req.CurrencyCode };
             try
             {
-
-                model.Bids = await _peachService.GetBidsListAsync(req);
+                var mopNames = await _pluginService.GetMoPNames(storeId);
+                model.Bids = await _peachService.GetBidsListAsync(req, mopNames);
 
             }
             catch (Exception ex)
@@ -117,7 +144,7 @@ namespace BTCPayServer.Plugins.Peach.Controllers
                     Amount = reqCient.Amount,
                     Premium = reqCient.Premium,
                     CurrencyCode = reqCient.Currency,
-                    MeansOfPayment = await _peachService.GetUserPaymentMethods(reqCient.Token),
+                    MeansOfPayment = await _pluginService.GetMoPNames(storeId),
                     ReturnAdress = await _pluginService.GetWalletBtcAddress(storeId)
                 };
                 var offerId = await _peachService.PostSellOffer(req);
