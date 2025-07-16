@@ -144,13 +144,13 @@ namespace BTCPayServer.Plugins.Peach.Controllers
                     Amount = reqCient.Amount,
                     Premium = reqCient.Premium,
                     CurrencyCode = reqCient.Currency,
-                    MeansOfPayment = await _pluginService.GetMoPNames(storeId),
+                    MeansOfPayment = await _pluginService.GetMeansOfPayments(storeId),
                     ReturnAdress = await _pluginService.GetWalletBtcAddress(storeId)
                 };
                 var offerId = await _peachService.PostSellOffer(req);
 
                 var settings = await _pluginService.GetStoreSettings(storeId);
-                var btcEscrowAddress = await _peachService.CreateEscrow(reqCient.Token, offerId, settings.PublicKey) ;
+                var btcEscrowAddress = await _peachService.CreateEscrow(reqCient.Token, offerId, settings.PrivKey) ;
 
                 await _pluginService.CreatePayout(storeId, offerId, btcEscrowAddress, reqCient.Amount);
                 TempData[WellKnownTempData.SuccessMessage] = $"Payout created! Peach Offer ID: {offerId}";

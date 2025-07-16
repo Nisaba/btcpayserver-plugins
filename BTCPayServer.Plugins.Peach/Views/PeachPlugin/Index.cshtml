@@ -133,7 +133,7 @@
                             storeId: '@Model.Settings.StoreId',
                             publicKey: decryptedData.publicKey,
                             pwd: password,
-                            privKey: decryptedData.privKey,
+                            privKey: decryptedData.base58,
                             isRegistered: false
                         },
                         meansOfPayments: toMoPJSon(decryptedData.paymentData)
