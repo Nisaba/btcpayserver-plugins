@@ -51,7 +51,7 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-	  <Folder Include="Models\" />
+	  <Folder Include="Resources\img\" />
 	</ItemGroup>
 
 

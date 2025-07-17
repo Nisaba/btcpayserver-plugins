@@ -1,0 +1,74 @@
+﻿@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.Lendasat.Views
+@using BTCPayServer.Plugins.Lendasat.Models
+@using BTCPayServer.Client
+
+@inject BTCPayServer.Plugins.Lendasat.Services.LendasatPluginService LendasatPluginService
+
+@model BTCPayServer.Plugins.Lendasat.Models.LendasatViewModel
+@{
+    ViewData.SetActivePage(PluginNavPages.Index, "Lendasat plugin");
+    var IsConfigured = Model.Settings.isConfigured;
+}
+
+<table>
+    <tr>
+        <td>
+            <a href="https://lendasat.com/" target="lnd">
+                <img src="/Resources/img/Lendasat.webp" />
+            </a>
+        </td>
+        <td width="20" />
+        <td>
+            <p>
+                Allows you to forward received funds to <a href="https://lendasat.com/" target="pch">Lendasat</a><br />
+                Please read our documentation <a href="https://github.com/Nisaba/btcpayserver-plugins/blob/master/BTCPayServer.Plugins.Lendasat/README.md" target="_blank">here</a>.
+            </p>
+        </td>
+    </tr>
+</table>
+<br />
+<partial name="_StatusMessage" />
+
+<div permission="@Policies.CanModifyStoreSettings">
+    <br />
+    <script src="/Resources/js/crypto-js.min.js"></script>
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="additional-htmlheader-header">
+            <button class="accordion-button @(IsConfigured ? "collapsed" : "")"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#peach-config"
+                    aria-expanded="@(IsConfigured.ToString().ToLower())"
+                    aria-controls="peach-config">
+                <h4>Configuration</h4>
+                <svg role="img" class="icon icon-caret-down">
+                    <use href="/img/icon-sprite.svg?v=zHetyUWwEcS2qGEsSu8P6l-mwsFkAqFbknsYrREYYvo#caret-down"></use>
+                </svg>
+            </button>
+        </h2>
+        <div id="peach-config" class="accordion-collapse collapse @(IsConfigured ? "" : "show")" aria-labelledby="additional-htmlheader-header" style="">
+            <div class="accordion-body">
+                <form method="post">
+                    <input asp-for="Settings.StoreId" type="hidden" />
+                    <table class="table table-sm mt-0 mx-0">
+                        <tr>
+                            <td width="100">
+                                <label asp-for="Settings.APIKey" class="form-label"></label>
+                            </td>
+                            <td width="300" class="border-0 ps-0 align-middle">
+                                <input asp-for="Settings.APIKey" data-fill="port" class="form-control readonly-input" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="100%" align="center" colspan="2">
+                                <button name="command" type="submit" value="save" class="btn btn-primary">Save</button>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
