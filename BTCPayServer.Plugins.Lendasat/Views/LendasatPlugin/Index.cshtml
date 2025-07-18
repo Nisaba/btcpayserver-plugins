@@ -2,8 +2,10 @@
 @using BTCPayServer.Plugins.Lendasat.Views
 @using BTCPayServer.Plugins.Lendasat.Models
 @using BTCPayServer.Client
+@using BTCPayServer.Services
 
 @inject BTCPayServer.Plugins.Lendasat.Services.LendasatPluginService LendasatPluginService
+@inject DisplayFormatter DisplayFormatter
 
 @model BTCPayServer.Plugins.Lendasat.Models.LendasatViewModel
 @{
@@ -36,11 +38,11 @@
     <div class="accordion-item">
         <h2 class="accordion-header" id="additional-htmlheader-header">
             <button class="accordion-button @(IsConfigured ? "collapsed" : "")"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#peach-config"
-                    aria-expanded="@(IsConfigured.ToString().ToLower())"
-                    aria-controls="peach-config">
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#peach-config"
+            aria-expanded="@(IsConfigured.ToString().ToLower())"
+            aria-controls="peach-config">
                 <h4>Configuration</h4>
                 <svg role="img" class="icon icon-caret-down">
                     <use href="/img/icon-sprite.svg?v=zHetyUWwEcS2qGEsSu8P6l-mwsFkAqFbknsYrREYYvo#caret-down"></use>
@@ -72,3 +74,88 @@
     </div>
 </div>
 
+<div permission="@Policies.CanCreateNonApprovedPullPayments,@Policies.CanManagePayouts">
+    <br />
+    <h4>Operations</h4>
+    <br />
+    @if (!IsConfigured)
+    {
+        <p>
+            <i>Lendasat settings not set for this store...</i>
+        </p>
+    } else
+    {
+        var walletConfig = await LendasatPluginService.GetBalances(Model.Settings.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
+        @if (walletConfig.OnChainEnabled)
+        {
+            <p><b>On Chain Balance</b>: @walletConfig.OnChainBalance BTC  ~ @DisplayFormatter.Currency(walletConfig.OnChainFiatBalance, walletConfig.FiatCurrency)</p>
+        }
+        else
+        {
+            <p>On Chain wallet not configured</p>
+        }
+        @if (walletConfig.OnChainBalance == 0)
+        {
+            <p>No bitcoins available for lending or borrowing...</p>
+        } else
+        {
+            <script type = "text/javascript" >
+                function setBalanceValues() {
+                    const percent = parseFloat($('#percentToSend').val());
+                    $('#lblToSendBTC').text(((percent *  @walletConfig.OnChainBalance) / 100).toFixed(8));
+                    $('#lblToSendFiat').text(Math.round((percent *  @walletConfig.OnChainFiatBalance) / 100));
+                }
+
+                function onLendasatCreate() {
+
+                }
+            </script>
+
+            <table>
+                <tr>
+                    <td>
+                        <table>
+                            <tr>
+                                <td>
+                                    <b>Percent to send:</b>&nbsp;
+                                    <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setBalanceValues()" />
+                                </td>
+                                <td width="25" />
+                                <td>
+                                    <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
+                                    <label id="lblToSendFiat">@((int)(walletConfig.OnChainFiatBalance * (decimal)0.95))</label>&nbsp; @walletConfig.FiatCurrency
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <table>
+                <tr>
+                    <td>
+                        <b>I want to</b>:
+                    </td>
+                    <td width="15" />
+                    <td>
+                        <input id="rdLend" name="rdChoice" type="radio" class="form-check-input mt-0 me-2" /> &nbsp;
+                        Lend my sats
+                    </td>
+                    <td width="25" />
+                    <td>
+                        <input id="rdBorrow" name="rdChoice" type="radio" class="form-check-input mt-0 me-2" /> &nbsp;
+                        Borrow stablecoins against my sats
+                    </td>
+                    <td width="25" />
+                    <td>
+                        <button id="btCreate" class="btn btn-primary" onclick="onLendasatCreate()">Go</button>
+                    </td>
+                </tr>
+            </table>
+
+            <br />
+            <i><small>Please check that there is no previous pending payout in BTCPay before placing another order</small></i>
+        }
+    }
+
+</div>
