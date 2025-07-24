@@ -1,4 +1,5 @@
 ﻿using BTCPayServer.Plugins.Peach.Model;
+using BTCPayServer.Plugins.Peach.Tools;
 using ExchangeSharp.BinanceGroup;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -54,8 +55,8 @@ namespace BTCPayServer.Plugins.Peach.Services
 
         private async Task<string> DoGetToken(PeachSettings peachSettings)
         {
-            return "MY-TOKEN-XXX";
-            /*string sRep = "";
+        //    return "MY-TOKEN-XXX";
+            string sRep = "";
             try
             {
                 var sMsg = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds().ToString();
@@ -89,7 +90,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 var sError = $"{ex.Message} - {sRep}";
                 _logger.LogError($"PeachPlugin.GetToken(): {sError}");
                 throw new Exception(sError);
-            }*/
+            }
 
         }
 
@@ -292,30 +293,12 @@ namespace BTCPayServer.Plugins.Peach.Services
         {
             var extKey = ExtKey.Parse(privateKeyHex, Network.Main);
 
-            var path = new KeyPath("m/0");
-            var derivedKey = extKey.Derive(path);
+            var key = extKey.Derive(new KeyPath("m/0")).PrivateKey;
+            var pubKey = key.PubKey;
 
-            Key privateKey = derivedKey.PrivateKey;
-            PubKey publicKey = privateKey.PubKey;
+            var signature = BitcoinMessageSigner.SignMessageBitcoin(key, message, Network.Main);
 
-            byte[] hash = Hashes.SHA256(Encoding.UTF8.GetBytes(message));
-            var signature = privateKey.Sign(new uint256(hash));
-            //return Tuple.Create(publicKey.ToHex(), Encoders.Hex.EncodeData(signature.ToDER()));
-            return Tuple.Create(publicKey.ToHex(), Convert.ToBase64String(signature.ToDER()));
-
+            return Tuple.Create(pubKey.ToHex(), signature);
         }
-
-
-        private string GetOfferPubKey(string offerId, string privateKeyHex)
-        {
-            var extKey = ExtKey.Parse(privateKeyHex, Network.Main);
-
-            var path = new KeyPath($"m/84'/0'/0'/{offerId}'");
-            var derivedKey = extKey.Derive(path);
-
-            return derivedKey.PrivateKey.PubKey.ToHex();
-
-        }
-
     }
 }
