@@ -33,20 +33,20 @@ const ExolixCheckout = {
                 'ADA': 'cardano',
                 'SOL': 'solana',
                 'DAI': 'ethereum',
-                'USDT-ETH': 'ethereum',
-                'USDT-TRX': 'tron',
-                'USDT-BSC': 'bnb',
-                'USDT-SOL': 'solana',
-                'USDT-NEAR': 'near',
-                'USDT-MATIC': 'polygon',
-                'USDT-TON': 'ton',
-                'USDT-AVAXC': 'avalanche',
-                'USDC-ETH': 'ethereum',
-                'USDC-BSC': 'bnb',
-                'USDC-SOL': 'solana',
-                'USDC-NEAR': 'near',
-                'USDC-MATIC': 'polygon',
-                'USDC-AVAXC': 'avalanche'
+                'USDT-ETH': 'ethereum-usdt',
+                'USDT-TRX': 'tron-usdt',
+                'USDT-BSC': 'bnb-usdt',
+                'USDT-SOL': 'solana-usdt',
+                'USDT-NEAR': 'near-usdt',
+                'USDT-MATIC': 'polygon-usdt',
+                'USDT-TON': 'ton-usdt',
+                'USDT-AVAXC': 'avalanche-usdt',
+                'USDC-ETH': 'ethereum-usdc',
+                'USDC-BSC': 'bnb-usdc',
+                'USDC-SOL': 'solana-usdc',
+                'USDC-NEAR': 'near-usdc',
+                'USDC-MATIC': 'polygon-usdc',
+                'USDC-AVAXC': 'avalanche-usdc'
             },
             manualAmount: '',
             showAmountInput: false
@@ -171,7 +171,7 @@ const ExolixCheckout = {
         },
         qrCodeData() {
             if (!this.swapData || !this.selectedCrypto) return null;
-            const protocol = this.selectedCrypto.toLowerCase();
+            const protocol = this.getProtocol(this.selectedCrypto);
             return `${protocol}:${this.swapData.fromAddress}?amount=${this.formatAmount(this.swapData.fromAmount)}`;
         },
         canShowCryptoList() {
