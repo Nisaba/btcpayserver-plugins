@@ -9,7 +9,7 @@ Similar plugins for BTCPay already exist. However, this one uses Exolix as the s
 ## Settings
 Exolix generates the bitcoin payment as soon as the altcoin transaction is confirmed, according to the terms of the blockchain used. Therefore, in the store settings, it is advisable to specify a sufficient time limit for invoice expiration.
 
-Please also note that Exolix requires a minimum amount for a swap to work, usually a few dozen dollars.
+Please also note that Exolix requires a minimum amount for a swap to work, around 10 USD.
 If this amount is not reached, the swap cannot be completed.
 
 The plugin settings must be configured for each BTCPay store. It is accessible to users with the "CanModifyStoreSettings" permission.
