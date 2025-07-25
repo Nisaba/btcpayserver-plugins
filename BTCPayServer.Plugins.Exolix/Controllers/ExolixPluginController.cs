@@ -15,9 +15,10 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
     [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanViewInvoices)]
     [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
     [Authorize(Policy = Policies.CanManagePayouts, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
-    public class ExolixPluginController (ExolixPluginService pluginService) : Controller
+    public class ExolixPluginController(ExolixPluginService pluginService, ExolixService exolixService) : Controller
     {
         private readonly ExolixPluginService _pluginService = pluginService;
+        private readonly ExolixService _exolixService = exolixService;
 
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
@@ -46,8 +47,60 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                     TempData[WellKnownTempData.ErrorMessage] = $"Error: {ex.Message}";
                     throw;
                 }
-           }
+            }
             return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [Route("SwapMerchant")]
+        public async Task<IActionResult> SwapMerchant([FromRoute] string storeId, [FromBody] SwapMerchantRequest req)
+        {
+            var rep = new SwapCreationResponse();
+            try
+            {
+                string sToCrypto, sToNetwork;
+                if (req.ToCrypto.Contains("-"))
+                {
+                    var sSplit = req.ToCrypto.Split('-');
+                    sToCrypto = sSplit[0];
+                    sToNetwork = sSplit[1];
+                }
+                else
+                {
+                    sToCrypto = req.ToCrypto;
+                    sToNetwork = req.ToCrypto;
+                }
+                var exolixSwapReq = new SwapCreationRequest
+                {
+                    FromCrypto = "BTC",
+                    FromNetwork = "BTC",
+                    FromAmount = req.BtcAmount,
+                    ToCrypto = sToCrypto,
+                    ToNetwork = sToNetwork,
+                    ToAmount = 0,
+                    ToAddress = req.ToAddress,
+                };
+                rep = await _exolixService.CreateSwapAsync(exolixSwapReq);
+
+                await _pluginService.CreatePayout(storeId, rep.SwapId, rep.FromAddress, (decimal)req.BtcAmount);
+
+                /*await _pluginService.AddStoreTransaction(new ExolixTx
+                {
+                    StoreId = storeId,
+                    AltcoinFrom = req.CryptoFrom,
+                    DateT = DateTime.UtcNow,
+                    BTCAmount = req.BtcAmount,
+                    TxID = rep.SwapId,
+                    BTCPayInvoiceId = req.BtcPayInvoiceId
+                });*/
+                rep.Success = true;
+            }
+            catch (Exception ex)
+            {
+                rep.Success = false;
+                rep.StatusMessage = ex.Message;
+            }
+            return Json(rep);
         }
     }
 }

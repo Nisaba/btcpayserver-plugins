@@ -19,6 +19,8 @@ using BTCPayServer.Data;
 using BTCPayServer.Models.StoreViewModels;
 using BTCPayServer.Payments.Bitcoin;
 using NBitcoin;
+using BTCPayServer.HostedServices;
+using BTCPayServer.Payouts;
 
 namespace BTCPayServer.Plugins.Exolix.Services
 {
@@ -33,6 +35,10 @@ namespace BTCPayServer.Plugins.Exolix.Services
         private readonly BTCPayWalletProvider _walletProvider;
         private readonly BTCPayNetworkProvider _networkProvider;
         private readonly PaymentMethodHandlerDictionary _handlers;
+        private readonly PullPaymentHostedService _pullPaymentService;
+        private readonly ApplicationDbContextFactory _btcPayDbContextFactory;
+        private readonly PayoutMethodHandlerDictionary _payoutHandlers;
+        private readonly PullPaymentHostedService _pullPaymentHostedService;
 
         public ExolixPluginService(ExolixPluginDbContextFactory pluginDbContextFactory,
                                       BTCPayNetworkProvider networkProvider,
@@ -41,8 +47,13 @@ namespace BTCPayServer.Plugins.Exolix.Services
                                       HttpClient httpClient2,
                                       WalletHistogramService walletHistogramService,
                                       PaymentMethodHandlerDictionary handlers,
-                                   ILogger<ExolixPluginService> logger,
-                                   BTCPayServerClient client)
+                                       ILogger<ExolixPluginService> logger,
+                                       BTCPayServerClient client,
+                                      PayoutMethodHandlerDictionary payoutHandlers,
+                                      PullPaymentHostedService pullPaymentHostedService,
+                                      PullPaymentHostedService pullPaymentService,
+                                       ApplicationDbContextFactory btcPayDbContextFactory
+                                       )
         {
             _logger = logger;
             _context = pluginDbContextFactory.CreateContext();
@@ -53,6 +64,10 @@ namespace BTCPayServer.Plugins.Exolix.Services
             _networkProvider = networkProvider;
             _walletProvider = walletProvider;
             _handlers = handlers;
+            _pullPaymentService = pullPaymentService;
+            _payoutHandlers = payoutHandlers;
+            _pullPaymentHostedService = pullPaymentHostedService;
+            _btcPayDbContextFactory = btcPayDbContextFactory;
         }
 
         public async Task<ExolixSettings> GetStoreSettings(string storeId)
@@ -236,5 +251,73 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 }
             }
         }
+
+
+        public async Task CreatePayout(string storeId, string offerId, string btcDest, decimal amount, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var payoutMethodId = PayoutMethodId.Parse("BTC-CHAIN");
+
+                var ppRequest = new CreatePullPaymentRequest
+                {
+                    Name = $"Exolix Swap {offerId}",
+                    Description = "",
+                    Amount = amount,
+                    Currency = "BTC",
+                    ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
+                    PayoutMethods = new[] { payoutMethodId.ToString() }
+                };
+
+                var store = await _storeRepository.FindStore(storeId);
+                var ppId = await _pullPaymentService.CreatePullPayment(store, ppRequest);
+
+                await using var btcPayCtx = _btcPayDbContextFactory.CreateContext();
+                var pp = await btcPayCtx.PullPayments.FindAsync(ppId);
+                var blob = pp.GetBlob();
+
+                var payoutHandler = _payoutHandlers.TryGet(payoutMethodId);
+                if (payoutHandler == null)
+                    throw new Exception($"No payout handler found for {payoutMethodId}");
+
+                string error = null;
+                IClaimDestination exolixDestination;
+
+                (exolixDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(btcDest, blob, cancellationToken);
+
+                if (exolixDestination == null)
+                    throw new Exception($"Destination parsing failed: {error ?? "Unknown error"}");
+
+                var result = await _pullPaymentHostedService.Claim(new ClaimRequest
+                {
+                    Destination = exolixDestination,
+                    PullPaymentId = ppId,
+                    ClaimedAmount = amount,
+                    PayoutMethodId = payoutMethodId,
+                    StoreId = storeId,
+                    PreApprove = true,
+                });
+
+                switch (result.Result)
+                {
+                    case ClaimRequest.ClaimResult.Duplicate:
+                        throw new Exception("Duplicate claim for pull payment");
+                    case ClaimRequest.ClaimResult.Expired:
+                        throw new Exception("Pull payment expired");
+                    case ClaimRequest.ClaimResult.Archived:
+                        throw new Exception("Pull payment archived");
+                    case ClaimRequest.ClaimResult.AmountTooLow:
+                        throw new Exception("Claim amount is too low");
+                    case ClaimRequest.ClaimResult.NotStarted:
+                        throw new Exception("Pull payment has not started yet");
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "ExolixPlugin:CreatePayout()");
+                throw;
+            }
+        }
+
     }
 }

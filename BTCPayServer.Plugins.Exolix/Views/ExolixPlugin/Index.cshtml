@@ -98,7 +98,8 @@
     </div>
 
 </div>
-<!--
+<br />
+
 <div class="accordion-item" permission="@Policies.CanCreateNonApprovedPullPayments,@Policies.CanManagePayouts">
     <h2 class="accordion-header" id="additional-configheader-header">
         <button class="accordion-button @(isModelKO ? "" : "collapsed")"
@@ -107,7 +108,7 @@
         data-bs-target="#exolix-payouts"
         aria-expanded="true"
         aria-controls="exolix-payouts">
-            <h4>New Payout</h4>
+            <h4>Swap my BTC Balance</h4>
             <svg role="img" class="icon icon-caret-down">
                 <use href="/img/icon-sprite.svg?v=zHetyUWwEcS2qGEsSu8P6l-mwsFkAqFbknsYrREYYvo#caret-down"></use>
             </svg>
@@ -134,59 +135,98 @@
                 }
                 @if (walletConfig.OnChainBalance == 0)
                 {
-                    <p>No bitcoins available for sale</p>
+                    <p>No bitcoins available for swap</p>
                 }
-                <table>
-                    <td>
-                        Percent to sale/swap:&nbsp;
-                        <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setExolixValues()" />
-                        <br />
-                    </td>
-                    <td width="25" />
-                    <td>
-                        <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
-                        <label id="lblToSendFiat">@((int)walletConfig.OnChainFiatBalance)</label>&nbsp; @walletConfig.FiatCurrency
-                    </td>
-                    <td width="25" />
-                    <td><button id="btSend" class="btn btn-primary" onclick="onExolixSwap()">ExolixSwap</button></td>
-                </table>
+                else {
+                    <table>
+                        <tr>
+                            <td>
+                                Percent to swap:&nbsp;
+                                <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setExolixValues()" />
+                                <br />
+                            </td>
+                            <td width="15" />
+                            <td>
+                                <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
+                                <label id="lblToSendFiat">@((int)walletConfig.OnChainFiatBalance)</label>&nbsp; @walletConfig.FiatCurrency
+                            </td>
+                        </tr>
+                    </table>
+                    <br/>
+                    <table>
+                        <tr>
+                            <td>
+                                Swap to:&nbsp;
+                            </td>
+                            <td>
+                                <select id="lstSwapToCrypto" class="form-select w-auto">
+                                    @foreach (var crypto in ExolixSettings.AvailableCryptos)
+                                    {
+                                        <option value="@crypto.Key">@crypto.Value</option>
+                                    }
+                                </select>
+                            </td>
+                            <td width="15" />
+                            <td>
+                                <input id="txtToAddress" type="text" class="form-control" placeholder="Enter your destination address here" />
+                            </td>
+                            <td width="15" />
+                            <td><button id="btSend" class="btn btn-primary" onclick="onExolixSwap()">Do Swap</button></td>
+                        </tr>
+                    </table>
 
-                <script type="text/javascript">
-                    const OnChainBalance = @walletConfig.OnChainBalance;
-
-                    const lblToSendBTC = document.getElementById('lblToSendBTC');
-                    const lblToSendFiat = document.getElementById('lblToSendFiat');
-                    const percentToSend = document.getElementById('percentToSend');
-
-                    function setExolixValues() {
-                        const percent = parseFloat(percentToSend.value) || 0;
-                        const fiatBalance = @walletConfig.OnChainFiatBalance;
-                        const btcBalance = @walletConfig.OnChainBalance;
-
-                        lblToSendBTC.textContent = ((percent * btcBalance) / 100).toFixed(8);
-                        lblToSendFiat.textContent = Math.round((percent * fiatBalance) / 100);
-                    }
-
-                    function onExolixSwap() {
-                        const percent = parseFloat(percentToSend.value) || 0;
-                        const fiatBalance = @walletConfig.OnChainFiatBalance;
-                        const btcBalance = @walletConfig.OnChainBalance;
-                        if (percent <= 0 || percent > 100) {
-                            alert("Please enter a valid percentage between 1 and 100.");
-                            return;
+                    <script type="text/javascript">
+                        function setExolixValues() {
+                            const percent = parseFloat($('#percentToSend').val());
+                            $('#lblToSendBTC').text(((percent *  @walletConfig.OnChainBalance) / 100).toFixed(8));
+                            $('#lblToSendFiat').text(Math.round((percent *  @walletConfig.OnChainFiatBalance) / 100));
                         }
-                        const amountToSendBTC = ((percent * btcBalance) / 100).toFixed(8);
-                        const amountToSendFiat = Math.round((percent * fiatBalance) / 100);
-                        if (confirm(`Are you sure you want to swap ${amountToSendBTC} BTC for approximately ${amountToSendFiat} ${@walletConfig.FiatCurrency}?`)) {
-                           // window.location.href = `@Url.Action("ExolixSwap", "UIInvoice")?amount=${amountToSendBTC}&fiatAmount=${amountToSendFiat}`;
+
+                        function onExolixSwap() {
+                            const percent = parseFloat($('#percentToSend').val());
+                            if (percent == 100) {
+                                alert('You must keep some sats for the transaction fees... Please reduce the amount');
+                                return;
+                            }
+
+                            const sToAddress = $('#txtToAddress').val();
+                            if (sToAddress == '') {
+                                alert('Please enter your altcoin destination address for the swap');
+                                return;
+                            }
+
+                            const amountToSendBTC = ((percent * @walletConfig.OnChainBalance) / 100).toFixed(8);
+                            const amountToSendFiat = Math.round((percent * @walletConfig.OnChainFiatBalance) / 100);
+                            if (confirm(`Are you sure you want to swap ${amountToSendBTC} BTC for approximately ${amountToSendFiat} @walletConfig.FiatCurrency?`)) {
+                                $('#btSend').hide();
+                                const Request = {
+                                    toCrypto: $('#lstSwapToCrypto').val(),
+                                    toAddress: sToAddress,
+                                    btcAmount: amountToSendBTC
+                                };
+
+                                $.ajax({
+                                    url: 'Exolix/SwapMerchant',
+                                    type: 'POST',
+                                    contentType: "application/json; charset=utf-8",
+                                    data: JSON.stringify(Request),
+                                    success: function(result) {
+                                        $('#btSend').show();
+                                        alert ("OK ! " + xhr.responseText)
+                                    },
+                                    error: function (xhr, status, error) {
+                                        $('#btSend').show();
+                                        alert ("Error: " + error + " - " + xhr.responseText);
+                                    }
+                                });
+                                }
                         }
-                    }
-                </script>
+                    </script>
+                }
             }
         </div>
     </div>
 </div>
--->
 
 <br/>
 <div class="accordion-item" permission="@Policies.CanViewInvoices">
