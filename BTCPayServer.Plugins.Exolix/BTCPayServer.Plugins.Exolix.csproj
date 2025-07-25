@@ -7,7 +7,7 @@
 	<!-- Plugin specific properties -->
 	<PropertyGroup>
 		<Product>Exolix</Product>
-		<Description>Allows you to accept Altcoins with Exolix in a seamless way. You can also swap you BTC onchain to altcoins using this plugin.</Description>
+		<Description>Allows you to accept Altcoins with Exolix in a seamless way. Please read our documentation for updates history</Description>
 		<Version>1.0.4</Version>
 	</PropertyGroup>
 
