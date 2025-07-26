@@ -53,7 +53,7 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
 
         [HttpPost]
         [Route("SwapMerchant")]
-        public async Task<IActionResult> SwapMerchant([FromRoute] string storeId, [FromBody] SwapMerchantRequest req)
+        public async Task<IActionResult> SwapMerchant([FromRoute] string storeId, [FromForm] SwapMerchantRequest req)
         {
             var rep = new SwapCreationResponse();
             try
@@ -80,7 +80,11 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                     ToAmount = 0,
                     ToAddress = req.ToAddress,
                 };
-                rep = await _exolixService.CreateSwapAsync(exolixSwapReq);
+                //rep = await _exolixService.CreateSwapAsync(exolixSwapReq);
+                rep = new SwapCreationResponse { SwapId = "test-swap-id", FromAmount = req.BtcAmount, StatusMessage = "Swap created successfully" };
+#if DEBUG
+                rep.FromAddress = "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
+#endif
 
                 await _pluginService.CreatePayout(storeId, rep.SwapId, rep.FromAddress, (decimal)req.BtcAmount);
 
@@ -93,14 +97,14 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                     TxID = rep.SwapId,
                     BTCPayInvoiceId = req.BtcPayInvoiceId
                 });*/
-                rep.Success = true;
+                TempData[WellKnownTempData.SuccessMessage] = "Exolix Swap successfully created: " + rep.SwapId;
+                TempData["SwapId"] = rep.SwapId;
             }
             catch (Exception ex)
             {
-                rep.Success = false;
-                rep.StatusMessage = ex.Message;
+                TempData[WellKnownTempData.ErrorMessage] = "Error during Swap creation: " + ex.Message;
             }
-            return Json(rep);
+            return RedirectToAction("Index", new { storeId = RouteData.Values["storeId"] });
         }
     }
 }

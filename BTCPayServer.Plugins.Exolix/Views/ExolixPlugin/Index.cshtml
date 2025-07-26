@@ -148,7 +148,7 @@
                             <td width="15" />
                             <td>
                                 <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
-                                <label id="lblToSendFiat">@((int)walletConfig.OnChainFiatBalance)</label>&nbsp; @walletConfig.FiatCurrency
+                                <label id="lblToSendFiat">@((int)(walletConfig.OnChainFiatBalance * (decimal)0.95))</label>&nbsp; @walletConfig.FiatCurrency
                             </td>
                         </tr>
                     </table>
@@ -174,6 +174,16 @@
                             <td><button id="btSend" class="btn btn-primary" onclick="onExolixSwap()">Do Swap</button></td>
                         </tr>
                     </table>
+                    @if (TempData.ContainsKey("SwapId"))
+                    {
+                        <br />
+                        <div>
+                            <strong>Success!</strong> Your payout has been created.<br />
+                            If you have set an automatic payout processor, the payment will be sent automatically to Exolix.<br />
+                            Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.<br />
+                            If an issue arises, contact support@exolix.com with the Swap id: @TempData["SwapId"]?.ToString()
+                        </div>
+                    }
 
                     <script type="text/javascript">
                         function setExolixValues() {
@@ -199,27 +209,33 @@
                             const amountToSendFiat = Math.round((percent * @walletConfig.OnChainFiatBalance) / 100);
                             if (confirm(`Are you sure you want to swap ${amountToSendBTC} BTC for approximately ${amountToSendFiat} @walletConfig.FiatCurrency?`)) {
                                 $('#btSend').hide();
-                                const Request = {
-                                    toCrypto: $('#lstSwapToCrypto').val(),
-                                    toAddress: sToAddress,
-                                    btcAmount: amountToSendBTC
-                                };
 
-                                $.ajax({
-                                    url: 'Exolix/SwapMerchant',
-                                    type: 'POST',
-                                    contentType: "application/json; charset=utf-8",
-                                    data: JSON.stringify(Request),
-                                    success: function(result) {
-                                        $('#btSend').show();
-                                        alert ("OK ! " + xhr.responseText)
-                                    },
-                                    error: function (xhr, status, error) {
-                                        $('#btSend').show();
-                                        alert ("Error: " + error + " - " + xhr.responseText);
-                                    }
-                                });
-                                }
+                                const form = document.createElement('form');
+                                form.method = 'POST';
+                                form.action = 'Exolix/SwapMerchant';
+
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'toCrypto';
+                                input.value = $('#lstSwapToCrypto').val();
+                                form.appendChild(input);
+
+                                const input2 = document.createElement('input');
+                                input2.type = 'hidden';
+                                input2.name = 'toAddress';
+                                input2.value = sToAddress;
+                                form.appendChild(input2);
+                                document.body.appendChild(form);
+
+                                const input3 = document.createElement('input');
+                                input3.type = 'hidden';
+                                input3.name = 'btcAmount';
+                                input3.value = amountToSendBTC;
+                                form.appendChild(input3);
+                                
+                                document.body.appendChild(form);
+                                form.submit();
+                            }
                         }
                     </script>
                 }

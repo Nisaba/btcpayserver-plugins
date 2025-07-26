@@ -40,10 +40,12 @@ namespace BTCPayServer.Plugins.Exolix.Services
                     ["coinTo"] = req.ToCrypto,
                     ["networkTo"] = GetNetwork(req.ToNetwork),
                     ["amount"] = req.FromAmount,
-                    ["withdrawalAmount"] = req.ToAmount,
                     ["withdrawalAddress"] = req.ToAddress,
                     ["rateType"] = "fixed"
                 };
+
+                if (req.ToAmount > 0)
+                    createSwapRequest["withdrawalAmount"] = req.ToAmount;
 
                 if (!string.IsNullOrEmpty(req.FromRefundAddress))
                     createSwapRequest["refundAddress"] = req.FromRefundAddress;
