@@ -80,23 +80,14 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                     ToAmount = 0,
                     ToAddress = req.ToAddress,
                 };
-                //rep = await _exolixService.CreateSwapAsync(exolixSwapReq);
-                rep = new SwapCreationResponse { SwapId = "test-swap-id", FromAmount = req.BtcAmount, StatusMessage = "Swap created successfully" };
+                rep = await _exolixService.CreateSwapAsync(exolixSwapReq);
+/*                rep = new SwapCreationResponse { SwapId = "test-swap-id", FromAmount = req.BtcAmount, StatusMessage = "Swap created successfully" };
 #if DEBUG
                 rep.FromAddress = "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
-#endif
+#endif*/
 
                 await _pluginService.CreatePayout(storeId, rep.SwapId, rep.FromAddress, (decimal)req.BtcAmount);
 
-                /*await _pluginService.AddStoreTransaction(new ExolixTx
-                {
-                    StoreId = storeId,
-                    AltcoinFrom = req.CryptoFrom,
-                    DateT = DateTime.UtcNow,
-                    BTCAmount = req.BtcAmount,
-                    TxID = rep.SwapId,
-                    BTCPayInvoiceId = req.BtcPayInvoiceId
-                });*/
                 TempData[WellKnownTempData.SuccessMessage] = "Exolix Swap successfully created: " + rep.SwapId;
                 TempData["SwapId"] = rep.SwapId;
             }

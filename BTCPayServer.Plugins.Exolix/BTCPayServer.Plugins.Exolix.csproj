@@ -7,8 +7,8 @@
 	<!-- Plugin specific properties -->
 	<PropertyGroup>
 		<Product>Exolix</Product>
-		<Description>Allows you to accept Altcoins with Exolix in a seamless way. Please read our documentation for updates history</Description>
-		<Version>1.0.4</Version>
+		<Description>Allows your customers to pay in Altcoins with Exolix in a seamless way. As merchant, you can also swap your balance. Please read our documentation for updates history</Description>
+		<Version>1.1.0</Version>
 	</PropertyGroup>
 
 	<!-- Plugin development properties -->

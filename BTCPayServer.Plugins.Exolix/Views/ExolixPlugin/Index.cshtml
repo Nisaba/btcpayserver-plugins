@@ -99,6 +99,7 @@
 
 </div>
 <br />
+<br />
 
 <div class="accordion-item" permission="@Policies.CanCreateNonApprovedPullPayments,@Policies.CanManagePayouts">
     <h2 class="accordion-header" id="additional-configheader-header">
@@ -183,6 +184,9 @@
                             Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.<br />
                             If an issue arises, contact support@exolix.com with the Swap id: @TempData["SwapId"]?.ToString()
                         </div>
+                    } else
+                    {
+                        <i><small>Please check that there is no previous pending payout in BTCPay before placing a swap</small></i>
                     }
 
                     <script type="text/javascript">
@@ -243,8 +247,9 @@
         </div>
     </div>
 </div>
+<br />
+<br />
 
-<br/>
 <div class="accordion-item" permission="@Policies.CanViewInvoices">
     <div style="height:20px"></div>
     <h2 class="accordion-header" id="additional-txheader-header">
