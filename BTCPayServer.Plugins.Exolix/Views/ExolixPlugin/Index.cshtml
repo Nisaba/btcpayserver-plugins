@@ -179,10 +179,10 @@
                     {
                         <br />
                         <div>
-                            <strong>Success!</strong> Your payout has been created.<br />
+                            <strong>Success!</strong> Exolix swap and the BTCPay payout have been created.<br />
                             If you have set an automatic payout processor, the payment will be sent automatically to Exolix.<br />
-                            Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.<br />
-                            If an issue arises, contact support@exolix.com with the Swap id: @TempData["SwapId"]?.ToString()
+                            Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment" target="btcp">click here</a> to validate the payout under BTCPay.<br />
+                            <a href="https://exolix.com/api/v2/transactions/@TempData["SwapId"]?.ToString()" target="exo">Check status transaction</a> to follow it. If an issue arises, contact support@exolix.com with the Swap id: @TempData["SwapId"]?.ToString()
                         </div>
                     } else
                     {
