@@ -6,6 +6,8 @@ This allows BTCPay to transparently consider the invoice as paid.
 
 Similar plugins for BTCPay already exist. However, this one uses Exolix as the swap service provider. Furthermore, there are no intrusive IFRAMEs at checkout, which can disrupt the customer and hinder their purchasing process. Instead, payment with altcoins respects the BTCPay user experience for a smoother checkout process.
 
+Since 1.1.0 version, you can also, as merchant, swap your balance.
+
 ## Settings
 Exolix generates the bitcoin payment as soon as the altcoin transaction is confirmed, according to the terms of the blockchain used. Therefore, in the store settings, it is advisable to specify a sufficient time limit for invoice expiration.
 
@@ -35,5 +37,7 @@ Swaps are displayed to users with the "CanViewInvoices" permission. By clicking 
 - **1.0.2** - Fixed a bug with BSC in checkout, add TRX and POL/MATIC cryptos, add informations about support in checkout
 - **1.0.3** - Improve status message in case of Exolix error, ask to enter BTC amount if BTCPay invoice amount is 0
 - **1.0.4** - Better QR Code generation, now readable by more wallets
+- **1.1.0** - Now you can also, as merchant, swap your balance
+  
 
 
