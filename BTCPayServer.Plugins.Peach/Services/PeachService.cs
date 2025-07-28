@@ -1,20 +1,15 @@
 ﻿using BTCPayServer.Plugins.Peach.Model;
-using BTCPayServer.Plugins.Peach.Tools;
-using ExchangeSharp.BinanceGroup;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using NBitcoin.Crypto;
-using NBitcoin.DataEncoders;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Network = NBitcoin.Network;
@@ -55,7 +50,6 @@ namespace BTCPayServer.Plugins.Peach.Services
 
         private async Task<string> DoGetToken(PeachSettings peachSettings)
         {
-        //    return "MY-TOKEN-XXX";
             string sRep = "";
             try
             {
@@ -296,9 +290,31 @@ namespace BTCPayServer.Plugins.Peach.Services
             var key = extKey.Derive(new KeyPath("m/0")).PrivateKey;
             var pubKey = key.PubKey;
 
-            var signature = BitcoinMessageSigner.SignMessageBitcoin(key, message, Network.Main);
+            try
+            {
+                using (SHA256 sha256 = SHA256.Create())
+                {
+                    byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
+                    byte[] messageHash = sha256.ComputeHash(messageBytes);
 
-            return Tuple.Create(pubKey.ToHex(), signature);
+                    uint256 hash = new uint256(messageHash);
+                    ECDSASignature signature = key.Sign(hash);
+                    byte[] compactSig = signature.ToCompact();
+
+                    if (compactSig.Length != 64)
+                    {
+                        throw new InvalidOperationException($"Compact signature length is {compactSig.Length}, expected 64.");
+                    }
+                    return Tuple.Create(pubKey.ToHex(), BitConverter.ToString(compactSig).Replace("-", "").ToLower());
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                throw;
+            }
+
         }
+
     }
 }
