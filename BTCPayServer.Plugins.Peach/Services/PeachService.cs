@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
@@ -199,7 +200,7 @@ namespace BTCPayServer.Plugins.Peach.Services
 
         public async Task<string> PostSellOffer(PeachPostOfferRequest req)
         {
-            /*string sRep = "";
+            string sRep = "";
             try
             {
                 var dicPaymentData  = new Dictionary<string, dynamic>();
@@ -212,8 +213,8 @@ namespace BTCPayServer.Plugins.Peach.Services
 
                 dynamic peachRequest = new ExpandoObject();
                 peachRequest.type = "ask";
-                peachRequest.amount = Convert.ToSingle(req.Amount) * 100000000;
-                peachRequest.premium = req.Premium;
+                peachRequest.amount = Convert.ToUInt64(Convert.ToSingle(req.Amount) * 100000000);
+                peachRequest.premium = Convert.ToUInt16(req.Premium);
                 peachRequest.meansOfPayment = new Dictionary<string, List<string>> { [req.CurrencyCode] = req.MeansOfPayment.Select(p => p.MoP).ToList() };
                 peachRequest.paymentData = dicPaymentData;
                 peachRequest.returnAddress = req.ReturnAdress;
@@ -239,16 +240,16 @@ namespace BTCPayServer.Plugins.Peach.Services
             {
                 _logger.LogError($"PeachPlugin.PostSellOffer(): {ex.Message} - {sRep}");
                 throw;
-            }*/
+            }
 
-            var random = new Random();
+        /*    var random = new Random();
             var offerId = $"{random.Next(1000, 9999)}-{DateTime.UtcNow.Ticks}";
-            return offerId;
+            return offerId;*/
         }
 
         public async Task<string> CreateEscrow(string token, string offerId, string privKey)
         {
-         /*   string sRep = "";
+            string sRep = "";
              try
              {
                  dynamic peachRequest = new ExpandoObject();
@@ -275,12 +276,12 @@ namespace BTCPayServer.Plugins.Peach.Services
              {
                  _logger.LogError($"PeachPlugin.CreateEscrow(): {ex.Message} - {sRep}");
                  throw;
-             }*/
-#if DEBUG
+             }
+/*#if DEBUG
             return "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
 #else
             return "bc1q75t28djzlpcm60jee4phtlvxh4uwj6fkyrnpxy";
-#endif
+#endif*/
         }
 
         private Tuple<string, string> SignMessage(string message, string privateKeyHex)
@@ -313,8 +314,19 @@ namespace BTCPayServer.Plugins.Peach.Services
                 Console.WriteLine($"Error: {ex.Message}");
                 throw;
             }
+        }
+
+        private string GetOfferPubKey(string offerId, string privateKeyHex)
+        {
+            var extKey = ExtKey.Parse(privateKeyHex, Network.Main);
+
+            var path = new KeyPath($"m/84'/0'/0'/{offerId}'");
+            var derivedKey = extKey.Derive(path);
+
+            return derivedKey.PrivateKey.PubKey.ToHex();
 
         }
+
 
     }
 }
