@@ -4,8 +4,11 @@ using Microsoft.Extensions.Logging;
 using NBitcoin;
 using NBitcoin.Crypto;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
@@ -64,7 +67,8 @@ namespace BTCPayServer.Plugins.Peach.Services
                 peachRequest.uniqueId = "btcpay-" + RandomNumberGenerator.GetInt32(100000).ToString();
 
                 var peachJson = JsonConvert.SerializeObject(peachRequest, Formatting.None);
-                var webRequest = new HttpRequestMessage(HttpMethod.Post, $"user/{(peachSettings.IsRegistered ? "auth" : "register")}")
+            // var webRequest = new HttpRequestMessage(HttpMethod.Post, $"user/{(peachSettings.IsRegistered ? "auth" : "register")}")
+                var webRequest = new HttpRequestMessage(HttpMethod.Post, "user/auth")
                 {
                     Content = new StringContent(peachJson, Encoding.UTF8, "application/json"),
                 };
@@ -78,6 +82,17 @@ namespace BTCPayServer.Plugins.Peach.Services
                 }
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
                 string sToken = JsonRep.accessToken;
+
+                var webRequestUser = new HttpRequestMessage(HttpMethod.Get, "user/me");
+                webRequestUser.Headers.Add("Authorization", $"Bearer {sToken}");
+                using (var rep = await _httpClient.SendAsync(webRequestUser))
+                {
+                    using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
+                    {
+                        sRep = await rdr.ReadToEndAsync();
+                    }
+                    rep.EnsureSuccessStatusCode();
+                }
                 return sToken;
             }
             catch (Exception ex)
@@ -208,7 +223,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 {
                     dicPaymentData[mop.MoP] = new ExpandoObject();
                     var data = (IDictionary<string, object>)dicPaymentData[mop.MoP];
-                    data["hashes"] = mop.HashPaymentData;
+                    data["hashes"] = new[] { mop.HashPaymentData };
                 }
 
                 dynamic peachRequest = new ExpandoObject();
@@ -217,14 +232,20 @@ namespace BTCPayServer.Plugins.Peach.Services
                 peachRequest.premium = Convert.ToUInt16(req.Premium);
                 peachRequest.meansOfPayment = new Dictionary<string, List<string>> { [req.CurrencyCode] = req.MeansOfPayment.Select(p => p.MoP).ToList() };
                 peachRequest.paymentData = dicPaymentData;
-                peachRequest.returnAddress = req.ReturnAdress;
-
+#if DEBUG
+                peachRequest.returnAddress = "bc1qfksx4fuzm6xua093zhllzwmzadtzegyhpqn4au";
+#else
+                peachRequest.returnAddress = req.ReturnAdress; 
+#endif 
                 var peachJson = JsonConvert.SerializeObject(peachRequest, Formatting.None);
                 var webRequest = new HttpRequestMessage(HttpMethod.Post, "offer")
                 {
                     Content = new StringContent(peachJson, Encoding.UTF8, "application/json"),
                 };
-                webRequest.Headers.Add("Authorization", $"Bearer {req.PeachToken}");
+                webRequest.Headers.Add("Accept", "application/json");
+                webRequest.Headers.Add("User-Agent", "Mozilla/5.0");
+                webRequest.Headers.TryAddWithoutValidation("Authorization", req.PeachToken);
+
                 using (var rep = await _httpClient.SendAsync(webRequest))
                 {
                     using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
@@ -233,18 +254,15 @@ namespace BTCPayServer.Plugins.Peach.Services
                     }
                     rep.EnsureSuccessStatusCode();
                 }
-                dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
-                return JsonRep.data.id;
+                var jObj = JObject.Parse(sRep);
+                string id = jObj["id"]?.ToString();
+                return id;
             }
             catch (Exception ex)
             {
                 _logger.LogError($"PeachPlugin.PostSellOffer(): {ex.Message} - {sRep}");
                 throw;
             }
-
-        /*    var random = new Random();
-            var offerId = $"{random.Next(1000, 9999)}-{DateTime.UtcNow.Ticks}";
-            return offerId;*/
         }
 
         public async Task<string> CreateEscrow(string token, string offerId, string privKey)
@@ -260,7 +278,9 @@ namespace BTCPayServer.Plugins.Peach.Services
                  {
                      Content = new StringContent(peachJson, Encoding.UTF8, "application/json"),
                  };
-                 webRequest.Headers.Add("Authorization", $"Bearer {token}");
+                 webRequest.Headers.Add("Accept", "application/json");
+                 webRequest.Headers.Add("User-Agent", "Mozilla/5.0");
+                 webRequest.Headers.TryAddWithoutValidation("Authorization", token);
                  using (var rep = await _httpClient.SendAsync(webRequest))
                  {
                      using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
@@ -269,27 +289,31 @@ namespace BTCPayServer.Plugins.Peach.Services
                      }
                      rep.EnsureSuccessStatusCode();
                  }
-                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
-                 return JsonRep.data.escrows.bitcoin;
+                var jObj = JObject.Parse(sRep);
+                string escrow = jObj["escrow"]?.ToString();
+#if DEBUG
+            return "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
+#else
+            return escrow;
+#endif            
              }
              catch (Exception ex)
              {
                  _logger.LogError($"PeachPlugin.CreateEscrow(): {ex.Message} - {sRep}");
                  throw;
              }
-/*#if DEBUG
-            return "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
-#else
-            return "bc1q75t28djzlpcm60jee4phtlvxh4uwj6fkyrnpxy";
-#endif*/
+
         }
 
         private Tuple<string, string> SignMessage(string message, string privateKeyHex)
         {
-            var extKey = ExtKey.Parse(privateKeyHex, Network.Main);
+            var master = ExtKey.Parse(privateKeyHex, Network.Main);
 
-            var key = extKey.Derive(new KeyPath("m/0")).PrivateKey;
-            var pubKey = key.PubKey;
+            var derived = master.Derive(new KeyPath("m/48'/0'/0'/0'"));
+
+            //string wif = derived.PrivateKey.GetWif(Network.Main).ToString();
+            var privKey = derived.PrivateKey;
+            var pubKey = privKey.PubKey;
 
             try
             {
@@ -299,7 +323,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                     byte[] messageHash = sha256.ComputeHash(messageBytes);
 
                     uint256 hash = new uint256(messageHash);
-                    ECDSASignature signature = key.Sign(hash);
+                    ECDSASignature signature = privKey.Sign(hash);
                     byte[] compactSig = signature.ToCompact();
 
                     if (compactSig.Length != 64)
@@ -320,7 +344,7 @@ namespace BTCPayServer.Plugins.Peach.Services
         {
             var extKey = ExtKey.Parse(privateKeyHex, Network.Main);
 
-            var path = new KeyPath($"m/84'/0'/0'/{offerId}'");
+            var path = new KeyPath($"m/48'/0'/0'/{offerId}'");
             var derivedKey = extKey.Derive(path);
 
             return derivedKey.PrivateKey.PubKey.ToHex();
