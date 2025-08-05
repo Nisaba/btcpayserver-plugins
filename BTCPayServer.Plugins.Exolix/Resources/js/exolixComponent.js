@@ -82,6 +82,9 @@ const ExolixCheckout = {
                 if (btcAmount == 0) {
                     this.error = 'Please enter a BTC amount first';
                 }
+                if (btcAmount > 3) {
+                    btcAmount /= 100000000;
+                }
                 const formData = new FormData();
                 formData.append('CryptoFrom', this.selectedCrypto);
                 formData.append('BtcAddress', this.model.address);
