@@ -358,10 +358,10 @@
                                     <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
                                     <label id="lblToSendFiat">@((int)(walletConfig.OnChainFiatBalance * (decimal)0.95))</label>&nbsp; @walletConfig.FiatCurrency
                                 </td>
-                                <td width="25" />
+                              <!--  <td width="25" />
                                 <td rowspan="2" valign="middle">
                                     <button id="btSend" class="btn btn-primary" onclick="onPeachSearch()">Search</button>
-                                </td>
+                                  </td> -->
                             </tr>
                             <tr>
                                 <td colspan="3"><b>Your means of payment: </b>@String.Join(", ", Model.MeansOfPayments)</td>

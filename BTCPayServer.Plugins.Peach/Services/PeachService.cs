@@ -256,6 +256,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 }
                 var jObj = JObject.Parse(sRep);
                 string id = jObj["id"]?.ToString();
+                _logger.LogInformation($"Peach Offer created: {id}");
                 return id;
             }
             catch (Exception ex)
@@ -291,8 +292,9 @@ namespace BTCPayServer.Plugins.Peach.Services
                  }
                 var jObj = JObject.Parse(sRep);
                 string escrow = jObj["escrow"]?.ToString();
+                _logger.LogInformation($"Peach Escrow created");
 #if DEBUG
-            return "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
+                return "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
 #else
             return escrow;
 #endif            
