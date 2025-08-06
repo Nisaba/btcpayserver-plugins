@@ -67,7 +67,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 peachRequest.uniqueId = "btcpay-" + RandomNumberGenerator.GetInt32(100000).ToString();
 
                 var peachJson = JsonConvert.SerializeObject(peachRequest, Formatting.None);
-            // var webRequest = new HttpRequestMessage(HttpMethod.Post, $"user/{(peachSettings.IsRegistered ? "auth" : "register")}")
+
                 var webRequest = new HttpRequestMessage(HttpMethod.Post, "user/auth")
                 {
                     Content = new StringContent(peachJson, Encoding.UTF8, "application/json"),
@@ -297,7 +297,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 return "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
 #else
             return escrow;
-#endif            
+#endif 
              }
              catch (Exception ex)
              {
@@ -313,7 +313,7 @@ namespace BTCPayServer.Plugins.Peach.Services
 
             var derived = master.Derive(new KeyPath("m/48'/0'/0'/0'"));
 
-            //string wif = derived.PrivateKey.GetWif(Network.Main).ToString();
+
             var privKey = derived.PrivateKey;
             var pubKey = privKey.PubKey;
 
