@@ -24,7 +24,7 @@
         <td width="20" />
         <td>
             <p>
-                Allows you to forward received funds to <a href="https://peachbitcoin.com/referral/?code=PROB44" target="pch">Peach bitcoin</a><br />
+                Allows you to exchange received Bitcoin to Eur, GBP, etc using <a href="https://peachbitcoin.com/referral/?code=PROB44" target="pch">Peach Bitcoin</a><br />
                 Please read our documentation <a href="https://github.com/Nisaba/btcpayserver-plugins/blob/master/BTCPayServer.Plugins.Peach/README.md" target="_blank">here</a>.
             </p>
         </td>
@@ -62,10 +62,10 @@
                 </div>
 
                 <div class="mb-4 password-container" id="passwordContainer" style="display: none;">
-                    <label class="form-label" for="decryptPassword">Enter password to decrypt file</label>
+                    <label class="form-label" for="decryptPassword">Enter Password to decrypt the Backup File</label>
                     <div class="input-group">
                         <input type="password" class="form-control" id="decryptPassword" autocomplete="off" />
-                        <button class="btn btn-primary" type="button" onclick="decryptFile()">Decrypt</button>
+                        <button class="btn btn-primary" type="button" onclick="decryptFile()">Load Backup</button>
                     </div>
                     <i>You will also need this password to access Peach functionnalities by the plugin</i>
                 </div>
@@ -112,7 +112,7 @@
 
             const password = $('#decryptPassword').val();
             if (!password) {
-                alert("Please enter a password");
+                alert("Please enter a password.");
                 return;
             }
 
@@ -124,7 +124,7 @@
                     const decryptedText = decryptedBytes.toString(CryptoJS.enc.Utf8);
 
                     if (!decryptedText) {
-                        throw new Error("Decrypt failed - incorrect password");
+                        throw new Error("Backup loading failed - incorrect password");
                     }
 
                     const decryptedData = JSON.parse(decryptedText);
@@ -364,7 +364,7 @@
                                   </td> -->
                             </tr>
                             <tr>
-                                <td colspan="3"><b>Your means of payment: </b>@String.Join(", ", Model.MeansOfPayments)</td>
+                                <td colspan="3"><b>Your Means of Payment: </b>@String.Join(", ", Model.MeansOfPayments)</td>
                             </tr>
                         </table>
                     </td>
@@ -400,7 +400,7 @@
                                     </td>
                                     <td width="5" />
                                     <td valign="middle">
-                                        <input id="premium" type="number" min="-30" max="30" value="0" />
+                                        <input id="premium" type="number" min="-21" max="21" value="0" />
                                     </td>
                                 </tr>
                             </table>
@@ -420,7 +420,7 @@
                 <br /><br />
                 <div>
                     <strong>Success!</strong> Your payout has been created.<br />
-                    If you have set an automatic payout processor, the payment will be sent automatically to Peach.<br />
+                    If you have set an automatic payout processor, the payment will be sent automatically to the Escrow Address of the Peach Sell Offer.<br />
                     Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.<br />
                     If an issue arises, please contact hello@peachbitcoin.com.
                 </div>
