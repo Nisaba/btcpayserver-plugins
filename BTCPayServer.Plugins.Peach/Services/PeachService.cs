@@ -229,7 +229,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 dynamic peachRequest = new ExpandoObject();
                 peachRequest.type = "ask";
                 peachRequest.amount = Convert.ToUInt64(Convert.ToSingle(req.Amount) * 100000000);
-                peachRequest.premium = Convert.ToUInt16(req.Premium);
+                peachRequest.premium = Convert.ToInt16(req.Premium);
                 peachRequest.meansOfPayment = new Dictionary<string, List<string>> { [req.CurrencyCode] = req.MeansOfPayment.Select(p => p.MoP).ToList() };
                 peachRequest.paymentData = dicPaymentData;
 #if DEBUG
@@ -353,6 +353,13 @@ namespace BTCPayServer.Plugins.Peach.Services
 
         }
 
+        public static string OfferIdToHex(string offerId)
+        {
+            if (!long.TryParse(offerId, out long parsedId))
+                throw new ArgumentException("Invalid offer ID");
 
+            string hex = parsedId.ToString("X");
+            return $"P-{hex}";
+        }
     }
 }
