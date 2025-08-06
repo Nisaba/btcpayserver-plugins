@@ -232,7 +232,11 @@ namespace BTCPayServer.Plugins.Peach.Services
                 peachRequest.premium = Convert.ToUInt16(req.Premium);
                 peachRequest.meansOfPayment = new Dictionary<string, List<string>> { [req.CurrencyCode] = req.MeansOfPayment.Select(p => p.MoP).ToList() };
                 peachRequest.paymentData = dicPaymentData;
+#if DEBUG
+                peachRequest.returnAddress = "bc1qfksx4fuzm6xua093zhllzwmzadtzegyhpqn4au";
+#else
                 peachRequest.returnAddress = req.ReturnAdress; 
+#endif 
                 var peachJson = JsonConvert.SerializeObject(peachRequest, Formatting.None);
                 var webRequest = new HttpRequestMessage(HttpMethod.Post, "offer")
                 {
@@ -289,7 +293,11 @@ namespace BTCPayServer.Plugins.Peach.Services
                 var jObj = JObject.Parse(sRep);
                 string escrow = jObj["escrow"]?.ToString();
                 _logger.LogInformation($"Peach Escrow created");
+#if DEBUG
+                return "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
+#else
             return escrow;
+#endif 
              }
              catch (Exception ex)
              {
