@@ -76,7 +76,7 @@ namespace BTCPayServer.Plugins.Peach.Controllers
                     sMsg += "Settings saved, ";
 
                     await _pluginService.UpdateMeansOfPayments(req.Settings.StoreId, req.MeansOfPayments);
-                    sMsg += "Means of Payments saved... Success";
+                    sMsg += "Means of Payments saved!";
                 }
                 catch (Exception ex)
                 {
