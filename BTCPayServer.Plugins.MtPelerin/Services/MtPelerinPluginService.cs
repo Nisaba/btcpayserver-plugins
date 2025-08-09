@@ -238,15 +238,17 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     derivationScheme.AccountDerivation,
                     WellknownMetadataKeys.MasterHDKey);
 
+                _logger.LogInformation("MtPelerinPlugin:GetSigningAdressInfo() - Master Key: {MasterKey}", masterKeyString);
+                _logger.LogInformation("MtPelerinPlugin:GetSigningAdressInfo() - UTXO KeyPath: {KeyPath}", utxo.KeyPath);
                 if (!string.IsNullOrEmpty(masterKeyString) && utxo.KeyPath != null)
                 {
                     var extKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
-
+                    
                     var derivedKey = extKey.Derive(utxo.KeyPath);
 
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
-                    signInfo.Signature =SignMessage(messageToSign, derivedKey.PrivateKey);
+                    signInfo.Signature = SignMessage(messageToSign, derivedKey.PrivateKey);
                 }
             }
             catch (Exception e)
