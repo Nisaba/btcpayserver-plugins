@@ -83,7 +83,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
                 string sToken = JsonRep.accessToken;
 
-                var webRequestUser = new HttpRequestMessage(HttpMethod.Get, "user/me");
+              /*  var webRequestUser = new HttpRequestMessage(HttpMethod.Get, "user/me");
                 webRequestUser.Headers.Add("Authorization", $"Bearer {sToken}");
                 using (var rep = await _httpClient.SendAsync(webRequestUser))
                 {
@@ -92,7 +92,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                         sRep = await rdr.ReadToEndAsync();
                     }
                     rep.EnsureSuccessStatusCode();
-                }
+                }*/
                 return sToken;
             }
             catch (Exception ex)
@@ -243,8 +243,9 @@ namespace BTCPayServer.Plugins.Peach.Services
                     Content = new StringContent(peachJson, Encoding.UTF8, "application/json"),
                 };
                 webRequest.Headers.Add("Accept", "application/json");
-                webRequest.Headers.Add("User-Agent", "Mozilla/5.0");
-                webRequest.Headers.TryAddWithoutValidation("Authorization", req.PeachToken);
+              //  webRequest.Headers.Add("User-Agent", "Mozilla/5.0");
+              //  webRequest.Headers.TryAddWithoutValidation("Authorization", req.PeachToken);
+                webRequest.Headers.Add("Authorization", $"Bearer {req.PeachToken}");
 
                 using (var rep = await _httpClient.SendAsync(webRequest))
                 {
