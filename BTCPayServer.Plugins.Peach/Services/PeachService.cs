@@ -262,7 +262,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"PeachPlugin.PostSellOffer(): {ex.Message} - {sRep}");
+                _logger.LogError($"PeachPlugin.PostSellOffer(): {ex.Message} - {sRep} - {req.PeachToken}");
                 throw;
             }
         }
