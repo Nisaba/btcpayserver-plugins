@@ -101,7 +101,7 @@ namespace BTCPayServer.Plugins.Peach.Controllers
                 var settings = await _pluginService.GetStoreSettings(storeId);
                 settings.Pwd = req["pwd"];
                 sToken = await _peachService.GetToken(settings);
-                sMsg = "Peach token received";
+                sMsg = String.IsNullOrEmpty(sToken) ? "Error: Password incorrect" : "Peach token received";
             }
             catch (Exception ex)
             {

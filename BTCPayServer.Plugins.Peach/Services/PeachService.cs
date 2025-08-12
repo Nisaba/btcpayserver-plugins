@@ -42,7 +42,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             if (string.IsNullOrEmpty(peachSettings.Pwd))
                 return string.Empty;
 
-            var cacheKey = $"Token-{peachSettings.StoreId}";
+            var cacheKey = $"Token-{peachSettings.StoreId}-{peachSettings.Pwd}";
             return await _cache.GetOrCreateAsync<string>(cacheKey,
                 async entry =>
                 {
@@ -54,7 +54,8 @@ namespace BTCPayServer.Plugins.Peach.Services
 
         private async Task<string> DoGetToken(PeachSettings peachSettings)
         {
-            string sRep = "";
+            string sRep = string.Empty;
+            string sToken = string.Empty;
             try
             {
                 var sMsg = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds().ToString();
@@ -81,7 +82,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                     rep.EnsureSuccessStatusCode();
                 }
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
-                string sToken = JsonRep.accessToken;
+                sToken = JsonRep.accessToken;
 
               /*  var webRequestUser = new HttpRequestMessage(HttpMethod.Get, "user/me");
                 webRequestUser.Headers.Add("Authorization", $"Bearer {sToken}");
@@ -93,14 +94,13 @@ namespace BTCPayServer.Plugins.Peach.Services
                     }
                     rep.EnsureSuccessStatusCode();
                 }*/
-                return sToken;
             }
             catch (Exception ex)
             {
                 var sError = $"{ex.Message} - {sRep}";
                 _logger.LogError($"PeachPlugin.GetToken(): {sError}");
-                throw new Exception(sError);
             }
+            return sToken;
 
         }
 
