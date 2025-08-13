@@ -1,6 +1,9 @@
 @using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Abstractions.Services
+@inject Safe Safe
 @{
     var parsedModel = TempData.GetStatusMessageModel();
+
 }
 
 @if (parsedModel != null)
@@ -20,7 +23,7 @@
         }
         @if (!string.IsNullOrEmpty(parsedModel.Html))
         {
-            @Html.Raw(HtmlSanitizer.Sanitize(parsedModel.Html))
+            @Safe.Raw(parsedModel.Html)
         }
     </div>
 }
