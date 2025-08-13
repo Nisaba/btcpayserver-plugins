@@ -32,6 +32,10 @@
 <br />
 
 <partial name="_StatusMessage" />
+@Html.AntiForgeryToken()
+<script>
+var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+</script>
 <div permission="@Policies.CanModifyStoreSettings">
     <br />
     <script src="/Resources/js/crypto-js.min.js"></script>
@@ -142,7 +146,8 @@
                     const response = await fetch('Peach/UpdSettings', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': antiForgeryToken
                         },
                         body: JSON.stringify(Request)
                     });
@@ -151,6 +156,12 @@
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = window.location.pathname;
+
+                    const inputFg = document.createElement('input');
+                    inputFg.type = 'hidden';
+                    inputFg.name = '__RequestVerificationToken';
+                    inputFg.value = antiForgeryToken;
+                    form.appendChild(inputFg);
 
                     const input = document.createElement('input');
                     input.type = 'hidden';
@@ -214,7 +225,6 @@
         } else {
             <script type = "text/javascript" >
                 var tblOfrs = [];
-                var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
                 
                 function GetPartial(reqData) {
                     $('#containerPeach').html('<div style="display: flex; justify-content: center;"><img src="/Resources/img/Loading_icon.gif"/></div>');
@@ -283,6 +293,12 @@
                     form.method = 'POST';
                     form.action = window.location.pathname + '/CreateOffer';
 
+                    const inputFg = document.createElement('input');
+                    inputFg.type = 'hidden';
+                    inputFg.name = '__RequestVerificationToken';
+                    inputFg.value = antiForgeryToken;
+                    form.appendChild(inputFg);
+
                     const input = document.createElement('input');
                     input.type = 'hidden';
                     input.name = 'token';
@@ -321,7 +337,8 @@
                     const response = await fetch('Peach/GetToken', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': antiForgeryToken
                         },
                         body: JSON.stringify(Request)
                     });
@@ -330,6 +347,12 @@
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = window.location.pathname;
+
+                    const inputFg = document.createElement('input');
+                    inputFg.type = 'hidden';
+                    inputFg.name = '__RequestVerificationToken';
+                    inputFg.value = antiForgeryToken;
+                    form.appendChild(inputFg);
 
                     const input = document.createElement('input');
                     input.type = 'hidden';
