@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 namespace BTCPayServer.Plugins.Lendasat.Controllers
 {
     [Route("~/plugins/{storeId}/Lendasat")]
+    [AutoValidateAntiforgeryToken]
 
 
     public class LendasatPluginController(LendasatPluginService pluginService, LendasatService lendasatService) : Controller

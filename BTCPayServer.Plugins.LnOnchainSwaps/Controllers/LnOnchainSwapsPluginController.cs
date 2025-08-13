@@ -11,8 +11,7 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
     [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanModifyStoreSettings)]
     [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
     [Authorize(Policy = Policies.CanManagePayouts, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
-
-
+    [AutoValidateAntiforgeryToken]
     public class LnOnchainSwapsPluginController(LnOnchainSwapsPluginService pluginService) : Controller
     {
         private readonly LnOnchainSwapsPluginService _pluginService = pluginService;
