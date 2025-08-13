@@ -12,6 +12,8 @@ namespace BTCPayServer.Plugins.Ecwid;
 
 [Route("~/plugins/{storeId}/Ecwid")]
 [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy= Policies.CanModifyStoreSettings)]
+[AutoValidateAntiforgeryToken]
+
 public class EcwidPluginController(EcwidPluginService ecwidService,
                                    BtcPayService btcPayService) : Controller
 {

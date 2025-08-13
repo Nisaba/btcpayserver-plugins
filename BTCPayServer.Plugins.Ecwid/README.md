@@ -55,3 +55,7 @@ Congratulations! Bitcoin payments are now live on your Ecwid store.
 
 You should now see the payment option in your Ecwid store checkout page. You can check by clicking on "Payment" on the left sidebar. Sometimes it can take a few minutes until it shows up after reinstalling the app.
 ![Payment Options](./docs/img/ecwid-payment-options.png)
+
+<br/>
+What's new in v 1.0.2 :
+- Small fixes
