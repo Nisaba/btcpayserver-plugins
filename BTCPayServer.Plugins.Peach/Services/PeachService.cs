@@ -16,6 +16,7 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using Network = NBitcoin.Network;
 
 namespace BTCPayServer.Plugins.Peach.Services
@@ -245,7 +246,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 webRequest.Headers.Add("Accept", "application/json");
               //  webRequest.Headers.Add("User-Agent", "Mozilla/5.0");
               //  webRequest.Headers.TryAddWithoutValidation("Authorization", req.PeachToken);
-                webRequest.Headers.Add("Authorization", $"Bearer {req.PeachToken}");
+                webRequest.Headers.Add("Authorization", $"Bearer {HttpUtility.HtmlDecode(req.PeachToken)}");
 
                 using (var rep = await _httpClient.SendAsync(webRequest))
                 {
