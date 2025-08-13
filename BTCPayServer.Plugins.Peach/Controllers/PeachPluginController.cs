@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace BTCPayServer.Plugins.Peach.Controllers
 {
     [Route("~/plugins/{storeId}/Peach")]
-
+    [AutoValidateAntiforgeryToken]
 
     public class PeachPluginController(PeachPluginService pluginService, PeachService peachService) : Controller
     {

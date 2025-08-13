@@ -42,6 +42,7 @@
 
     <h4>Configuration</h4>
     <form method="post" autocomplete="off">
+        @Html.AntiForgeryToken()
         <input asp-for="EcwidPluginUrl" type="hidden" />
         <input asp-for="Settings.StoreId" type="hidden" />
         <table class="table table-sm mt-0 mx-0">

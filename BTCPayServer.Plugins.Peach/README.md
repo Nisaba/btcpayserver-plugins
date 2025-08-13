@@ -41,7 +41,7 @@ Now you can create a sales offer, optionally specifying a premium, positive or n
 <img width="942" height="73" alt="image" src="https://github.com/user-attachments/assets/1b378be5-48f6-4bf3-a2e2-37704b7810d5" />
 
 
-<br/>Great! The sell offer is created ! You can see it in your Peach app.<br/>
+<br/>Great! The Sell Offer is created ! You can see it in your Peach app.<br/>
 
 
 <img width="1206" height="572" alt="image" src="https://github.com/user-attachments/assets/300bc55c-9735-476d-9df2-ceb2806880d4" />

@@ -24,7 +24,7 @@
         <td width="20" />
         <td>
             <p>
-                Allows you to forward received funds to <a href="https://peachbitcoin.com/referral/?code=PROB44" target="pch">Peach bitcoin</a><br />
+                This program allows you to exchange received Bitcoin to EUR, GBP, and many other currencies using <a href="https://peachbitcoin.com/referral/?code=PROB44" target="pch">Peach Bitcoin</a><br />
                 Please read our documentation <a href="https://github.com/Nisaba/btcpayserver-plugins/blob/master/BTCPayServer.Plugins.Peach/README.md" target="_blank">here</a>.
             </p>
         </td>
@@ -214,7 +214,8 @@
         } else {
             <script type = "text/javascript" >
                 var tblOfrs = [];
-
+                var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                
                 function GetPartial(reqData) {
                     $('#containerPeach').html('<div style="display: flex; justify-content: center;"><img src="/Resources/img/Loading_icon.gif"/></div>');
                     $('#btSend').hide();
@@ -224,6 +225,9 @@
                         type: 'POST',
                         contentType: "application/json; charset=utf-8",
                         data: JSON.stringify(reqData),
+                        headers: {
+                            'RequestVerificationToken': antiForgeryToken 
+                        },
                         success: function(result) {
                             tblOfrs = [];
                             $('#containerPeach').html(result);

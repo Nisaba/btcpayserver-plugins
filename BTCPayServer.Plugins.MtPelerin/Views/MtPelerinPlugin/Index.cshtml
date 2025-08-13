@@ -56,6 +56,7 @@
             <div class="accordion-body">
                 <br />
                 <form method="post" autocomplete="off">
+                    @Html.AntiForgeryToken()
                     <input asp-for="Settings.StoreId" type="hidden" />
                     <table class="table table-sm mt-0 mx-0">
                         <tr>
@@ -83,11 +84,11 @@
                             <td width="300" class="border-0 ps-0 align-middle">
                                 <select asp-for="Settings.Lang" class="form-select">
                                     <option value="en">English</option>
-                                    <option value="fr">Français</option>
+                                    <option value="fr">Franï¿½ais</option>
                                     <option value="de">Deutsch</option>
                                     <option value="it">Italiano</option>
-                                    <option value="es">Español</option>
-                                    <option value="pt">Português</option>
+                                    <option value="es">Espaï¿½ol</option>
+                                    <option value="pt">Portuguï¿½s</option>
                                 </select>
                                 <span asp-validation-for="Settings.Lang" class="text-danger"></span>
                             </td>

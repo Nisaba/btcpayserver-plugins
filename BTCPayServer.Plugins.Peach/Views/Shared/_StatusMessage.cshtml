@@ -20,7 +20,7 @@
         }
         @if (!string.IsNullOrEmpty(parsedModel.Html))
         {
-            @Html.Raw(parsedModel.Html)
+            @Html.Raw(HtmlSanitizer.Sanitize(parsedModel.Html))
         }
     </div>
 }
