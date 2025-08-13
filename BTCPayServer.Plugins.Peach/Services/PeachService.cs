@@ -282,9 +282,9 @@ namespace BTCPayServer.Plugins.Peach.Services
                      Content = new StringContent(peachJson, Encoding.UTF8, "application/json"),
                  };
                  webRequest.Headers.Add("Accept", "application/json");
-                 webRequest.Headers.Add("User-Agent", "Mozilla/5.0");
-                 webRequest.Headers.TryAddWithoutValidation("Authorization", token);
-                 using (var rep = await _httpClient.SendAsync(webRequest))
+                 // webRequest.Headers.Add("User-Agent", "Mozilla/5.0");
+                 webRequest.Headers.Add("Authorization", $"Bearer {HttpUtility.HtmlDecode(token)}");
+                using (var rep = await _httpClient.SendAsync(webRequest))
                  {
                      using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
                      {

@@ -1,11 +1,14 @@
 @using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Abstractions.Services
+@inject Safe Safe
 @{
     var parsedModel = TempData.GetStatusMessageModel();
+
 }
 
 @if (parsedModel != null)
 {
-	<div class="alert alert-@parsedModel.SeverityCSS @(parsedModel.AllowDismiss? "alert-dismissible":"" ) @(ViewData["Margin"] ?? "mb-4") text-break" role="alert" v-pre>
+    <div class="alert alert-@parsedModel.SeverityCSS @(parsedModel.AllowDismiss? "alert-dismissible":"" ) @(ViewData["Margin"] ?? "mb-4") text-break" role="alert" v-pre>
         @if (parsedModel.AllowDismiss)
         {
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
@@ -20,7 +23,7 @@
         }
         @if (!string.IsNullOrEmpty(parsedModel.Html))
         {
-            @Html.Raw(parsedModel.Html)
+            @Safe.Raw(parsedModel.Html)
         }
     </div>
 }
