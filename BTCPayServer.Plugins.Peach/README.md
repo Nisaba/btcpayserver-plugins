@@ -12,6 +12,7 @@ You must now specify a password to secure the file.
 
 
 <br/>Now you can retrieve the generated JSON file and import it into the BTCPay Peach Plugin and enter the password.<br/>
+<b>Note:</b> The currency of your Peach account must match with the currency of the BTCPay store.<br/>
 
 
 <img width="743" height="480" alt="image" src="https://github.com/user-attachments/assets/5ef6ab67-2420-4c25-b263-1564aaa94591" />
