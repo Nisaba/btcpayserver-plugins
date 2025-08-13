@@ -52,6 +52,7 @@
         <div class="accordion-body">
             <br />
             <form method="post">
+                @Html.AntiForgeryToken()
                 <input asp-for="Settings.StoreId" type="hidden" />
                 <div class="form-group">
                     <table>

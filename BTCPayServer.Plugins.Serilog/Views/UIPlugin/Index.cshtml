@@ -18,60 +18,7 @@
 <partial name="_StatusMessage" />
 
 <form method="post" autocomplete="off">
-    <!--
-    <div class="row">
-        <div class="col-xl-10 col-xxl-constrain">
-            <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between mt-n1 mb-4">
-                <h4 class="mb-3">Email</h4>
-                <div class="d-flex">
-                    <button class="btn btn-secondary mt-2" value="TestEmail" name="Command">Test</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-        <table class="table table-sm mt-0 mx-0"><tr>
-        <td class="border-0 ps-0 align-middle">
-            <input asp-for="logEmailEnabled" type="checkbox" class="form-check-input" />
-            <label asp-for="logEmailEnabled" class="form-check-label"></label>
-            <span asp-validation-for="logEmailEnabled" class="text-danger"></span>
-        </td>
-        <td class="border-0 ps-0 align-middle">
-            <label asp-for="emailConfig.MinLevel" class="form-check-label"></label>
-            <select asp-for="emailConfig.MinLevel" asp-items="Html.GetEnumSelectList<Serilog.Events.LogEventLevel>()"></select>
-        </td>
-    </tr></table>
-
-    <div class="form-group">
-        <label asp-for="emailConfig.To" class="form-label"></label>
-        <input asp-for="emailConfig.To" placeholder="name@email.com" data-fill="port" class="form-control" />
-        <span asp-validation-for="emailConfig.To" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="emailConfig.Template" class="form-label"></label>
-        <input asp-for="emailConfig.Template" data-fill="port" class="form-control" />
-        <span asp-validation-for="emailConfig.Template" class="text-danger"></span>
-    </div>
-
-    <table class="table table-sm mt-0 mx-0">
-        <tr>
-            <td class="border-0 ps-0 align-middle">
-                <label asp-for="Settings.emailConfig.Period" class="form-label"></label>
-                <input asp-for="Settings.emailConfig.Period" data-fill="port" class="form-control" />
-                <span asp-validation-for="Settings.emailConfig.Period" class="text-danger"></span>
-            </td>
-            <td width="20"/>
-            <td class="border-0 ps-0 align-middle">
-                <label asp-for="Settings.emailConfig.NbMaxEventsInMail" class="form-label"></label>
-                <input asp-for="Settings.emailConfig.NbMaxEventsInMail" data-fill="port" class="form-control" />
-                <span asp-validation-for="Settings.emailConfig.NbMaxEventsInMail" class="text-danger"></span>
-            </td>
-        </tr>
-    </table>
-
-    <br>
-    -->
+    @Html.AntiForgeryToken()
 
     <div class="row">
         <div class="col-xl-10 col-xxl-constrain">

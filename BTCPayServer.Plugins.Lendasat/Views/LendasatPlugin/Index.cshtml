@@ -52,6 +52,7 @@
         <div id="peach-config" class="accordion-collapse collapse @(IsConfigured ? "" : "show")" aria-labelledby="additional-htmlheader-header" style="">
             <div class="accordion-body">
                 <form method="post">
+                    @Html.AntiForgeryToken()
                     <input asp-for="Settings.StoreId" type="hidden" />
                     <table class="table table-sm mt-0 mx-0">
                         <tr>

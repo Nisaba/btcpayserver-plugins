@@ -31,7 +31,7 @@ You can set the percentage of your balance to sell and the premium ( example: yo
 <img width="942" height="73" alt="image" src="https://github.com/user-attachments/assets/1b378be5-48f6-4bf3-a2e2-37704b7810d5" />
 
 
-<br/>Great! The Sell Offer is created! You can now open your Phone and access the Peach App and see it there<br/>
+<br/>Great! The Sell Offer is created ! You can see it in your Peach app.<br/>
 
 
 <img width="1206" height="572" alt="image" src="https://github.com/user-attachments/assets/300bc55c-9735-476d-9df2-ceb2806880d4" />
