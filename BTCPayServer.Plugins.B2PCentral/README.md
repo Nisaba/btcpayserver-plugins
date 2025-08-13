@@ -37,5 +37,9 @@ What's new in v 1.2.4 :
 What's new in v 1.2.5 :
 - Display correct Lightning balance for stores using Boltz plugin
 
+What's new in v 1.2.6 :
+- Small fixes
+
+
 
 

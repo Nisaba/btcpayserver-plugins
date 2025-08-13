@@ -15,7 +15,6 @@ using Org.BouncyCastle.Ocsp;
 namespace BTCPayServer.Plugins.B2PCentral;
 
 [Route("~/plugins/{storeId}/b2pcentral")]
-[Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie)]
 [AutoValidateAntiforgeryToken]
 
 public class B2PPluginController : Controller

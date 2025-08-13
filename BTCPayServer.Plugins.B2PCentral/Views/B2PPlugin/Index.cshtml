@@ -16,10 +16,10 @@
     var tblOfrs = [];
     var tblOfrsOnChain = [];
     var tblOfrsLightning = [];
-    var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
 
     function GetPartial(reqData, container, bt) {
+        var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
         $(container).html('<div style="display: flex; justify-content: center;"><img src="/Resources/img/Loading_icon.gif"/></div>');
         $(bt).hide();
         $.ajax({
