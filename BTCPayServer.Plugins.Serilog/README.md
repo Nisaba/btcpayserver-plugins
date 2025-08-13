@@ -35,4 +35,10 @@ https://stackoverflow.com/questions/32423837/telegram-bot-how-to-get-a-group-cha
 What's new in v 1.2.1 :
 - Bump to BTCPay v2
 
+What's new in v 1.2.2 :
+- Small fixes
+
+What's new in v 1.2.3 :
+- Small fixes
+
 If you like my work, you can send me with a few sats here: donate@btcpay2.nisaba.solutions. Thank you !

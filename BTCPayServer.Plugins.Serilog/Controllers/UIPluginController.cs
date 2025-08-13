@@ -19,6 +19,8 @@ namespace BTCPayServer.Plugins.Serilog;
 
 [Route("~/plugins/serilog")]
 [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanModifyServerSettings)]
+[AutoValidateAntiforgeryToken]
+
 public class UIPluginController : Controller
 {
     private readonly ISettingsRepository _SettingsRepository;
