@@ -215,9 +215,16 @@
                             if (confirm(`Are you sure you want to swap ${amountToSendBTC} BTC for approximately ${amountToSendFiat} @walletConfig.FiatCurrency?`)) {
                                 $('#btSend').hide();
 
+                                var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
                                 const form = document.createElement('form');
                                 form.method = 'POST';
                                 form.action = 'Exolix/SwapMerchant';
+
+                                const inputFg = document.createElement('input');
+                                inputFg.type = 'hidden';
+                                inputFg.name = '__RequestVerificationToken';
+                                inputFg.value = antiForgeryToken;
+                                form.appendChild(inputFg);
 
                                 const input = document.createElement('input');
                                 input.type = 'hidden';

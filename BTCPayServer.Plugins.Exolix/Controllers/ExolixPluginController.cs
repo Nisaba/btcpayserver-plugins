@@ -15,6 +15,7 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
     [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanViewInvoices)]
     [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
     [Authorize(Policy = Policies.CanManagePayouts, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
+    [AutoValidateAntiforgeryToken]
     public class ExolixPluginController(ExolixPluginService pluginService, ExolixService exolixService) : Controller
     {
         private readonly ExolixPluginService _pluginService = pluginService;
