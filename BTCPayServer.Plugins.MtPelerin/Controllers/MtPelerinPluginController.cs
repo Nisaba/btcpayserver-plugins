@@ -14,8 +14,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
     [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanModifyStoreSettings)]
     [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
     [Authorize(Policy = Policies.CanManagePayouts, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
-
-
+    [AutoValidateAntiforgeryToken]
     public class MtPelerinPluginController(MtPelerinPluginService pluginService) : Controller
     {
         private readonly MtPelerinPluginService _pluginService = pluginService;
