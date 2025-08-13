@@ -1,6 +1,6 @@
 # Peach plugin for BTCPay Server
-Sell your bitcoins peer-to-peer to individuals usins <a href="https://peachbitcoin.com/referral/?code=PROB44" target="new">Peach Bitcoin</a> !
-This plugin allows you to forward received onchain BTC funds to your Peach account, by creating a sales offer that Peach users can respond to.
+Sell your Bitcoins Peer-to-Peer to individuals using <a href="https://peachbitcoin.com/referral/?code=PROB44" target="new">Peach Bitcoin</a> !
+This plugin allows you to forward received onchain BTC funds to your Peach account, by creating Sell Offer that Peach users can interact with.
 
 # Settings
 
@@ -11,32 +11,22 @@ You must now specify a password to secure the file.
 ![WhatsApp Image 2025-08-05 à 13 48 35_552434ac](https://github.com/user-attachments/assets/f1f4cfe1-076b-4d54-9316-c234a9e40bad)
 
 
-<br/>Now you can retrieve the generated JSON file and import it into the Peach plugin, specifying the password that was set.<br/>
+<br/>Now you can retrieve the generated JSON file and import it into the BTCPay Peach Plugin and enter the password.<br/>
 
 
 <img width="743" height="480" alt="image" src="https://github.com/user-attachments/assets/5ef6ab67-2420-4c25-b263-1564aaa94591" />
 
 
-<br/>The Peach plugin is now configured and ready to use.<br/>
+<br/>The Peach Plugin is now configured and ready to use!<br/>
 
 
 <img width="752" height="453" alt="image" src="https://github.com/user-attachments/assets/5bb0a4ef-cd0c-4268-aa90-df05fcaa2d40" />
 
 
-# Using Peach Plugin
+# Using the Peach Plugin
 
-The plugin displays your onchain balance and the fiat exchange rate in the store currency.
-You can set the percentage of the balance to sell.
-
-Clicking Search displays a list of currently available purchase offers that match your criteria (balances and payment methods).
-This is simply a way to check the status of current offers. To respond to them, you must create a sale offer.<br/>
-
-
-<img width="1192" height="552" alt="image" src="https://github.com/user-attachments/assets/b8580d08-dffd-4a9f-9e78-0bf16bade063" />
-
-
-<br/>To do this, and if you haven't already done so, you must enter the password, the one you defined when backing up your JSON file from the Peach application.
-Now you can create a sales offer, optionally specifying a premium, positive or negative.<br/>
+The Peach Plugin displays your Onchain Balance and the Fiat exchange rate in the store currency.
+You can set the percentage of your balance to sell and the premium ( example: you want to sell 2 BTC in exchange for Euros at a price that is 5% above the market price defined by Centralized Exchanges)<br/>
 
 <img width="942" height="73" alt="image" src="https://github.com/user-attachments/assets/1b378be5-48f6-4bf3-a2e2-37704b7810d5" />
 
@@ -47,4 +37,4 @@ Now you can create a sales offer, optionally specifying a premium, positive or n
 <img width="1206" height="572" alt="image" src="https://github.com/user-attachments/assets/300bc55c-9735-476d-9df2-ceb2806880d4" />
 
 
-<br/>Now you need to pay the escrow to activate it. Click on the link provided. It will simply take you to the BTCPay payouts page, with a payout already configured to be sent to Peach, with the correct amount and receiving address. All you have to do is make this payment for your Peach offer to be effective. Its status will be updated in the app.<br/>
+<br/>Now you need to fund the Escrow to activate it. Click on the link provided. It will simply take you to the BTCPay payouts page, with a payout already configured to be sent to Peach, with the correct amount and receiving address. All you have to do is make this payment for your Sell Offer on Peach to be concluded and visible to every Buyer. Its status will be updated in the app.<br/>

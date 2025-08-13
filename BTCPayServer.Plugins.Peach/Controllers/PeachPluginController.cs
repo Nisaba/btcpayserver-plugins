@@ -76,7 +76,7 @@ namespace BTCPayServer.Plugins.Peach.Controllers
                     sMsg += "Settings saved, ";
 
                     await _pluginService.UpdateMeansOfPayments(req.Settings.StoreId, req.MeansOfPayments);
-                    sMsg += "Means of Payments saved... Success";
+                    sMsg += "Means of Payment saved! Backup was loaded successfully!";
                 }
                 catch (Exception ex)
                 {
@@ -101,7 +101,7 @@ namespace BTCPayServer.Plugins.Peach.Controllers
                 var settings = await _pluginService.GetStoreSettings(storeId);
                 settings.Pwd = req["pwd"];
                 sToken = await _peachService.GetToken(settings);
-                sMsg = "Peach token received";
+                sMsg = String.IsNullOrEmpty(sToken) ? "Error: Password incorrect" : "Peach token received";
             }
             catch (Exception ex)
             {
@@ -152,8 +152,9 @@ namespace BTCPayServer.Plugins.Peach.Controllers
                 var settings = await _pluginService.GetStoreSettings(storeId);
                 var btcEscrowAddress = await _peachService.CreateEscrow(reqCient.Token, offerId, settings.PrivKey) ;
 
-                await _pluginService.CreatePayout(storeId, offerId, btcEscrowAddress, reqCient.Amount);
-                TempData[WellKnownTempData.SuccessMessage] = $"Payout created! Peach Offer ID: {offerId}";
+                var peachOfferId = PeachService.OfferIdToHex(offerId);
+                await _pluginService.CreatePayout(storeId, peachOfferId, btcEscrowAddress, reqCient.Amount);
+                TempData[WellKnownTempData.SuccessMessage] = $"Payout created! Peach Offer ID: {peachOfferId}";
             }
             catch (Exception ex)
             {

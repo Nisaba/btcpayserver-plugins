@@ -17,12 +17,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
+using NBitcoin.Crypto;
 using NBXplorer;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -208,7 +210,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 SenderBtcAddress = string.Empty
             };
 
-           /*   try
+            try
             {
                 var store = await _storeRepository.FindStore(storeId);
 
@@ -231,28 +233,56 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 var address = utxo.Address;
                 signInfo.SenderBtcAddress = address.ToString();
 
-              var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
+                var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
                 var masterKeyString = await explorer.GetMetadataAsync<string>(
                     derivationScheme.AccountDerivation,
                     WellknownMetadataKeys.MasterHDKey);
 
+                _logger.LogInformation("MtPelerinPlugin:GetSigningAdressInfo() - Master Key: {MasterKey}", masterKeyString);
+                _logger.LogInformation("MtPelerinPlugin:GetSigningAdressInfo() - UTXO KeyPath: {KeyPath}", utxo.KeyPath);
                 if (!string.IsNullOrEmpty(masterKeyString) && utxo.KeyPath != null)
                 {
                     var extKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
-
+                    
                     var derivedKey = extKey.Derive(utxo.KeyPath);
-                    var privateKeyForSigning = derivedKey.PrivateKey;
 
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
-                    signInfo.Signature = privateKeyForSigning.SignMessageBitcoin(messageToSign, btcNetwork.NBitcoinNetwork);
+                    signInfo.Signature = SignMessage(messageToSign, derivedKey.PrivateKey);
                 }
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "MtPelerinPlugin:GetSigningAdressInfo()");
-            }*/
+            }
             return signInfo;
+        }
+
+        private string SignMessage(string message, Key privKey)
+        {
+            try
+            {
+                using (SHA256 sha256 = SHA256.Create())
+                {
+                    byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
+                    byte[] messageHash = sha256.ComputeHash(messageBytes);
+
+                    uint256 hash = new uint256(messageHash);
+                    ECDSASignature signature = privKey.Sign(hash);
+                    byte[] compactSig = signature.ToCompact();
+
+                    if (compactSig.Length != 64)
+                    {
+                        throw new InvalidOperationException($"Compact signature length is {compactSig.Length}, expected 64.");
+                    }
+                    return BitConverter.ToString(compactSig).Replace("-", "").ToLower();
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "MtPelerinPlugin:SignMessage()");
+                throw;
+            }
         }
 
 

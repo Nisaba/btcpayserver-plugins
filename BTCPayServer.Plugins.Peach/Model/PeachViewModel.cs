@@ -7,7 +7,7 @@ namespace BTCPayServer.Plugins.Peach.Model
     {
         public PeachSettings Settings { get; set; }
 
-        [Display(Name = "Your means of payment")]
+        [Display(Name = "Your Means of Payment")]
         public List<string> MeansOfPayments { get; set; }
 
         public bool IsPayoutCreated { get; set; } = false;

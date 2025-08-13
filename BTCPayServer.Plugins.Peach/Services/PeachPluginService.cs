@@ -319,7 +319,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                     Description = "",
                     Amount = amount,
                     Currency = "BTC",
-                    ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
+                    ExpiresAt = DateTimeOffset.UtcNow.AddHours(12),
                     PayoutMethods = new[] { payoutMethodId.ToString() }
                 };
 
