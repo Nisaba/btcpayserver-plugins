@@ -167,7 +167,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 if (mtPelerinDestination == null)
                     throw new Exception($"Destination parsing failed: {error ?? "Unknown error"}");
 
-                (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, blob, cancellationToken);
+               // (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, blob, cancellationToken);
 
                 var result = await _pullPaymentHostedService.Claim(new ClaimRequest
                 {

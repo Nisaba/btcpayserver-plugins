@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using System;
 
-namespace BTCPayServer.Plugins.Lendasat.Services;
+namespace BTCPayServer.Plugins.Lendasat.Data;
 
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<LendasatPluginDbContext>
 {

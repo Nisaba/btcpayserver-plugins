@@ -1,4 +1,5 @@
 ﻿using BTCPayServer.Abstractions.Contracts;
+using BTCPayServer.Plugins.Lendasat.Data;
 using BTCPayServer.Plugins.Lendasat.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;

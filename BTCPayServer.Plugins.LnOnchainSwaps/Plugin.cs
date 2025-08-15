@@ -1,6 +1,7 @@
 ﻿using BTCPayServer.Abstractions.Contracts;
 using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Abstractions.Services;
+using BTCPayServer.Plugins.LnOnchainSwaps.Data;
 using BTCPayServer.Plugins.LnOnchainSwaps.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +20,15 @@ public class Plugin : BaseBTCPayServerPlugin
         services.AddUIExtension("store-wallets-nav", "LnOnchainSwapsPluginHeaderNav");
         
         services.AddHostedService<ApplicationPartsLogger>();
+        services.AddHostedService<PluginMigrationRunner>();
+        services.AddSingleton<LnOnchainSwapsDbContextFactory>();
+        services.AddDbContext<LnOnchainSwapsDbContext>((provider, o) =>
+        {
+            var factory = provider.GetRequiredService<LnOnchainSwapsDbContextFactory>();
+            factory.ConfigureBuilder(o);
+        });
         services.AddSingleton<LnOnchainSwapsPluginService>();
+        services.AddSingleton<BoltzService>();
 
     }
 

@@ -66,7 +66,7 @@ namespace BTCPayServer.Plugins.Lendasat.Services
                 }
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
                 // ...
-                return new List<LendasatLoanOffer>;
+                return new List<LendasatLoanOffer>();
             }
             catch (Exception ex)
             {

@@ -16,6 +16,7 @@ using BTCPayServer.Models.StoreViewModels;
 using System.Linq;
 using BTCPayServer.Payments.Bitcoin;
 using NBitcoin;
+using BTCPayServer.Plugins.Lendasat.Data;
 
 namespace BTCPayServer.Plugins.Lendasat.Services
 {

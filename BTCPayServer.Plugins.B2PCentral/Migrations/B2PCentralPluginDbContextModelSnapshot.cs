@@ -28,9 +28,6 @@ namespace BTCPayServer.Plugins.B2PCentral.Migrations
                     b.Property<DateTimeOffset>("ApiKey")
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("ApiKey")
-                        .HasColumnType("text");
-
                     b.Property<DateTimeOffset>("ProvidersString")
                         .HasColumnType("text");
 

@@ -29,7 +29,7 @@
 	</ItemDefinitionGroup>
 	
 	<!-- If you need Entity Framework, you can uncomment this. This will make it usable in your project without publishing assemblies
-  already referenced by BTCPay Server Core project
+  already referenced by BTCPay Server Core project -->
 
 	<ItemGroup Condition="$(Configuration) != 'Release'">
 		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.10.0" />
@@ -40,7 +40,7 @@
 		</PackageReference>
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
 		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.11" />
-	</ItemGroup> -->
+	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />

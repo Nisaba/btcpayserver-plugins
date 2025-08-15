@@ -1,5 +1,6 @@
 ﻿using BTCPayServer.Abstractions.Constants;
 using BTCPayServer.Client;
+using BTCPayServer.Plugins.LnOnchainSwaps.Models;
 using BTCPayServer.Plugins.LnOnchainSwaps.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +20,12 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
         [HttpGet]
         public IActionResult Index([FromRoute] string storeId)
         {
-            return View();
+            var model = new LnOnchainSwapsViewModel()
+            {
+                StoreId = storeId,
+                IsPayoutCreated = false
+            };
+            return View(model);
         }
     }
 }

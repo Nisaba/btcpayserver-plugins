@@ -1,6 +1,7 @@
 ﻿using BTCPayServer.Abstractions.Contracts;
 using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Abstractions.Services;
+using BTCPayServer.Plugins.Lendasat.Data;
 using BTCPayServer.Plugins.Lendasat.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
