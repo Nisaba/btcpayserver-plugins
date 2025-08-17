@@ -327,12 +327,12 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
 
                     if (cnfg.OffChainEnabled)
                     {
-                        var lightningClient = GetLightningClient(store);
-                        var balance = await lightningClient.GetBalance();
-                        cnfg.OffChainBalance = (balance.OffchainBalance != null
-                                               ? (balance.OffchainBalance.Local ?? 0) : 0).ToDecimal(LightMoneyUnit.BTC);
                         try
                         {
+                            var lightningClient = GetLightningClient(store);
+                            var balance = await lightningClient.GetBalance();
+                            cnfg.OffChainBalance = (balance.OffchainBalance != null
+                                               ? (balance.OffchainBalance.Local ?? 0) : 0).ToDecimal(LightMoneyUnit.BTC);
                             var info = await lightningClient.GetInfo();
                             if (info.Alias == "boltz-client" && balance.OnchainBalance != null)
                             {
