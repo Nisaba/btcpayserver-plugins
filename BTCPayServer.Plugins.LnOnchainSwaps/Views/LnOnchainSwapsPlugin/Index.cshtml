@@ -7,18 +7,16 @@
 @inject BTCPayServer.Plugins.LnOnchainSwaps.Services.LnOnchainSwapsPluginService LnOnchainSwapsPluginService
 @inject DisplayFormatter DisplayFormatter
 
+@model LnOnchainSwapsViewModel
 @{
     ViewData.SetActivePage(PluginNavPages.Index, "Lightning/Onchain Swaps plugin");
 }
 
-
 <table><tr>
         <td>
-            <a href="https://www.LnOnchainSwaps.com/" target="mtp">
-                <img src="/Resources/img/LnOnchainSwaps.png" />
-            </a>
+            <img src="/Resources/img/LnOnchainSwaps.webp" />
         </td>
-        <td width="20" />
+        <td width="20"></td>
         <td>
             <h2>@ViewData["Title"]</h2>
             <br />
@@ -27,7 +25,7 @@
                 Please read our documentation <a href="https://github.com/LnOnchainSwaps/btcpay-plugin/blob/master/BTCPayServer.Plugins.LnOnchainSwaps/README.md" target="_blank">here</a>.
             </p>
         </td>
-    </tr></table>
+</tr></table>
 <br />
 
 <partial name="_StatusMessage" />
@@ -37,13 +35,11 @@
     <h4>Operations</h4>
     <br />
     @{
-        var walletConfig = await LnOnchainSwapsPluginService.GetBalances(Model.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
+        StoreWalletConfig walletConfig = await LnOnchainSwapsPluginService.GetBalances(Model.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
      }
         <table class="table table-sm mt-0 mx-0">
             <tr>
                 <td>
-                    <input id="chkOnchain" name="chkNetwork" value="" type="radio" checked="checked" class="form-check-input mt-0 me-2" onchange="setLnOnchainSwapsValues()" />
-                </td><td>
                     <h5>On Chain</h5>
                     @if (walletConfig.OnChainEnabled)
                     {
@@ -55,12 +51,10 @@
                     }
                     @if (walletConfig.OnChainBalance == 0)
                     {
-                        <p>No bitcoins available for sale</p>
+                        <p>No bitcoins available for swap</p>
                     }
                 </td><td width="20"></td>
                 <td>
-                    <input id="chkLightning" name="chkNetwork" type="radio" class="form-check-input mt-0 me-2" onchange="setLnOnchainSwapsValues()" />
-                </td><td>
                     <h5>Lightning</h5>
                     @if (walletConfig.OffChainEnabled)
                     {
@@ -72,31 +66,74 @@
                     }
                     @if (walletConfig.OffChainBalance == 0)
                     {
-                        <p>No bitcoins available for sale</p>
+                        <p>No bitcoins available for swap</p>
                     }
                 </td>
             </tr>
         </table>
-
+        <table>
+            <tr>
+                <td>Swap from :</td>
+                <td width="10"></td>
+                <td>
+                    <input id="chkFromOnchain" name="chkFromSwap" type="radio" checked="checked" class="form-check-input mt-0 me-2" onchange="showRows()" />&nbsp; On Chain BTCPay Wallet
+                </td>
+                <td width="10"></td>
+                <td>
+                    <input id="chkFromLightning" name="chkFromSwap" type="radio" class="form-check-input mt-0 me-2" onchange="showRows()" />&nbsp; Lightning BTCPay Wallet
+                </td>
+            </tr>
+            <tr id="rowSwapToOnchain" style="display:none">
+                <td>Swap to :</td>
+                <td width="10"></td>
+                @if (walletConfig.OnChainAvailable)
+                {
+                    <td>
+                        <input id="chkToOnchainInternal" name="chkToSwapOnChain" value="" type="radio" checked="checked" class="form-check-input mt-0 me-2" />&nbsp; On Chain BTCPay Wallet
+                    </td>
+                    <td width="10"></td>
+                }
+                <td>
+                    @Html.RadioButton("chkToSwapOnChain", "external", !walletConfig.OnChainAvailable, new { @class = "form-check-input mt-0 me-2", id = "chkToOnchainExternal" })
+                    &nbsp; External On Chain Wallet :
+                    <input id="txtToOnchainExternal" type="text" class="form-control form-control-sm" placeholder="Paste an external btc address" />
+                </td>
+            </tr>
+            <tr id="rowSwapToLightning">
+                <td>Swap to :</td>
+                <td width="10"></td>
+                @if (walletConfig.OffChainAvailable)
+                {
+                    <td>
+                        <input id="chkLightningInternal" name="chkToSwapLightning" value="" type="radio" checked="checked" class="form-check-input mt-0 me-2" />&nbsp; Lightning BTCPay Wallet
+                    </td>
+                    <td width="10"></td>
+                }
+                <td>
+                    @Html.RadioButton("chkToSwapLightning", "external", !walletConfig.OffChainAvailable, new { @class = "form-check-input mt-0 me-2", id = "chkLightningExternal" })
+                    &nbsp; External Lightning Wallet :
+                    <input id="txtLightningExternal" type="text" class="form-control form-control-sm" placeholder="Paste a Lightning invoice, offer or LNURL" onchange="setSwapValues()" />
+                </td>
+            </tr>
+        </table>
         <table>
             <tr>
                 <td>
-                    Percent to sale/swap:&nbsp;
-                    <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setLnOnchainSwapsValues()" />
+                    Percent to swap:&nbsp;
+                    <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setSwapValues()" />
                     <br />
                 </td>
-                <td width="25" />
+                <td width="25"></td>
                 <td>
                     <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
                     <label id="lblToSendFiat">@((int)(walletConfig.OnChainFiatBalance * (decimal)0.95))</label>&nbsp; @walletConfig.FiatCurrency
                 </td>
-                <td width="25" />
-                <td><button id="btSend" class="btn btn-primary" onclick="onLnOnchainSwapsAsk()">Ask to Mt Pelerin</button></td>
+                <td width="25"></td>
+                <td><button id="btSend" class="btn btn-primary" onclick="onSwap()">Do Swap</button></td>
             </tr>
         </table>
         <br />
-            <i><small>Please check that there is no previous pending payout in BTCPay before placing another order.<br />
-                For a sell, Mt Pelerin requires a minimum amount for a transaction, equivalent to 50 CHF (1 CHF for a swap).
+            <i><small>Please check that there is no previous pending payout in BTCPay before placing a swap.<br />
             </small></i>
         <br />
 
@@ -105,12 +142,12 @@
             <br />
             <div>
                 <strong>Success!</strong> Your payout has been created.<br />
-                If you have set an automatic payout processor, the payment will be sent automatically to Mt Pelerin.<br/>
+                If you have set an automatic payout processor, the payment will be sent automatically to Boltz.<br/>
                 Otherwise, <a href="/stores/@Model.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.<br />
                 If an issue arises, please contact hello@LnOnchainSwaps.com.
             </div>
         }
-
+   
         <script type="text/javascript">
         const OnChainBalance = @walletConfig.OnChainBalance;
         const OffChainBalance = @walletConfig.OffChainBalance;
@@ -118,14 +155,11 @@
         const lblToSendBTC = document.getElementById('lblToSendBTC');
         const lblToSendFiat = document.getElementById('lblToSendFiat');
         const percentToSend = document.getElementById('percentToSend');
-        const chkOnchain = document.getElementById('chkOnchain');
-        const confirmLnOnchainSwaps = document.getElementById('confirmLnOnchainSwaps');
-        const sendSection = document.getElementById('sendSection');
-        var popupLnOnchainSwaps;
+        const chkOnchain = document.getElementById('chkFromOnchain');
 
-        function setLnOnchainSwapsValues() {
+        function setSwapValues() {
             const percent = parseFloat(percentToSend.value) || 0;
-            const isOnChain = document.getElementById('chkOnchain').checked;
+            const isOnChain = chkOnchain.checked;
             const fiatBalance = isOnChain ? @walletConfig.OnChainFiatBalance : @walletConfig.OffChainFiatBalance;
             const btcBalance = isOnChain ? OnChainBalance : OffChainBalance;
 
@@ -133,35 +167,42 @@
             lblToSendFiat.textContent = Math.round((percent * fiatBalance) / 100);
         }
 
-        function onLnOnchainSwapsAsk() {
+        function showRows() {
+            const selected = document.querySelector('input[name="chkFromSwap"]:checked').id;
+
+            if (selected === "chkFromOnchain") {
+                document.getElementById('rowSwapToOnchain').style.display = 'none';
+                document.getElementById('rowSwapToLightning').style.display = 'table-row';
+            } else {
+                document.getElementById('rowSwapToOnchain').style.display = 'table-row';
+                document.getElementById('rowSwapToLightning').style.display = 'none';
+            }
+        }
+
+        function onSwap() {
             const percent = parseFloat(percentToSend.value) || 0;
             if (percent == 100) {
                 alert('You must keep some sats for the transaction fees... Please reduce the amount');
                 return;
             }
-            const isOnChain = chkOnchain.checked;
-            const balance = isOnChain ? OnChainBalance : OffChainBalance;
-            const amountToSend = (percent * balance) / 100;
+            $('#btSend').hide();
 
-            if (amountToSend <= 0) return;
+            $('#SwapType').val() = chkOnchain.checked ? '@BoltzSwap.SwapTypeOnChainToLn' : '@BoltzSwap.SwapTypeLnToOnChain';
+            $('#BtcAmount').val() = lblToSendBTC.textContent;
+            $('#IsInternal').val() = chkOnchain.checked ? $('chkToOnchainExternal').is(':checked') : $('chkLightningExternal').is(':checked');
+            $('#ExternalAddressOrInvoice').val() = chkOnchain.checked ? $('#txtToOnchainExternal').val() : $('#txtLightningExternal').val();
+            $('#frmSwap')[0].submit();
 
-            const sNet = isOnChain ? 'bitcoin' : 'lightning';
+
         }
-
-        function handleLnOnchainSwapsMessage(event) {
-            if (event.origin !== 'https://widget.LnOnchainSwaps.com') return;
-            if (event.data.type === 'orderCreated') {
-                sendToLnOnchainSwaps(event.data.data);
-                window.removeEventListener('message', handleLnOnchainSwapsMessage);
-            }
-        }
-
-        function onConfirmChange() {
-            sendSection.style.display = confirmLnOnchainSwaps.checked ? 'block' : 'none';
-        }
-
-        function sendToLnOnchainSwaps(createdOrderData) {
-        }
-        </script>
-    }
+    </script>
+        <form method="post" autocomplete="off" action="CreateSwap" id="frmSwap">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="SwapType" id="SwapType" />
+            <input type="hidden" name="BtcAmount" id="BtcAmount" />
+            <input type="hidden" name="IsInternal" id="IsInternal" />
+            <input type="hidden" name="IsInternal" id="IsInternal" />
+    </form>
 </div>
+
+

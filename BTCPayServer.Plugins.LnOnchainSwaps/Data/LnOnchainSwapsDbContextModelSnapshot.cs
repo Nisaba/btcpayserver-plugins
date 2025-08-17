@@ -24,6 +24,9 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Data
                 b.Property<string>("SwapId")
                     .HasColumnType("text");
 
+                b.Property<string>("StoreId")
+                    .HasColumnType("text");
+
                 b.Property<string>("Type")
                     .HasColumnType("text");
 
@@ -43,6 +46,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Data
                     .HasColumnType("text");
 
                 b.HasKey("SwapId");
+                b.HasIndex("StoreId");
 
                 b.ToTable("BoltzSwaps", "BTCPayServer.Plugins.LnOnchainSwaps");
             });

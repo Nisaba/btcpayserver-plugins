@@ -13,6 +13,16 @@
 
         public decimal Rate { get; set; }
 
+        public bool OnChainAvailable
+        {
+            get { return OnChainEnabled && OnChainBalance > 0; }
+        }
+
+        public bool OffChainAvailable
+        {
+            get { return OffChainEnabled && OffChainBalance > 0; }
+        }
+
 
     }
 }

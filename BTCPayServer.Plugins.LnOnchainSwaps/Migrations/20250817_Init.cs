@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
 {
     [DbContext(typeof(LnOnchainSwapsDbContext))]
-    [Migration("20250815_Init")]
+    [Migration("20250817_Init")]
     public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,6 +21,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
                 columns: table => new
                 {
                     SwapId = table.Column<string>(nullable: false),
+                    StoreId = table.Column<string>(nullable: false),
                     Type = table.Column<string>(nullable: false),
                     PreImageHash = table.Column<string>(nullable: false),
                     Destination = table.Column<string>(nullable: false),
@@ -32,6 +33,13 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
                 {
                     table.PrimaryKey("PK_BoltzSwaps", x => x.SwapId);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BoltzSwaps_StoreId",
+                schema: "BTCPayServer.Plugins.LnOnchainSwaps",
+                table: "BoltzSwaps",
+                column: "StoreId"
+            );
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

@@ -1,8 +1,11 @@
-﻿namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
+﻿using System.Collections.Generic;
+
+namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
 {
     public class LnOnchainSwapsViewModel
     {
-        public string StoreId { get; set; }
+        public string StoreId;
+        public List<BoltzSwap> Swaps { get; set; }
         public bool IsPayoutCreated { get; set; }
     }
 }

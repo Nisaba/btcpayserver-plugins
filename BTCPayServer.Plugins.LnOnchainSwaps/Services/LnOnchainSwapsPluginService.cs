@@ -18,6 +18,7 @@ using BTCPayServer.Services.Invoices;
 using BTCPayServer.Services.Stores;
 using BTCPayServer.Services.Wallets;
 using MailKit.Search;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
@@ -70,6 +71,21 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         private readonly InvoiceRepository _invoiceRepository = invoiceRepository;
         private readonly UIInvoiceController _invoiceController = invoiceController;
         private readonly LnOnchainSwapsDbContext _context = context;
+
+
+        public async Task<List<BoltzSwap>> GetStoreSwaps(string storeId)
+        {
+            try
+            {
+                var txs = await _context.BoltzSwaps.Where(a => a.StoreId == storeId).ToListAsync();
+                return txs.Reverse<BoltzSwap>().ToList();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "LnOnchainSwapsPlugin:GetStoreSwaps()");
+                throw;
+            }
+        }
 
         private async Task<string> CreateInvoice(StoreData store, string rootUrl, decimal amount, string network)
         {
