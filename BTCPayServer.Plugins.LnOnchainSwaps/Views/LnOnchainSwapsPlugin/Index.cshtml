@@ -209,7 +209,7 @@
                 $('#SwapType').val(isOnChain ? '@BoltzSwap.SwapTypeOnChainToLn' : '@BoltzSwap.SwapTypeLnToOnChain');
                 $('#BtcAmount').val(lblToSendBTC.textContent);
                 $('#IsInternal').val(isOnChain ? $('#chkToLightningInternal').is(':checked') : $('#chkToOnchainInternal').is(':checked'));
-                $('#ExternalAddressOrInvoice').val(isOnChain ? $('#txtToOnchainExternal').val() : $('#txtLightningExternal').val());
+                $('#ExternalAddressOrInvoice').val(isOnChain ? $('#txtLightningExternal').val() : $('#txtToOnchainExternal').val());
                 $('#frmSwap')[0].submit();
             }
         </script>
