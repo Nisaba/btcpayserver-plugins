@@ -92,53 +92,45 @@
                         <input value="FromLightning" name="chkFromSwap" type="radio" checked="@(!walletConfig.OnChainAvailable)" class="form-check-input mt-0 me-2" onchange="showRows()" />&nbsp; Lightning BTCPay Wallet
                 </td>
             }
-        </tr></table>
-
-        <table class="table table-sm mt-0 mx-0">
-            @if(walletConfig.OffChainAvailable)
-            {
-                <tr id="rowSwapToOnchain" style="display:@(walletConfig.OnChainAvailable ? "none" : "block")">
-                    <td><b>Swap to :</b></td>
-                    <td width="10"></td>
-                    @if (walletConfig.OnChainAvailable)
-                    {
-                        <td>
-                            <input id="chkToOnchainInternal" name="chkToSwapOnChain" value="" type="radio" checked="checked" class="form-check-input mt-0 me-2" />&nbsp; On Chain BTCPay Wallet
-                        </td>
-                        <td width="10"></td>
-                    }
+        </tr>
+        @if(walletConfig.OffChainAvailable)
+        {
+            <tr id="rowSwapToOnchain" style="display:@(walletConfig.OnChainAvailable ? "none" : "block")">
+                <td><b>Swap to :</b></td>
+                <td width="10"></td>
+                @if (walletConfig.OnChainAvailable)
+                {
                     <td>
-                        @Html.RadioButton("chkToSwapOnChain", "external", !walletConfig.OnChainAvailable, new { @class = "form-check-input mt-0 me-2", id = "chkToOnchainExternal" })
+                        <input id="chkToOnchainInternal" name="chkToSwapOnChain" value="" type="radio" checked="checked" class="form-check-input mt-0 me-2" />&nbsp; On Chain BTCPay Wallet
                     </td>
                     <td width="10"></td>
+                }
+                <td>
+                    @Html.RadioButton("chkToSwapOnChain", "external", !walletConfig.OnChainAvailable, new { @class = "form-check-input mt-0 me-2", id = "chkToOnchainExternal" })
+                    &nbsp;External On Chain Wallet :&nbsp;
+                    <input id="txtToOnchainExternal" type="text" class="form-control form-control-sm" placeholder="Paste an external btc address" />
+                </td>
+            </tr>
+        }
+        @if (walletConfig.OnChainAvailable)
+        {
+            <tr id="rowSwapToLightning">
+                <td><b>Swap to :</b></td>
+                <td width="10"></td>
+                @if (walletConfig.OffChainAvailable)
+                {
                     <td>
-                        External On Chain Wallet :
-                        <input id="txtToOnchainExternal" type="text" class="form-control form-control-sm" placeholder="Paste an external btc address" />
-                    </td>
-                </tr>
-            }
-            @if (walletConfig.OnChainAvailable)
-            {
-                <tr id="rowSwapToLightning">
-                    <td><b>Swap to :</b></td>
-                    <td width="10"></td>
-                    @if (walletConfig.OffChainAvailable)
-                    {
-                        <td>
-                            <input id="chkToLightningInternal" name="chkToSwapLightning" value="" type="radio" checked="checked" class="form-check-input mt-0 me-2" />&nbsp; Lightning BTCPay Wallet
-                        </td>
-                        <td width="10"></td>
-                    }
-                    <td>
-                        @Html.RadioButton("chkToSwapLightning", "external", !walletConfig.OffChainAvailable, new { @class = "form-check-input mt-0 me-2", id = "chkLightningExternal" })
+                        <input id="chkToLightningInternal" name="chkToSwapLightning" value="" type="radio" checked="checked" class="form-check-input mt-0 me-2" />&nbsp; Lightning BTCPay Wallet
                     </td>
                     <td width="10"></td>
-                    <td>
-                        External Lightning Wallet :
-                        <input id="txtLightningExternal" type="text" class="form-control form-control-sm" placeholder="Paste a Lightning invoice, offer or LNURL" onchange="setSwapValues()" />
-                    </td>
-                </tr>
-            }
+                }
+                <td>
+                    @Html.RadioButton("chkToSwapLightning", "external", !walletConfig.OffChainAvailable, new { @class = "form-check-input mt-0 me-2", id = "chkLightningExternal" })
+                    &nbsp;External Lightning Wallet : &nbsp;
+                    <input id="txtLightningExternal" type="text" class="form-control form-control-sm" placeholder="Paste a Lightning invoice, offer or LNURL" onchange="setSwapValues()" />
+                </td>
+            </tr>
+        }
         </table>
         <br />
         <table class="table table-sm mt-0 mx-0">
@@ -216,7 +208,7 @@
 
                 $('#SwapType').val(isOnChain ? '@BoltzSwap.SwapTypeOnChainToLn' : '@BoltzSwap.SwapTypeLnToOnChain');
                 $('#BtcAmount').val(lblToSendBTC.textContent);
-                $('#IsInternal').val(isOnChain ? $('chkToOnchainExternal').is(':checked') : $('chkLightningExternal').is(':checked'));
+                $('#IsInternal').val(isOnChain ? $('#chkToLightningInternal').is(':checked') : $('#chkToOnchainInternal').is(':checked'));
                 $('#ExternalAddressOrInvoice').val(isOnChain ? $('#txtToOnchainExternal').val() : $('#txtLightningExternal').val());
                 $('#frmSwap')[0].submit();
             }

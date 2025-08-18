@@ -15,7 +15,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
     public class BoltzService
     {
         private const string BaseUrl = "https://api.boltz.exchange/v2";
-        private const string Referral = "xxx";
+        private const string Referral = "nisaba";
 
         private readonly HttpClient _httpClient;
         private readonly ILogger<BoltzService> _logger;
@@ -43,7 +43,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 };
 
                 var swapJson = JsonConvert.SerializeObject(swapRequest);
-
+                _logger.LogInformation($"LnOnchainSwapsPlugin.CreateOnChainToLnSwap(): {swapJson}");
                 var webRequest = new HttpRequestMessage(HttpMethod.Post, $"swap/submarine")
                 {
                     Content = new StringContent(swapJson, Encoding.UTF8, "application/json"),
@@ -98,6 +98,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 };
 
                 var swapJson = JsonConvert.SerializeObject(swapRequest);
+                _logger.LogInformation($"LnOnchainSwapsPlugin.CreateLnToOnChainSwapAsync(): {swapJson}");
 
                 var webRequest = new HttpRequestMessage(HttpMethod.Post, $"swap/reverse")
                 {
