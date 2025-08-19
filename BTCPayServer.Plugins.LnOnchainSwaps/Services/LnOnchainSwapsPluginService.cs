@@ -127,7 +127,11 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                                 await CreateInvoice(store, RequestGetAbsoluteRoot, swap.BtcAmount, "BTC-LN")
                                 : swap.ExternalLnInvoice;
 
-                var boltz = await _boltzService.CreateOnChainToLnSwapAsync(lnInvoice);
+                var extKey = await GetStoreKey(store);
+                var bolt11 = BOLT11PaymentRequest.Parse(lnInvoice, Network.Main);
+                var paymentHash = bolt11.PaymentHash.ToString();
+
+                var boltz = await _boltzService.CreateOnChainToLnSwapAsync(lnInvoice, extKey.PrivateKey.PubKey.ToHex(), paymentHash);
                 await CreatePayout(store, boltz);
 
                 _context.BoltzSwaps.Add(boltz);
@@ -153,14 +157,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                                 await CreateInvoice(store, RequestGetAbsoluteRoot, swap.BtcAmount, "BTC-CHAIN")
                                 : swap.ExternalOnChainAddress;
 
-                var derivationScheme = store.GetDerivationSchemeSettings(_handlers, "BTC");
-                var btcNetwork = _networkProvider.DefaultNetwork as BTCPayNetwork;
-                var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
-                var masterKeyString = await explorer.GetMetadataAsync<string>(
-                    derivationScheme.AccountDerivation,
-                    WellknownMetadataKeys.MasterHDKey);
-                var extKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
-
+                var extKey = await GetStoreKey(store);
 
                 var boltz = await _boltzService.CreateLnToOnChainSwapAsync(btcAddress, extKey.PrivateKey, swap.BtcAmount);
                 await CreatePayout(store, boltz);
@@ -176,6 +173,17 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 throw;
             }
 
+        }
+
+        private async Task<ExtKey> GetStoreKey(StoreData store)
+        {
+            var derivationScheme = store.GetDerivationSchemeSettings(_handlers, "BTC");
+            var btcNetwork = _networkProvider.DefaultNetwork as BTCPayNetwork;
+            var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
+            var masterKeyString = await explorer.GetMetadataAsync<string>(
+                derivationScheme.AccountDerivation,
+                WellknownMetadataKeys.MasterHDKey);
+            return ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
         }
 
         public async Task CreatePayout(StoreData store, BoltzSwap boltzSwap, CancellationToken cancellationToken = default)

@@ -29,16 +29,16 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             _httpClient.BaseAddress = new Uri(BaseUrl);
         }
 
-        public async Task<BoltzSwap> CreateOnChainToLnSwapAsync(string lnInvoice)
+        public async Task<BoltzSwap> CreateOnChainToLnSwapAsync(string lnInvoice, string pubKey, string preImageHash)
         {
             string sRep = "";
             try
             {
-                GeneratePreimageHash(out var preImage, out var preImageHash);
                 var swapRequest = new Dictionary<string, object>
                 {
                     ["from"] = "BTC",
                     ["to"] = "BTC",
+                    ["refundPublicKey"] = pubKey,
                     ["invoice"] = lnInvoice,
                     ["referralId"] = Referral,
                     ["preimageHash"] = preImageHash
@@ -61,7 +61,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 return new BoltzSwap
                 {
                     Type = BoltzSwap.SwapTypeOnChainToLn,
-                    PreImage = preImage,
+                    PreImage = string.Empty,
                     PreImageHash = preImageHash,
                     SwapId = JsonRep.id,
                     Destination = JsonRep.address,
