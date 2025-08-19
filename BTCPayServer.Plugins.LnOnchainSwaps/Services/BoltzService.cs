@@ -1,5 +1,7 @@
 ﻿using BTCPayServer.Plugins.LnOnchainSwaps.Models;
 using Microsoft.Extensions.Logging;
+using NBitcoin;
+using NBitcoin.Crypto;
 using NBitpayClient;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Ocsp;
@@ -32,7 +34,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             string sRep = "";
             try
             {
-                var preImageHash = GeneratePreimageHash();
+                GeneratePreimageHash(out var preImage, out var preImageHash);
                 var swapRequest = new Dictionary<string, object>
                 {
                     ["from"] = "BTC",
@@ -43,7 +45,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 };
 
                 var swapJson = JsonConvert.SerializeObject(swapRequest);
-                _logger.LogInformation($"LnOnchainSwapsPlugin.CreateOnChainToLnSwap(): {swapJson}");
+                _logger.LogInformation($"LnOnchainSwapsPlugin.CreateOnChainToLnSwap(swapJson): {swapJson}");
                 var webRequest = new HttpRequestMessage(HttpMethod.Post, "swap/submarine")
                 {
                     Content = new StringContent(swapJson, Encoding.UTF8, "application/json"),
@@ -53,11 +55,13 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     sRep = await rep.Content.ReadAsStringAsync();
                     rep.EnsureSuccessStatusCode();
                 }
+                _logger.LogInformation($"LnOnchainSwapsPlugin.CreateOnChainToLnSwap(sRep): {sRep}");
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
 
                 return new BoltzSwap
                 {
                     Type = BoltzSwap.SwapTypeOnChainToLn,
+                    PreImage = preImage,
                     PreImageHash = preImageHash,
                     SwapId = JsonRep.id,
                     Destination = JsonRep.address,
@@ -81,24 +85,26 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
         }
 
-        public async Task<BoltzSwap> CreateLnToOnChainSwapAsync(string btcReceptionAdress, decimal btcAmount)
+        public async Task<BoltzSwap> CreateLnToOnChainSwapAsync(string btcReceptionAdress, Key privateKey, decimal btcAmount)
         {
             string sRep = "";
             try
             {
-                var preImageHash = GeneratePreimageHash();
+                GeneratePreimageHash(out var preImage, out var preImageHash);
                 var swapRequest = new Dictionary<string, object>
                 {
                     ["from"] = "BTC",
                     ["to"] = "BTC",
-                    ["claimAddress"] = btcReceptionAdress,
+                    ["claimPublicKey"] = privateKey.PubKey.ToHex(),
+                    ["address"] = btcReceptionAdress,
+                    ["addressSignature"] = SignMessage(btcReceptionAdress, privateKey),
                     ["onchainAmount"] = btcAmount,
                     ["referralId"] = Referral,
                     ["preimageHash"] = preImageHash
                 };
 
                 var swapJson = JsonConvert.SerializeObject(swapRequest);
-                _logger.LogInformation($"LnOnchainSwapsPlugin.CreateLnToOnChainSwapAsync(): {swapJson}");
+                _logger.LogInformation($"LnOnchainSwapsPlugin.CreateLnToOnChainSwap(swapJson): {swapJson}");
 
                 var webRequest = new HttpRequestMessage(HttpMethod.Post, "swap/reverse")
                 {
@@ -109,11 +115,13 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     sRep = await rep.Content.ReadAsStringAsync();
                     rep.EnsureSuccessStatusCode();
                 }
+                _logger.LogInformation($"LnOnchainSwapsPlugin.CreateLnToOnChainSwap(sRep): {sRep}");
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
 
                 return new BoltzSwap
                 {
                     Type = BoltzSwap.SwapTypeOnChainToLn,
+                    PreImage = preImage,
                     PreImageHash = preImageHash,
                     SwapId = JsonRep.id,
                     Destination = JsonRep.invoice,
@@ -123,7 +131,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"LnOnchainSwapsPlugin.CreateOnChainToLnSwap(): {ex.Message} - {sRep}");
+                _logger.LogError($"LnOnchainSwapsPlugin.CreateLnToOnChainSwap(): {ex.Message} - {sRep}");
                 if (string.IsNullOrEmpty(sRep))
                 {
                     throw;
@@ -142,18 +150,48 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             throw new NotImplementedException();
         }
 
-        private string GeneratePreimageHash()
+        private void GeneratePreimageHash(out string preImage, out string preImageHash)
         {
             byte[] data = new byte[32];
             using (var rng = RandomNumberGenerator.Create())
             {
                 rng.GetBytes(data);
             }
+            preImage = BitConverter.ToString(data).Replace("-", "").ToLower();
             using (var sha256 = SHA256.Create())
             {
                 byte[] hashBytes = sha256.ComputeHash(data);
-                return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+                preImageHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
             }
         }
+        private string SignMessage(string message, Key privKey)
+        {
+            try
+            {
+                using (SHA256 sha256 = SHA256.Create())
+                {
+                    byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
+                    byte[] messageHash = sha256.ComputeHash(messageBytes);
+
+                    uint256 hash = new uint256(messageHash);
+                    ECDSASignature signature = privKey.Sign(hash);
+                    byte[] compactSig = signature.ToCompact();
+
+                    if (compactSig.Length != 64)
+                    {
+                        throw new InvalidOperationException($"Compact signature length is {compactSig.Length}, expected 64.");
+                    }
+                    return BitConverter.ToString(compactSig).Replace("-", "").ToLower();
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "LnOnchainSwapsPlugin:SignMessage()");
+                throw;
+            }
+        }
+
+
+
     }
 }

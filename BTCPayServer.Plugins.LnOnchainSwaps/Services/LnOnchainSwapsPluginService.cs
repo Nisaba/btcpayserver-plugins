@@ -23,6 +23,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
 using NBitpayClient;
+using NBXplorer;
+using NBXplorer.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -151,7 +153,16 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                                 await CreateInvoice(store, RequestGetAbsoluteRoot, swap.BtcAmount, "BTC-CHAIN")
                                 : swap.ExternalOnChainAddress;
 
-                var boltz = await _boltzService.CreateLnToOnChainSwapAsync(btcAddress, swap.BtcAmount);
+                var derivationScheme = store.GetDerivationSchemeSettings(_handlers, "BTC");
+                var btcNetwork = _networkProvider.DefaultNetwork as BTCPayNetwork;
+                var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
+                var masterKeyString = await explorer.GetMetadataAsync<string>(
+                    derivationScheme.AccountDerivation,
+                    WellknownMetadataKeys.MasterHDKey);
+                var extKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
+
+
+                var boltz = await _boltzService.CreateLnToOnChainSwapAsync(btcAddress, extKey.PrivateKey, swap.BtcAmount);
                 await CreatePayout(store, boltz);
 
                 _context.BoltzSwaps.Add(boltz);

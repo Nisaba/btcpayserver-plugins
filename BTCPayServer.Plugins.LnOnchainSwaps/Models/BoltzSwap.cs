@@ -12,6 +12,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
         public string StoreId { get; set; }
 
         public string Type { get; set; } // "onchain_to_ln" or "ln_to_onchain"
+        public string PreImage { get; set; }
         public string PreImageHash { get; set; }
         public string Destination { get; set; } // BtcAddress or LnInvoice
         public decimal ExpectedAmount { get; set; }
