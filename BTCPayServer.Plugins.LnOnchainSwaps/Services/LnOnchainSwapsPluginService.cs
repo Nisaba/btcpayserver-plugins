@@ -102,7 +102,8 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     Checkout = new InvoiceDataBase.CheckoutOptions
                     {
                         DefaultPaymentMethod = network,
-                        PaymentMethods = [network]
+                        PaymentMethods = [network],
+                        Expiration = TimeSpan.FromHours(24),
                     }
                 };
                 var invoice = await _invoiceController.CreateInvoiceCoreRaw(req, store, rootUrl);
