@@ -30,6 +30,9 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Data
                 b.Property<string>("Type")
                     .HasColumnType("text");
 
+                b.Property<string>("PreImage")
+                    .HasColumnType("text");
+
                 b.Property<string>("PreImageHash")
                     .HasColumnType("text");
 

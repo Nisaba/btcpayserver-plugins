@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
 {
     [DbContext(typeof(LnOnchainSwapsDbContext))]
-    [Migration("20250817_Init")]
+    [Migration("20250819_Init")]
     public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -23,6 +23,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
                     SwapId = table.Column<string>(nullable: false),
                     StoreId = table.Column<string>(nullable: false),
                     Type = table.Column<string>(nullable: false),
+                    PreImage = table.Column<string>(nullable: false),
                     PreImageHash = table.Column<string>(nullable: false),
                     Destination = table.Column<string>(nullable: false),
                     ExpectedAmount = table.Column<decimal>(nullable: false),
