@@ -134,6 +134,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
 
                 var boltz = await _boltzService.CreateOnChainToLnSwapAsync(lnInvoice, extKey.PrivateKey.PubKey.ToHex(), paymentHash);
                 await CreatePayout(store, boltz);
+                boltz.StoreId = store.Id;
 
                 _context.BoltzSwaps.Add(boltz);
                 await _context.SaveChangesAsync();
@@ -162,6 +163,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
 
                 var boltz = await _boltzService.CreateLnToOnChainSwapAsync(btcAddress, extKey.PrivateKey, swap.BtcAmount);
                 await CreatePayout(store, boltz);
+                boltz.StoreId = store.Id;
 
                 _context.BoltzSwaps.Add(boltz);
                 await _context.SaveChangesAsync();
