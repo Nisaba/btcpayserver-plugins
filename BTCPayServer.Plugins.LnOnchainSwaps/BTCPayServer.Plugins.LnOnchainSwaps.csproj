@@ -52,6 +52,7 @@
 	
 	<ItemGroup>
 	  <Folder Include="Resources\img\" />
+	  <Folder Include="Resources\css\" />
 	</ItemGroup>
 
 

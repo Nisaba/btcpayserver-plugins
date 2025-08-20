@@ -222,6 +222,74 @@
         </form>
     }
 
+    <br /><br />
+    <h4>Swaps</h4>
+    <br />
+    @if (Model.Swaps.Any())
+    {
+        var page = Context.Request.Query["page"].Count > 0 ? int.Parse(Context.Request.Query["page"]) : 1;
+        var pageSize = 20;
+        var totalItems = Model.Swaps.Count();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+        var pagedTransactions = Model.Swaps
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+        <link rel="stylesheet" type="text/css" href="/Resources/css/pre-style.css">
+
+        <div class="table-responsive">
+            <table class="table table-hover mass-action">
+                <thead mass-action-head>
+                    <tr>
+                        <th>Swap ID</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Original Amount</th>
+                        <th>Swap Amount</th>
+                        <th>Invoice</th>
+                        <th>PullPayment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var swap in Model.Swaps)
+                    {
+                        var detailsId = $"swapDetails_{swap.SwapId}";
+                        <tr class="mass-action-row item">
+                            <td>@swap.SwapId</td>
+                            <td>@swap.DateT</td>
+                            <td><div class="badge badge-expired">@swap.Type</div></td>
+                            <td align="right">@swap.OriginalAmount</td>
+                            <td align="right">@swap.ExpectedAmount</td>
+                            <td class="text-break align-middle invoiceId-col">
+                                <a asp-controller="UIInvoice" asp-action="Invoice" asp-route-invoiceId="@swap.BTCPayInvoiceId" class="text-break">@swap.BTCPayInvoiceId</a>
+                            </td>
+                            <td class="text-break align-middle invoiceId-col">
+                                <a asp-controller="UIPullPayment" asp-action="ViewPullPayment" asp-route-pullPaymentId="@swap.BTCPayPullPaymentId" class="text-break">@swap.BTCPayPullPaymentId</a>
+                            </td>
+                            <td class="align-middle text-end">
+                                <div class="d-inline-flex align-items-center gap-2">
+                                    <button class="accordion-button collapsed only-for-js ms-0 d-inline-block" type="button" data-bs-toggle="collapse" data-bs-target="#@detailsId" aria-expanded="false" aria-controls="@detailsId">
+                                        <vc:icon symbol="caret-down" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr id="@detailsId" class="invoice-details-row collapse">
+                        <td colspan="8" class="border-top-0">
+                            Initial Json:<br/>
+                            <pre>@swap.Json</pre>
+                            <br />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p>No swaps found.</p>
+    }
 </div>
 
 

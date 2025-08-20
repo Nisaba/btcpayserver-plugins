@@ -89,7 +89,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
         }
 
-        private async Task<string> CreateInvoice(StoreData store, string rootUrl, decimal amount, string network)
+        private async Task<Tuple<string, string>> CreateInvoice(StoreData store, string rootUrl, decimal amount, string network)
         {
             try
             {
@@ -109,7 +109,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 var invoice = await _invoiceController.CreateInvoiceCoreRaw(req, store, rootUrl);
                 var invDest = invoice.GetPaymentPrompts()
                     .FirstOrDefault(prompt => prompt.PaymentMethodId == paymentMethodId).Destination;
-                return invDest;
+                return Tuple.Create(invoice.Id, invDest);
             }
             catch (Exception e)
             {
@@ -124,10 +124,18 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             {
                 var store = await _storeRepository.FindStore(storeId);
 
-                var lnInvoice = swap.ToInternalLnWalet ? 
-                                await CreateInvoice(store, RequestGetAbsoluteRoot, swap.BtcAmount, "BTC-LN")
-                                : swap.ExternalLnInvoice;
-
+                string invoiceId = string.Empty;
+                string lnInvoice = string.Empty;
+                if (swap.ToInternalLnWalet)
+                {
+                    var invoiceTuple = await CreateInvoice(store, RequestGetAbsoluteRoot, swap.BtcAmount, "BTC-LN");
+                    invoiceId = invoiceTuple.Item1;
+                    lnInvoice = invoiceTuple.Item2;
+                }
+                else
+                {
+                    lnInvoice = swap.ExternalLnInvoice;
+                }
                 var extKey = await GetStoreKey(store);
                 var bolt11 = BOLT11PaymentRequest.Parse(lnInvoice, Network.Main);
                 var paymentHash = bolt11.PaymentHash.ToString();
@@ -135,6 +143,8 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 var boltz = await _boltzService.CreateOnChainToLnSwapAsync(lnInvoice, extKey.PrivateKey.PubKey.ToHex(), paymentHash);
                 await CreatePayout(store, boltz);
                 boltz.StoreId = store.Id;
+                boltz.BTCPayInvoiceId = invoiceId;
+                boltz.OriginalAmount = swap.BtcAmount;
 
                 _context.BoltzSwaps.Add(boltz);
                 await _context.SaveChangesAsync();
@@ -155,15 +165,26 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             {
                 var store = await _storeRepository.FindStore(storeId);
 
-                var btcAddress = swap.ToInternalOnChainWallet?
-                                await CreateInvoice(store, RequestGetAbsoluteRoot, swap.BtcAmount, "BTC-CHAIN")
-                                : swap.ExternalOnChainAddress;
+                string invoiceId = string.Empty;
+                string btcAddress = string.Empty;
+                if (swap.ToInternalOnChainWallet)
+                {
+                    var invoiceTuple = await CreateInvoice(store, RequestGetAbsoluteRoot, swap.BtcAmount, "BTC-CHAIN");
+                    invoiceId = invoiceTuple.Item1;
+                    btcAddress = invoiceTuple.Item2;
+                }
+                else
+                {
+                    btcAddress = swap.ExternalOnChainAddress;
+                }
 
                 var extKey = await GetStoreKey(store);
 
                 var boltz = await _boltzService.CreateLnToOnChainSwapAsync(btcAddress, extKey.PrivateKey, swap.BtcAmount);
                 await CreatePayout(store, boltz);
                 boltz.StoreId = store.Id;
+                boltz.BTCPayInvoiceId = invoiceId;
+                boltz.OriginalAmount = swap.BtcAmount;
 
                 _context.BoltzSwaps.Add(boltz);
                 await _context.SaveChangesAsync();
@@ -199,7 +220,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 {
                     Name = $"Boltz Swap {boltzSwap.SwapId}",
                     Description = "",
-                    Amount = boltzSwap.ExpectedAmount,
+                    Amount = boltzSwap.ExpectedAmount / 100000000,
                     Currency = "BTC",
                     ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
                     PayoutMethods = new[] { payoutMethodId.ToString() }
@@ -247,6 +268,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                         throw new Exception("Pull payment has not started yet");
                 }
 
+                boltzSwap.BTCPayPullPaymentId = ppId;
                 boltzSwap.BTCPayPayoutId = result.PayoutData.Id;
             }
             catch (Exception e)

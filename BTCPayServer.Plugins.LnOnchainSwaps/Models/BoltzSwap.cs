@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
 {
@@ -11,11 +12,15 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
         public string SwapId { get; set; }
         public string StoreId { get; set; }
 
+        public DateTime DateT {  get; set; }
         public string Type { get; set; } // "onchain_to_ln" or "ln_to_onchain"
         public string PreImage { get; set; }
         public string PreImageHash { get; set; }
         public string Destination { get; set; } // BtcAddress or LnInvoice
+        public decimal OriginalAmount { get; set; }
         public decimal ExpectedAmount { get; set; }
+        public string BTCPayInvoiceId { get; set; }
+        public string BTCPayPullPaymentId { get; set; }
         public string BTCPayPayoutId { get; set; }
         public string Json { get; set; }
     }

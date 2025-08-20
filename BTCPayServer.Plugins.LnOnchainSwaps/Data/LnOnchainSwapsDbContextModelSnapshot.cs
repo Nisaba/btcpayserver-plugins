@@ -27,6 +27,9 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Data
                 b.Property<string>("StoreId")
                     .HasColumnType("text");
 
+                b.Property<DateTime>("DateT")
+                    .HasColumnType("DateTime");
+
                 b.Property<string>("Type")
                     .HasColumnType("text");
 
@@ -39,10 +42,19 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Data
                 b.Property<string>("Destination")
                     .HasColumnType("text");
 
+                b.Property<string>("OriginalAmount")
+                    .HasColumnType("decimal(18,8)");
+
                 b.Property<string>("ExpectedAmount")
                     .HasColumnType("decimal(18,8)");
 
+                b.Property<string>("BTCPayInvoiceId")
+                    .HasColumnType("text");
+
                 b.Property<string>("BTCPayPayoutId")
+                    .HasColumnType("text");
+
+                b.Property<string>("BTCPayPullPaymentId")
                     .HasColumnType("text");
 
                 b.Property<string>("Json")

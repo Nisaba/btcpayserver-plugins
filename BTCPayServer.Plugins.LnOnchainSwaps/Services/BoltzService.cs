@@ -58,6 +58,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 _logger.LogInformation($"LnOnchainSwapsPlugin.CreateOnChainToLnSwap(sRep): {sRep}");
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
 
+                _logger.LogInformation($"Boltzswap created: {JsonRep.id}");
                 return new BoltzSwap
                 {
                     Type = BoltzSwap.SwapTypeOnChainToLn,
@@ -118,8 +119,10 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 _logger.LogInformation($"LnOnchainSwapsPlugin.CreateLnToOnChainSwap(sRep): {sRep}");
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
 
+                _logger.LogInformation($"Boltzswap created: {JsonRep.id}");
                 return new BoltzSwap
                 {
+                    DateT = DateTime.Now,
                     Type = BoltzSwap.SwapTypeOnChainToLn,
                     PreImage = preImage,
                     PreImageHash = preImageHash,
