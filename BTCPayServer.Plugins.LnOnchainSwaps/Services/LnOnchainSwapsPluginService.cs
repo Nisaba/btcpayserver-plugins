@@ -266,6 +266,10 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                         throw new Exception("Claim amount is too low");
                     case ClaimRequest.ClaimResult.NotStarted:
                         throw new Exception("Pull payment has not started yet");
+                    case ClaimRequest.ClaimResult.PaymentMethodNotSupported:
+                        throw new Exception("Payment Method Not Supported");
+                    case ClaimRequest.ClaimResult.Overdraft:
+                        throw new Exception("Pull payment: overdraft");
                 }
 
                 boltzSwap.BTCPayPullPaymentId = ppId;
