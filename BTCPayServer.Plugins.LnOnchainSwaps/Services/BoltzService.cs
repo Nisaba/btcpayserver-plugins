@@ -66,7 +66,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     PreImageHash = preImageHash,
                     SwapId = JsonRep.id,
                     Destination = JsonRep.address,
-                    ExpectedAmount = JsonRep.expectedAmount / 100000000,
+                    ExpectedAmount = JsonRep.expectedAmount,
                     Json = sRep
                 };
             }
