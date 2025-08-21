@@ -214,7 +214,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         {
             try
             {
-                _logger.LogInformation($"CreatePayout() for {boltzSwap.SwapId} - OriginalAmount: {boltzSwap.OriginalAmount} - ExpectedAmount: {boltzSwap.ExpectedAmount}");
+                _logger.LogInformation($"CreatePayout() for {boltzSwap.SwapId} - OriginalAmount: {boltzSwap.OriginalAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)} - ExpectedAmount: {boltzSwap.ExpectedAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
                 var payoutMethodId = boltzSwap.Type == BoltzSwap.SwapTypeOnChainToLn ? PayoutMethodId.Parse("BTC-CHAIN") : PayoutMethodId.Parse("BTC-LN");
 
                 var ppRequest = new CreatePullPaymentRequest
