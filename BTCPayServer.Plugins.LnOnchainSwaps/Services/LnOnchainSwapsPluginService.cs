@@ -220,7 +220,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 {
                     Name = $"Boltz Swap {boltzSwap.SwapId}",
                     Description = "",
-                    Amount = boltzSwap.ExpectedAmount / 100000000,
+                    Amount = boltzSwap.ExpectedAmount,
                     Currency = "BTC",
                     ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
                     PayoutMethods = new[] { payoutMethodId.ToString() }
