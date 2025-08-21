@@ -1,5 +1,9 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
 {
@@ -23,5 +27,49 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
         public string BTCPayPullPaymentId { get; set; }
         public string BTCPayPayoutId { get; set; }
         public string Json { get; set; }
+
+        [NotMapped]
+        public string HighlightJson 
+        {
+            get
+            {
+                var doc = JsonDocument.Parse(Json);
+                string pretty = JsonSerializer.Serialize(doc, new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
+
+                pretty = System.Net.WebUtility.HtmlEncode(pretty);
+
+                pretty = Regex.Replace(pretty,
+                    @"(""(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\\""])*""(\s*:)?|\b(true|false|null)\b|-?\d+(\.\d*)?([eE][+\-]?\d+)?)",
+                    match =>
+                    {
+                        string cls = "number";
+                        string val = match.Value;
+
+                        if (val.StartsWith("\""))
+                        {
+                            if (val.EndsWith(":"))
+                                cls = "key";
+                            else
+                                cls = "string";
+                        }
+                        else if (val == "true" || val == "false")
+                        {
+                            cls = "boolean";
+                        }
+                        else if (val == "null")
+                        {
+                            cls = "null";
+                        }
+
+                        return $"<span class=\"{cls}\">{val}</span>";
+                    });
+                return $"<pre>{pretty}</pre>";
+            }
+        }
+
     }
 }

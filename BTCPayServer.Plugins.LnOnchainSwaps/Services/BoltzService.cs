@@ -61,12 +61,13 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 _logger.LogInformation($"Boltzswap created: {JsonRep.id}");
                 return new BoltzSwap
                 {
+                    DateT = DateTime.Now,
                     Type = BoltzSwap.SwapTypeOnChainToLn,
                     PreImage = string.Empty,
                     PreImageHash = preImageHash,
                     SwapId = JsonRep.id,
                     Destination = JsonRep.address,
-                    ExpectedAmount = JsonRep.expectedAmount,
+                    ExpectedAmount = JsonRep.amount,
                     Json = sRep
                 };
             }
@@ -128,7 +129,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     PreImageHash = preImageHash,
                     SwapId = JsonRep.id,
                     Destination = JsonRep.invoice,
-                    ExpectedAmount = JsonRep.expectedAmount / 100000000,
+                    ExpectedAmount = JsonRep.amount,
                     Json = sRep
                 };
             }
