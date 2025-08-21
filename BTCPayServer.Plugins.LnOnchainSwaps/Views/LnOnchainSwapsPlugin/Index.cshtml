@@ -3,9 +3,11 @@
 @using BTCPayServer.Client
 @using BTCPayServer.Plugins.LnOnchainSwaps.Models
 @using BTCPayServer.Services
+@using BTCPayServer.Abstractions.Services
 
 @inject BTCPayServer.Plugins.LnOnchainSwaps.Services.LnOnchainSwapsPluginService LnOnchainSwapsPluginService
 @inject DisplayFormatter DisplayFormatter
+@inject Safe Safe
 
 @model LnOnchainSwapsViewModel
 @{
@@ -277,7 +279,7 @@
                         <tr id="@detailsId" class="invoice-details-row collapse">
                         <td colspan="8" class="border-top-0">
                             Initial Json:<br/>
-                            <pre>@swap.HighlightJson</pre>
+                            <pre>@Safe.Raw(@swap.HighlightJson)</pre>
                             <br />
                             </td>
                         </tr>

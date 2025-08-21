@@ -61,7 +61,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 _logger.LogInformation($"Boltzswap created: {JsonRep.id}");
                 return new BoltzSwap
                 {
-                    DateT = DateTime.Now,
+                    DateT = DateTime.UtcNow,
                     Type = BoltzSwap.SwapTypeOnChainToLn,
                     PreImage = string.Empty,
                     PreImageHash = preImageHash,
@@ -123,7 +123,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 _logger.LogInformation($"Boltzswap created: {JsonRep.id}");
                 return new BoltzSwap
                 {
-                    DateT = DateTime.Now,
+                    DateT = DateTime.UtcNow,
                     Type = BoltzSwap.SwapTypeOnChainToLn,
                     PreImage = preImage,
                     PreImageHash = preImageHash,
