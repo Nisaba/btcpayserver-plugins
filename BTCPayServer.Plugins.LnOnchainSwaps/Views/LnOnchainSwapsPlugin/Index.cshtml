@@ -294,8 +294,8 @@
         <script>
             function GetSwapStatus(swapId) {
                 $.ajax({
-                    url: '@Url.Action("GetSwapStatus", "LnOnchainSwaps")',
-                    type: 'POST',
+                    url: 'LnOnchainSwaps/GetSwapStatus',
+                    type: 'GET',
                     data: { swapId: swapId },
                     success: function (data) {
                         if (data && data.status) {
