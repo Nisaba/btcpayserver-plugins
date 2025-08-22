@@ -1,11 +1,9 @@
-﻿using AngleSharp.Dom;
-using BTCPayServer.Client.Models;
+﻿using BTCPayServer.Client.Models;
 using BTCPayServer.Configuration;
 using BTCPayServer.Controllers;
 using BTCPayServer.Data;
 using BTCPayServer.HostedServices;
 using BTCPayServer.Lightning;
-using BTCPayServer.Logging;
 using BTCPayServer.Models.StoreViewModels;
 using BTCPayServer.Payments;
 using BTCPayServer.Payments.Bitcoin;
@@ -17,14 +15,12 @@ using BTCPayServer.Services;
 using BTCPayServer.Services.Invoices;
 using BTCPayServer.Services.Stores;
 using BTCPayServer.Services.Wallets;
-using MailKit.Search;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
-using NBitpayClient;
 using NBXplorer;
-using NBXplorer.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -199,6 +195,27 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
 
         }
 
+        public async Task<string> DoGetSwapStatus(string swapId)
+        {
+            try
+            {
+                var status = await _boltzService.GetSwapStatusAsync(swapId);
+
+                var dbSwap = await _context.BoltzSwaps.FirstOrDefaultAsync(s => s.SwapId == swapId);
+                if (dbSwap.Status != status) {
+                    dbSwap.Status = status;
+                    _context.BoltzSwaps.Update(dbSwap);
+                    await _context.SaveChangesAsync();
+                }
+                return status;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "LnOnchainSwapsPlugin:GetSwap()");
+                throw;
+            }
+        }
+
         private async Task<ExtKey> GetStoreKey(StoreData store)
         {
             var derivationScheme = store.GetDerivationSchemeSettings(_handlers, "BTC");
@@ -214,7 +231,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         {
             try
             {
-                _logger.LogInformation($"CreatePayout() for {boltzSwap.SwapId} - OriginalAmount: {boltzSwap.OriginalAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)} - ExpectedAmount: {boltzSwap.ExpectedAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
                 var payoutMethodId = boltzSwap.Type == BoltzSwap.SwapTypeOnChainToLn ? PayoutMethodId.Parse("BTC-CHAIN") : PayoutMethodId.Parse("BTC-LN");
 
                 var ppRequest = new CreatePullPaymentRequest

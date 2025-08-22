@@ -244,6 +244,7 @@
                 <thead mass-action-head>
                     <tr>
                         <th>Swap ID</th>
+                        <th>Status</th>
                         <th>Date</th>
                         <th>Type</th>
                         <th>Original Amount</th>
@@ -257,7 +258,10 @@
                     {
                         var detailsId = $"swapDetails_{swap.SwapId}";
                         <tr class="mass-action-row item">
-                            <td>@swap.SwapId</td>
+                            <td class="text-break align-middle invoiceId-col">
+                                <a href="#" onclick="GetSwapStatus('@swap.SwapId');return false;" class="invoice-details-link">@swap.SwapId</a>
+                            </td>
+                            <td><div class="badge badge-expired" id="status-@swap.SwapId">@swap.Status</div></td>
                             <td>@swap.DateT</td>
                             <td><div class="badge badge-expired">@swap.Type</div></td>
                             <td align="right">@swap.OriginalAmount</td>
@@ -277,7 +281,7 @@
                             </td>
                         </tr>
                         <tr id="@detailsId" class="invoice-details-row collapse">
-                        <td colspan="8" class="border-top-0">
+                        <td colspan="9" class="border-top-0">
                             Initial Json:<br/>
                             <pre>@Safe.Raw(@swap.HighlightJson)</pre>
                             <br />
@@ -287,6 +291,25 @@
                 </tbody>
             </table>
         </div>
+        <script>
+            function GetSwapStatus(swapId) {
+                $.ajax({
+                    url: '@Url.Action("GetSwapStatus", "LnOnchainSwaps")',
+                    type: 'POST',
+                    data: { swapId: swapId },
+                    success: function (data) {
+                        if (data && data.status) {
+                            $('#status-' + swapId).text(data.status);
+                        } else {
+                            console.log('No status returned for swap ID:', swapId);
+                        }
+                    },
+                    error: function (dataError) {
+                        console.log('Error fetching swap status:', dataError);
+                    }
+                });
+            }
+        </script>
     }
     else
     {

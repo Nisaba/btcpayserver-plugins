@@ -68,5 +68,19 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
             return RedirectToAction("Index", routeValues: new { storeId = storeId });
         }
 
+        [HttpGet]
+        [Route("GetSwapStatus")]
+        public async Task<ActionResult> GetSwapStatus(string swapId)
+        {
+            try
+            {
+                var status = await _pluginService.DoGetSwapStatus(swapId);
+                return Ok(status);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

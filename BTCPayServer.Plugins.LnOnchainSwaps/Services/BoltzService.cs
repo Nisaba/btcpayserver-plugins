@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
@@ -45,7 +46,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 };
 
                 var swapJson = JsonConvert.SerializeObject(swapRequest);
-                _logger.LogInformation($"LnOnchainSwapsPlugin.CreateOnChainToLnSwap(swapJson): {swapJson}");
                 var webRequest = new HttpRequestMessage(HttpMethod.Post, "swap/submarine")
                 {
                     Content = new StringContent(swapJson, Encoding.UTF8, "application/json"),
@@ -55,7 +55,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     sRep = await rep.Content.ReadAsStringAsync();
                     rep.EnsureSuccessStatusCode();
                 }
-                _logger.LogInformation($"LnOnchainSwapsPlugin.CreateOnChainToLnSwap(sRep): {sRep}");
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
 
                 _logger.LogInformation($"Boltzswap created: {JsonRep.id}");
@@ -63,6 +62,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 {
                     DateT = DateTime.UtcNow,
                     Type = BoltzSwap.SwapTypeOnChainToLn,
+                    Status = string.Empty,
                     PreImage = string.Empty,
                     PreImageHash = preImageHash,
                     SwapId = JsonRep.id,
@@ -106,7 +106,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 };
 
                 var swapJson = JsonConvert.SerializeObject(swapRequest);
-                _logger.LogInformation($"LnOnchainSwapsPlugin.CreateLnToOnChainSwap(swapJson): {swapJson}");
 
                 var webRequest = new HttpRequestMessage(HttpMethod.Post, "swap/reverse")
                 {
@@ -117,7 +116,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     sRep = await rep.Content.ReadAsStringAsync();
                     rep.EnsureSuccessStatusCode();
                 }
-                _logger.LogInformation($"LnOnchainSwapsPlugin.CreateLnToOnChainSwap(sRep): {sRep}");
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
 
                 _logger.LogInformation($"Boltzswap created: {JsonRep.id}");
@@ -125,6 +123,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 {
                     DateT = DateTime.UtcNow,
                     Type = BoltzSwap.SwapTypeOnChainToLn,
+                    Status = string.Empty,
                     PreImage = preImage,
                     PreImageHash = preImageHash,
                     SwapId = JsonRep.id,
@@ -148,10 +147,33 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 }
             }
         }
-        public async Task<LnOnchainSwapsOperation> GetSwapStatusAsync(string swapId)
+        public async Task<string> GetSwapStatusAsync(string swapId)
         {
-            // Implement the logic to get the status of a swap using Boltz API
-            throw new NotImplementedException();
+            string sRep = "";
+            try
+            {
+                using (var rep = await _httpClient.GetAsync($"swap/{swapId}"))
+                {
+                    sRep = await rep.Content.ReadAsStringAsync();
+                    rep.EnsureSuccessStatusCode();
+                }
+                dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
+                return JsonRep.status;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"LnOnchainSwapsPlugin.GetSwapStatus(): {ex.Message} - {sRep}");
+                if (string.IsNullOrEmpty(sRep))
+                {
+                    throw;
+                }
+                else
+                {
+                    dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
+                    string sMsg = JsonRep.error;
+                    throw new Exception(sMsg);
+                }
+            }
         }
 
         private void GeneratePreimageHash(out string preImage, out string preImageHash)

@@ -24,6 +24,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
                     StoreId = table.Column<string>(nullable: false),
                     DateT = table.Column<DateTime>(nullable: false),
                     Type = table.Column<string>(nullable: false),
+                    Status = table.Column<string>(nullable: false),
                     PreImage = table.Column<string>(nullable: false),
                     PreImageHash = table.Column<string>(nullable: false),
                     Destination = table.Column<string>(nullable: false),
