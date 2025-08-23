@@ -182,7 +182,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             string sRep = "";
             try
             {
-                using (var rep = await _httpClient.GetAsync($"swap/{swapId}/refund"))
+                using (var rep = await _httpClient.GetAsync($"swap/submarine/{swapId}/refund"))
                 {
                     sRep = await rep.Content.ReadAsStringAsync();
                     rep.EnsureSuccessStatusCode();

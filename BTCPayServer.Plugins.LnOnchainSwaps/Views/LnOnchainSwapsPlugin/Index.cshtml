@@ -282,24 +282,22 @@
                         </tr>
                         <tr id="@detailsId" class="invoice-details-row collapse">
                         <td colspan="9" class="border-top-0">
-                            Initial Json:<br/>
+                            <b>Initial Json:</b><br />
                             <pre>@Safe.Raw(@swap.HighlightJson)</pre>
                             <br />
+                             <p>Refund Signature:</p>
                             @if (string.IsNullOrEmpty(swap.RefundSignature))
                             {
-                                    <button id="btRefund-@swap.SwapId" class="btn btn-primary" onclick="GetRefundSignature('@swap.SwapId')">
+                                    <button id="btRefund-@swap.SwapId" class="btn btn-secondary" onclick="GetRefundSignature('@swap.SwapId')">
                                     Get Refund signature
                                 </button>
-                                <div id="refund-@swap.SwapId" style="display:none">
-                                    <p>Refund Signature:</p>
-                                    <pre id="pre-@swap.SwapId"/>
-                                </div>
+                                <br />
+                                <pre id="pre-@swap.SwapId" style="display:none"/>
                             }
                             else
                             {
-                                <p>Refund Signature:</p>
                                 <pre>swap.RefundSignature</pre>
-                            }}
+                            }
                             </td>
                         </tr>
                     }
@@ -332,7 +330,7 @@
                     data: { swapId: swapId },
                     success: function (data) {
                         if (data) {
-                            $('refund-' + swapId).show();
+                            $('pre-' + swapId).show();
                             $('#pre-' + swapId).text(data);
                             $('#btRefund-' + swapId).hide();
                         } else {
