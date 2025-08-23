@@ -107,11 +107,11 @@
                     </td>
                     <td width="10"></td>
                 }
-                <td>
+               <!-- <td>
                     @Html.RadioButton("chkToSwapOnChain", "external", !walletConfig.OnChainAvailable, new { @class = "form-check-input mt-0 me-2", id = "chkToOnchainExternal" })
                     &nbsp;External On Chain Wallet :&nbsp;
                     <input id="txtToOnchainExternal" type="text" class="form-control form-control-sm" placeholder="Paste an external btc address" />
-                </td>
+                     </td>-->
             </tr>
         }
         @if (walletConfig.OnChainAvailable)
@@ -285,6 +285,21 @@
                             Initial Json:<br/>
                             <pre>@Safe.Raw(@swap.HighlightJson)</pre>
                             <br />
+                            @if (string.IsNullOrEmpty(swap.RefundSignature))
+                            {
+                                    <button id="btRefund-@swap.SwapId" class="btn btn-primary" onclick="GetRefundSignature('@swap.SwapId')">
+                                    Get Refund signature
+                                </button>
+                                <div id="refund-@swap.SwapId" style="display:none">
+                                    <p>Refund Signature:</p>
+                                    <pre id="pre-@swap.SwapId"/>
+                                </div>
+                            }
+                            else
+                            {
+                                <p>Refund Signature:</p>
+                                <pre>swap.RefundSignature</pre>
+                            }}
                             </td>
                         </tr>
                     }
@@ -298,14 +313,34 @@
                     type: 'GET',
                     data: { swapId: swapId },
                     success: function (data) {
-                        if (data && data.status) {
-                            $('#status-' + swapId).text(data.status);
+                        if (data) {
+                            $('#status-' + swapId).text(data);
                         } else {
                             console.log('No status returned for swap ID:', swapId);
                         }
                     },
                     error: function (dataError) {
                         console.log('Error fetching swap status:', dataError);
+                    }
+                });
+            }
+
+            function GetRefundSignature(swapId) {
+                $.ajax({
+                    url: 'LnOnchainSwaps/GetRefundSignature',
+                    type: 'GET',
+                    data: { swapId: swapId },
+                    success: function (data) {
+                        if (data) {
+                            $('refund-' + swapId).show();
+                            $('#pre-' + swapId).text(data);
+                            $('#btRefund-' + swapId).hide();
+                        } else {
+                            console.log('No refund signature returned for swap ID:', swapId);
+                        }
+                    },
+                    error: function (dataError) {
+                        console.log('Error fetching refund signature:', dataError);
                     }
                 });
             }

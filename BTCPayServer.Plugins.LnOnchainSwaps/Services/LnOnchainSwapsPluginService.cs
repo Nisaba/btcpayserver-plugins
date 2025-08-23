@@ -202,7 +202,8 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 var status = await _boltzService.GetSwapStatusAsync(swapId);
 
                 var dbSwap = await _context.BoltzSwaps.FirstOrDefaultAsync(s => s.SwapId == swapId);
-                if (dbSwap.Status != status) {
+                if (dbSwap.Status != status)
+                {
                     dbSwap.Status = status;
                     _context.BoltzSwaps.Update(dbSwap);
                     await _context.SaveChangesAsync();
@@ -211,7 +212,29 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "LnOnchainSwapsPlugin:GetSwap()");
+                _logger.LogError(e, "LnOnchainSwapsPlugin:DoGetSwapStatus()");
+                throw;
+            }
+        }
+
+        public async Task<string> DoGetRefundSignature(string swapId)
+        {
+            try
+            {
+                var sign = await _boltzService.GetSubmarineRefundSignatureAsync(swapId);
+
+                var dbSwap = await _context.BoltzSwaps.FirstOrDefaultAsync(s => s.SwapId == swapId);
+                if (dbSwap.RefundSignature != sign)
+                {
+                    dbSwap.RefundSignature = sign;
+                    _context.BoltzSwaps.Update(dbSwap);
+                    await _context.SaveChangesAsync();
+                }
+                return sign;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "LnOnchainSwapsPlugin:DoGetSwapRefundSignature()");
                 throw;
             }
         }

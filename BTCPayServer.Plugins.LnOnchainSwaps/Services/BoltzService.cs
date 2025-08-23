@@ -147,6 +147,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 }
             }
         }
+
         public async Task<string> GetSwapStatusAsync(string swapId)
         {
             string sRep = "";
@@ -176,6 +177,36 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
         }
 
+        public async Task<string> GetSubmarineRefundSignatureAsync(string swapId)
+        {
+            string sRep = "";
+            try
+            {
+                using (var rep = await _httpClient.GetAsync($"swap/{swapId}/refund"))
+                {
+                    sRep = await rep.Content.ReadAsStringAsync();
+                    rep.EnsureSuccessStatusCode();
+                }
+                dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
+                return JsonRep.signature;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"LnOnchainSwapsPlugin.GetSubmarineRefundInfos(): {ex.Message}");
+                if (string.IsNullOrEmpty(sRep))
+                {
+                    throw;
+                }
+                else
+                {
+                    dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
+                    string sMsg = JsonRep.error;
+                    throw new Exception(sMsg);
+                }
+                throw;
+            }
+        }
+
         private void GeneratePreimageHash(out string preImage, out string preImageHash)
         {
             byte[] data = new byte[32];
@@ -190,6 +221,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 preImageHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
             }
         }
+
         private string SignMessage(string message, Key privKey)
         {
             try
@@ -216,8 +248,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 throw;
             }
         }
-
-
 
     }
 }

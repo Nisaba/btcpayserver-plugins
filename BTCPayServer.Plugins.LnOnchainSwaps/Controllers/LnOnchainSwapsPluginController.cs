@@ -82,5 +82,20 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet]
+        [Route("GetRefundSignature")]
+        public async Task<ActionResult> GetRefundSignature(string swapId)
+        {
+            try
+            {
+                var sign = await _pluginService.DoGetRefundSignature(swapId);
+                return Ok(sign);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

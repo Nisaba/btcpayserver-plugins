@@ -33,7 +33,8 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
                     BTCPayInvoiceId = table.Column<string>(nullable: false),
                     BTCPayPullPaymentId = table.Column<string>(nullable: false),
                     BTCPayPayoutId = table.Column<string>(nullable: false),
-                    Json = table.Column<string>(nullable: false)
+                    Json = table.Column<string>(nullable: false),
+                    RefundSignature = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {

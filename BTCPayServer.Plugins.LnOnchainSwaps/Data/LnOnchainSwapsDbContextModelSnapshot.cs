@@ -63,6 +63,9 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Data
                 b.Property<string>("Json")
                     .HasColumnType("text");
 
+                b.Property<string>("RefundSignature")
+                    .HasColumnType("text");
+
                 b.HasKey("SwapId");
                 b.HasIndex("StoreId");
 
