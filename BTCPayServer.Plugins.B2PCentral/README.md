@@ -40,6 +40,9 @@ What's new in v 1.2.5 :
 What's new in v 1.2.6 :
 - Small fixes
 
+What's new in v 1.3.1 :
+- Add Mostro as Lightning provider
+
 
 
 

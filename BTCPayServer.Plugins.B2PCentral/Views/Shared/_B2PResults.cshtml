@@ -69,12 +69,30 @@
                                 <div class="badge badge-expired">
                                     @pay
                                 </div>
-                                switch (item.NumProvider) {
+                            }
+                            @{
+                                switch (item.NumProvider)
+                                {
                                     case BTCPayServer.Plugins.B2PCentral.Models.ProvidersEnum.Peach:
-                                        <br/><br/><p><i>Peach offers must be consulted in your Peach mobile application...</i></p>
+                                        <br />
+
+                                        <br />
+
+                                        <p><i>Peach offers must be consulted in your Peach mobile application...</i></p>
                                         break;
                                     case BTCPayServer.Plugins.B2PCentral.Models.ProvidersEnum.RoboSats:
-                                        <br/><br /><p><i>To view this offer, you must use an Onion browser (TOR Browser or Brave in TOR mode) and have a RoboSats robot already created....</i></p>
+                                        <br />
+
+                                        <br />
+
+                                        <p><i>To view this offer, you must use an Onion browser (TOR Browser or Brave in TOR mode) and have a RoboSats robot already created...</i></p>
+                                        break;
+                                    case BTCPayServer.Plugins.B2PCentral.Models.ProvidersEnum.Mostro:
+                                        <br />
+
+                                        <br />
+
+                                        <p><i>To view this offer, you must use a Mostro Client. Please refer to <a href="https://mostro.network/docs-english/" target="_blank">Mostro documentation</a> for more information...</i></p>
                                         break;
 
                                 }

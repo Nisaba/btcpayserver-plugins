@@ -39,5 +39,8 @@ namespace BTCPayServer.Plugins.B2PCentral.Models
 
         [Description("reserved")]
         Reserved3 = 10,
+
+        [Description("Mostro")]
+        Mostro = 11,
     }
 }

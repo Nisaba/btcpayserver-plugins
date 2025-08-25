@@ -77,13 +77,6 @@ public class B2PPluginController : Controller
                 Providers = req.Providers
             };
             model.Offers = await _PluginService.GetOffersListAsync(ofrReq, req.ApiKey);
-            var vRate = (float)req.Rate;
-            foreach (var ofr in model.Offers.Where(a => a.NumProvider == ProvidersEnum.LNp2pBot))
-            {
-                ofr.Price = vRate * (1 + (ofr.Price / 100));
-            }
-            //model.Offers.Where(a => a.NumProvider == ProvidersEnum.LNp2pBot).ToList().ForEach(ofr => ofr.p = 35);
-
         }
         catch (Exception ex)
         {

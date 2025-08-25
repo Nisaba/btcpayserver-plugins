@@ -294,6 +294,11 @@
                             RoboSats &nbsp;
                             <input id="chkRbs" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.RoboSats)" />
                         </td>
+                        <td width="15" />
+                        <td>
+                            Mostro &nbsp;
+                            <input id="chkMst" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.Mostro)" />
+                        </td>
                     </tr>
                 </table>
                 <br />
@@ -324,6 +329,7 @@
                         var tbl = [];
                         if (document.querySelector('#chkLNp2p').checked) tbl.push(@((short)ProvidersEnum.LNp2pBot));
                         if (document.querySelector('#chkRbs').checked) tbl.push(@((short)ProvidersEnum.RoboSats));
+                        if (document.querySelector('#chkMst').checked) tbl.push(@((short)ProvidersEnum.Mostro));
                         if (tbl.length == 0) return;
                         
                         const data = {
