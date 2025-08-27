@@ -27,7 +27,8 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
             var model = new ExolixModel
             {
                 Settings = await _pluginService.GetStoreSettings(storeId),
-                Transactions = await _pluginService.GetStoreTransactions(storeId)
+                Transactions = await _pluginService.GetStoreTransactions(storeId),
+                MerchantTransactions = await _pluginService.GetStoreMerchantTransactions(storeId)
             };
             return View(model);
         }
@@ -78,16 +79,27 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                     FromAmount = req.BtcAmount,
                     ToCrypto = sToCrypto,
                     ToNetwork = sToNetwork,
-                    ToAmount = 0,
+                    ToAmount = req.ToAmount,
                     ToAddress = req.ToAddress,
                 };
                 rep = await _exolixService.CreateSwapAsync(exolixSwapReq);
 //              rep = new SwapCreationResponse { SwapId = "test-swap-id", FromAmount = req.BtcAmount, StatusMessage = "Swap created successfully" };
-/*#if DEBUG
+#if DEBUG
                 rep.FromAddress = "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
-#endif*/
+#endif
 
-                await _pluginService.CreatePayout(storeId, rep.SwapId, rep.FromAddress, (decimal)req.BtcAmount);
+                var sPPId = await _pluginService.CreatePayout(storeId, rep.SwapId, rep.FromAddress, (decimal)rep.FromAmount);
+
+                await _pluginService.AddStoreMerchantTransaction(new ExolixMerchantTx
+                {
+                    StoreId = storeId,
+                    AltcoinTo = req.ToCrypto,
+                    DateT = DateTime.UtcNow,
+                    BTCAmount = rep.FromAmount,
+                    AltAmount = req.ToAmount,
+                    TxID = rep.SwapId,
+                    BTCPayPullPaymentId = sPPId,
+                });
 
                 TempData[WellKnownTempData.SuccessMessage] = "Exolix Swap successfully created: " + rep.SwapId;
                 TempData["SwapId"] = rep.SwapId;

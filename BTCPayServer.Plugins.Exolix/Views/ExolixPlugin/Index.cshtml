@@ -143,14 +143,19 @@
                     <table>
                         <tr>
                             <td>
-                                Percent to swap:&nbsp;
-                                <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setExolixValues()" />
+                                <input value="ToSend" name="rdFromTo" type="radio" checked="checked" class="form-check-input mt-0 me-2" onchange="setSwapCurrency()" />&nbsp; To Send
+                                <br/>
+                                <input value="ToReceive" name="rdFromTo" type="radio" class="form-check-input mt-0 me-2" onchange="setSwapCurrency()" />&nbsp; To Receive
+                            </td>
+                            <td width="25" />
+                            <td>
+                                Amount:&nbsp;
+                                <input id="swapAmount" type="number" min="0" value="@(walletConfig.OnChainBalance * (decimal)0.95)" step="0.0001" />
                                 <br />
                             </td>
                             <td width="15" />
                             <td>
-                                <label id="lblToSendBTC">@(walletConfig.OnChainBalance * (decimal)0.95)</label>&nbsp; BTC - &nbsp;
-                                <label id="lblToSendFiat">@((int)(walletConfig.OnChainFiatBalance * (decimal)0.95))</label>&nbsp; @walletConfig.FiatCurrency
+                                <label id="lblCurrency">BTC</label>
                             </td>
                         </tr>
                     </table>
@@ -161,7 +166,7 @@
                                 Swap to:&nbsp;
                             </td>
                             <td>
-                                <select id="lstSwapToCrypto" class="form-select w-auto">
+                                <select id="lstSwapToCrypto" class="form-select w-auto" onchange="setSwapCurrency()">
                                     @foreach (var crypto in ExolixSettings.AvailableCryptos)
                                     {
                                         <option value="@crypto.Key">@crypto.Value</option>
@@ -191,16 +196,24 @@
                     }
 
                     <script type="text/javascript">
-                        function setExolixValues() {
-                            const percent = parseFloat($('#percentToSend').val());
-                            $('#lblToSendBTC').text(((percent *  @walletConfig.OnChainBalance) / 100).toFixed(8));
-                            $('#lblToSendFiat').text(Math.round((percent *  @walletConfig.OnChainFiatBalance) / 100));
+                        window.setSwapCurrency = function () {
+                            $('#lblCurrency').text(getSwapCurrency());
+                        }
+
+                        function getSwapCurrency() {
+                            const isToSend =  $("input[name='rdFromTo']:checked").val() === "ToSend";
+                            return isToSend ? "BTC" : $('#lstSwapToCrypto').val();
+                        }
+
+                        function testAmount() {
+                            const value = $('#swapAmount').val().trim();
+                            if (value === '') return false;
+                            return !isNaN(value) && isFinite(value)
                         }
 
                         function onExolixSwap() {
-                            const percent = parseFloat($('#percentToSend').val());
-                            if (percent == 100) {
-                                alert('You must keep some sats for the transaction fees... Please reduce the amount');
+                            if (!testAmount()) {
+                                alert('Please enter a correct amount');
                                 return;
                             }
 
@@ -210,9 +223,18 @@
                                 return;
                             }
 
-                            const amountToSendBTC = ((percent * @walletConfig.OnChainBalance) / 100).toFixed(8);
-                            const amountToSendFiat = Math.round((percent * @walletConfig.OnChainFiatBalance) / 100);
-                            if (confirm(`Are you sure you want to swap ${amountToSendBTC} BTC for approximately ${amountToSendFiat} @walletConfig.FiatCurrency?`)) {
+                            let sConfirm;
+                            let btcAmount = 0;
+                            let altAmount = 0;
+                            const sCurr = getSwapCurrency();
+                            if (sCurr == 'BTC') {
+                                btcAmount = $('#swapAmount').val();
+                                sConfirm = `Are you sure you want to swap ${btcAmount} BTC to ${$('#lstSwapToCrypto').val()} ?`;
+                            } else {
+                                altAmount = $('#swapAmount').val();
+                                sConfirm = `Are you sure you want to swap BTC to ${altAmount} ${$('#lstSwapToCrypto').val()} ?`;
+                            }
+                            if (confirm(sConfirm)) {
                                 $('#btSend').hide();
 
                                 var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
@@ -237,14 +259,19 @@
                                 input2.name = 'toAddress';
                                 input2.value = sToAddress;
                                 form.appendChild(input2);
-                                document.body.appendChild(form);
 
                                 const input3 = document.createElement('input');
                                 input3.type = 'hidden';
                                 input3.name = 'btcAmount';
-                                input3.value = amountToSendBTC;
+                                input3.value = btcAmount;
                                 form.appendChild(input3);
-                                
+
+                                const input4 = document.createElement('input');
+                                input4.type = 'hidden';
+                                input4.name = 'toAmount';
+                                input4.value = altAmount;
+                                form.appendChild(input4);
+
                                 document.body.appendChild(form);
                                 form.submit();
                             }
@@ -307,7 +334,7 @@
                             {
                                 <tr class="mass-action-row item">
                                     <td class="text-break align-middle invoiceId-col">
-                                        <a href="https://exolix.com/api/v2/transactions/@item.TxID" target="_blank" class="invoice-details-link">@item.TxID</a>
+                                        <a href="https://exolix.com/transaction/@item.TxID" target="_blank" class="invoice-details-link">@item.TxID</a>
                                     </td>
                                     <td>@item.DateT</td>
                                     <td class="align-center">
@@ -318,6 +345,103 @@
                                     <td class="align-right">@item.BTCAmount</td>
                                     <td class="text-break align-middle invoiceId-col">
                                         <a asp-controller="UIInvoice" asp-action="Invoice" asp-route-invoiceId="@item.BTCPayInvoiceId" class="text-break">@item.BTCPayInvoiceId</a>
+                                    </td>
+                                    <td>
+                                        <a href="https://exolix.com/api/v2/transactions/@item.TxID" target="_blank">View JSON</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <nav aria-label="Page navigation" class="mt-3">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(page == 1 ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(page - 1)" tabindex="-1">Previous</a>
+                        </li>
+                        @for (var i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == page ? "active" : "")">
+                                <a class="page-link" href="?page=@i">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(page == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(page + 1)">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+
+            }
+        </div>
+    </div>
+</div>
+<br/>
+
+<div class="accordion-item" permission="@Policies.CanViewPullPayments,@Policies.CanViewPayouts">
+    <div style="height:20px"></div>
+    <h2 class="accordion-header" id="additional-txheader-header">
+        <button class="accordion-button @(isModelKO ? "" : "collapsed")"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#exolix-mtx"
+        aria-expanded="true"
+        aria-controls="exolix-mtx">
+            <h4>Exolix Merchant Transactions</h4>
+            <svg role="img" class="icon icon-caret-down">
+                <use href="/img/icon-sprite.svg?v=zHetyUWwEcS2qGEsSu8P6l-mwsFkAqFbknsYrREYYvo#caret-down"></use>
+            </svg>
+        </button>
+    </h2>
+    <div id="exolix-mtx" class="accordion-collapse collapse show" aria-labelledby="additional-htmlheader-header" style="">
+        <div class="accordion-body">
+            <br />
+            @if (!Model.MerchantTransactions.Any())
+            {
+                <p>
+                    <i>No Exolix Merchant transactions for this store...</i>
+                </p>
+            } else {
+                var page = Context.Request.Query["page"].Count > 0 ? int.Parse(Context.Request.Query["page"]) : 1;
+                var pageSize = 20;
+                var totalItems = Model.MerchantTransactions.Count();
+                var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+                var pagedTransactions = Model.MerchantTransactions
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                <div class="table-responsive">
+                    <table class="table table-hover mass-action">
+                        <thead class="mass-action-head">
+                            <tr>
+                                <th class="text-nowrap">Swap Id</th>
+                                <th class="text-nowrap">Date</th>
+                                <th class="text-nowrap">Altcoin</th>
+                                <th class="text-nowrap">Amount (BTC)</th>
+                                <th class="text-nowrap">Amount (Alt)</th>
+                                <th class="text-nowrap">Pull Payment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in pagedTransactions)
+                            {
+                                <tr class="mass-action-row item">
+                                    <td class="text-break align-middle invoiceId-col">
+                                        <a href="https://exolix.com/transaction/@item.TxID" target="_blank" class="invoice-details-link">@item.TxID</a>
+                                    </td>
+                                    <td>@item.DateT</td>
+                                    <td class="align-center">
+                                        <div class="badge badge-expired">
+                                            @item.AltcoinTo
+                                        </div>
+                                    </td>
+                                    <td class="align-right">@item.BTCAmount</td>
+                                    <td class="align-right">@item.AltAmount</td>
+                                    <td class="text-break align-middle invoiceId-col">
+                                        <a asp-controller="UIPullPayment" asp-action="ViewPullPayment" asp-route-pullPaymentId="@item.BTCPayPullPaymentId" class="text-break">@item.BTCPayPullPaymentId</a>
+                                    </td>
+                                    <td>
+                                        <a href="https://exolix.com/api/v2/transactions/@item.TxID" target="_blank">View JSON</a>
                                     </td>
                                 </tr>
                             }

@@ -133,7 +133,21 @@ namespace BTCPayServer.Plugins.Exolix.Services
             }
         }
 
-        public async Task AddStoreTransaction (ExolixTx tx)
+        public async Task<List<ExolixMerchantTx>> GetStoreMerchantTransactions(string storeId)
+        {
+            try
+            {
+                var txs = await _context.ExolixMerchantTransactions.Where(a => a.StoreId == storeId).ToListAsync();
+                return txs.Reverse<ExolixMerchantTx>().ToList();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "ExolixPlugin:GetStoreMerchantTransactions()");
+                throw;
+            }
+        }
+
+        public async Task AddStoreTransaction(ExolixTx tx)
         {
             try
             {
@@ -143,6 +157,20 @@ namespace BTCPayServer.Plugins.Exolix.Services
             catch (Exception e)
             {
                 _logger.LogError(e, "ExolixPlugin:AddStoreTransaction()");
+                throw;
+            }
+        }
+
+        public async Task AddStoreMerchantTransaction(ExolixMerchantTx tx)
+        {
+            try
+            {
+                await _context.ExolixMerchantTransactions.AddAsync(tx);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "ExolixPlugin:AddStoreMerchantTransaction()");
                 throw;
             }
         }
@@ -253,7 +281,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
         }
 
 
-        public async Task CreatePayout(string storeId, string offerId, string btcDest, decimal amount, CancellationToken cancellationToken = default)
+        public async Task<string> CreatePayout(string storeId, string offerId, string btcDest, decimal amount, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -310,7 +338,13 @@ namespace BTCPayServer.Plugins.Exolix.Services
                         throw new Exception("Claim amount is too low");
                     case ClaimRequest.ClaimResult.NotStarted:
                         throw new Exception("Pull payment has not started yet");
+                    case ClaimRequest.ClaimResult.PaymentMethodNotSupported:
+                        throw new Exception("Payment Method Not Supported");
+                    case ClaimRequest.ClaimResult.Overdraft:
+                        throw new Exception("Pull payment: overdraft");
                 }
+
+                return ppId;
             }
             catch (Exception e)
             {

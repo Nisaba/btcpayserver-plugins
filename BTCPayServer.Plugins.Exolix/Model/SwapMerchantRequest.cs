@@ -14,5 +14,7 @@ namespace BTCPayServer.Plugins.Exolix.Model
 
         public float BtcAmount { get; set; }
 
+        public float ToAmount { get; set; }
+
     }
 }

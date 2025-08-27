@@ -15,6 +15,7 @@ public class ExolixPluginDbContext : DbContext
 
     public DbSet<ExolixSettings> ExolixSettings { get; set; }
     public DbSet<ExolixTx> ExolixTransactions { get; set; }
+    public DbSet<ExolixMerchantTx> ExolixMerchantTransactions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
