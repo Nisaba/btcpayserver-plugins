@@ -81,15 +81,14 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
 
                     var mnemonicBoltz = new Mnemonic(Wordlist.English, WordCount.Twelve);
                     var masterExtKeyBoltz = mnemonicBoltz.DeriveExtKey("");
-                   // var derivedBoltz = masterExtKeyBoltz.Derive(new KeyPath("m/84'/0'/0'/0/0"));
+                    var derivedBoltz = masterExtKeyBoltz.Derive(new KeyPath("m/44/0/0/0"));
 
                     var settings = new Settings
                     {
                         StoreId = storeId,
                         Pwd = extKeyStore.PrivateKey.PubKey.ToHex(),
                         RefundMnemonic = mnemonicBoltz.ToString(),
-                        //RefundPubKey = derivedBoltz.PrivateKey.PubKey.ToHex(),
-                        RefundPubKey = masterExtKeyBoltz.PrivateKey.PubKey.ToHex(),
+                        RefundPubKey = derivedBoltz.PrivateKey.PubKey.ToHex(),
                     };
                     _context.Settings.Add(settings);
                     await _context.SaveChangesAsync();
