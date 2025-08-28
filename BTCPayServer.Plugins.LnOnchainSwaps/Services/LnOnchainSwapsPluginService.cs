@@ -70,6 +70,55 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         private readonly UIInvoiceController _invoiceController = invoiceController;
         private readonly LnOnchainSwapsDbContext _context = context;
 
+        public async Task InitSettings (string storeId)
+        {
+            try
+            {
+                if (!await _context.Settings.AnyAsync(a => a.StoreId == storeId))
+                {
+                    var store = await _storeRepository.FindStore(storeId);
+                    var extKeyStore = await GetStoreKey(store);
+
+                    var mnemonicBoltz = new Mnemonic(Wordlist.English, WordCount.Twelve);
+                    var masterExtKeyBoltz = mnemonicBoltz.DeriveExtKey("");
+                    var derivedBoltz = masterExtKeyBoltz.Derive(new KeyPath("m/84'/0'/0'/0/0"));
+
+                    var settings = new Settings
+                    {
+                        StoreId = storeId,
+                        Pwd = extKeyStore.PrivateKey.PubKey.ToHex(),
+                        RefundMnemonic = mnemonicBoltz.ToString(),
+                        RefundPubKey = derivedBoltz.PrivateKey.PubKey.ToHex(),
+                    };
+                    _context.Settings.Add(settings);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "LnOnchainSwapsPlugin:InitSettings()");
+                throw;
+            }
+        }
+
+        public async Task<Settings> GetStoreSettings(string storeId)
+        {
+            try
+            {
+                var settings = await _context.Settings.FirstAsync(a => a.StoreId == storeId);
+
+                var store = await _storeRepository.FindStore(storeId);
+                var extKeyStore = await GetStoreKey(store);
+                settings.Pwd = extKeyStore.PrivateKey.PubKey.ToHex();
+
+                return settings;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "LnOnchainSwapsPlugin:GetStoreSettings()");
+                throw;
+            }
+        }
 
         public async Task<List<BoltzSwap>> GetStoreSwaps(string storeId)
         {
@@ -132,11 +181,13 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 {
                     lnInvoice = swap.ExternalLnInvoice;
                 }
-                var extKey = await GetStoreKey(store);
+
+                var settings = _context.Settings.First(a => a.StoreId == storeId);
+
                 var bolt11 = BOLT11PaymentRequest.Parse(lnInvoice, Network.Main);
                 var paymentHash = bolt11.PaymentHash.ToString();
 
-                var boltz = await _boltzService.CreateOnChainToLnSwapAsync(lnInvoice, extKey.PrivateKey.PubKey.ToHex(), paymentHash);
+                var boltz = await _boltzService.CreateOnChainToLnSwapAsync(lnInvoice, settings.RefundPubKey, paymentHash);
                 await CreatePayout(store, boltz);
                 boltz.StoreId = store.Id;
                 boltz.BTCPayInvoiceId = invoiceId;
@@ -213,28 +264,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             catch (Exception e)
             {
                 _logger.LogError(e, "LnOnchainSwapsPlugin:DoGetSwapStatus()");
-                throw;
-            }
-        }
-
-        public async Task<string> DoGetRefundSignature(string swapId)
-        {
-            try
-            {
-                var sign = await _boltzService.GetSubmarineRefundSignatureAsync(swapId);
-
-                var dbSwap = await _context.BoltzSwaps.FirstOrDefaultAsync(s => s.SwapId == swapId);
-                if (dbSwap.RefundSignature != sign)
-                {
-                    dbSwap.RefundSignature = sign;
-                    _context.BoltzSwaps.Update(dbSwap);
-                    await _context.SaveChangesAsync();
-                }
-                return sign;
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "LnOnchainSwapsPlugin:DoGetSwapRefundSignature()");
                 throw;
             }
         }

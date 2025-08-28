@@ -31,9 +31,36 @@
 <br />
 
 <partial name="_StatusMessage" />
+@Html.AntiForgeryToken()
+<script>
+    var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+</script>
 
 <div permission="@Policies.CanCreateNonApprovedPullPayments,@Policies.CanManagePayouts">
+
     <br />
+    <h4>Boltz Rescue file</h4>
+    <p>In case of a swap fails, blablabla...</p>
+    <button class="btn btn-primary" onclick="onDownloadRescue()">Download Boltz Rescue file</button>
+    <br /><br />
+    
+    <script type="text/javascript">
+        function onDownloadRescue(){
+            const form = document.createElement('form');
+            form.method = 'GET';
+            form.action = 'LnOnchainSwaps/DownloadRefundJson';
+
+            const inputFg = document.createElement('input');
+            inputFg.type = 'hidden';
+            inputFg.name = '__RequestVerificationToken';
+            inputFg.value = antiForgeryToken;
+            form.appendChild(inputFg);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
+    
     <h4>Operations</h4>
     <br />
     @{
@@ -285,19 +312,6 @@
                             <b>Initial Json:</b><br />
                             <pre>@Safe.Raw(@swap.HighlightJson)</pre>
                             <br />
-                             <p>Refund Signature:</p>
-                            @if (string.IsNullOrEmpty(swap.RefundSignature))
-                            {
-                                    <button id="btRefund-@swap.SwapId" class="btn btn-secondary" onclick="GetRefundSignature('@swap.SwapId')">
-                                    Get Refund signature
-                                </button>
-                                <br />
-                                <pre id="pre-@swap.SwapId" style="display:none"/>
-                            }
-                            else
-                            {
-                                <pre>swap.RefundSignature</pre>
-                            }
                             </td>
                         </tr>
                     }
@@ -319,26 +333,6 @@
                     },
                     error: function (dataError) {
                         console.log('Error fetching swap status:', dataError);
-                    }
-                });
-            }
-
-            function GetRefundSignature(swapId) {
-                $.ajax({
-                    url: 'LnOnchainSwaps/GetRefundSignature',
-                    type: 'GET',
-                    data: { swapId: swapId },
-                    success: function (data) {
-                        if (data) {
-                            $('pre-' + swapId).show();
-                            $('#pre-' + swapId).text(data);
-                            $('#btRefund-' + swapId).hide();
-                        } else {
-                            console.log('No refund signature returned for swap ID:', swapId);
-                        }
-                    },
-                    error: function (dataError) {
-                        console.log('Error fetching refund signature:', dataError);
                     }
                 });
             }

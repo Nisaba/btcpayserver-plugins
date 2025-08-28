@@ -29,8 +29,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
         public string BTCPayPayoutId { get; set; }
         public string Json { get; set; }
 
-        public string RefundSignature { get; set; }
-
 
         [NotMapped]
         public string HighlightJson

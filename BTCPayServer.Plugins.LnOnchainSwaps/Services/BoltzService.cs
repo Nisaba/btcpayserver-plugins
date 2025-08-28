@@ -177,36 +177,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
         }
 
-        public async Task<string> GetSubmarineRefundSignatureAsync(string swapId)
-        {
-            string sRep = "";
-            try
-            {
-                using (var rep = await _httpClient.GetAsync($"swap/submarine/{swapId}/refund"))
-                {
-                    sRep = await rep.Content.ReadAsStringAsync();
-                    rep.EnsureSuccessStatusCode();
-                }
-                dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
-                return JsonRep.signature;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"LnOnchainSwapsPlugin.GetSubmarineRefundInfos(): {ex.Message}");
-                if (string.IsNullOrEmpty(sRep))
-                {
-                    throw;
-                }
-                else
-                {
-                    dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
-                    string sMsg = JsonRep.error;
-                    throw new Exception(sMsg);
-                }
-                throw;
-            }
-        }
-
         private void GeneratePreimageHash(out string preImage, out string preImageHash)
         {
             byte[] data = new byte[32];

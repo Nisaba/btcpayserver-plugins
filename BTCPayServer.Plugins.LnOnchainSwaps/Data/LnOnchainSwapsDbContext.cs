@@ -13,6 +13,7 @@ public class LnOnchainSwapsDbContext : DbContext
         _designTime = designTime;
     }
 
+    public DbSet<Settings> Settings { get; set; }
     public DbSet<BoltzSwap> BoltzSwaps { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

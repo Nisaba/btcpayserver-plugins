@@ -6,6 +6,8 @@ using BTCPayServer.Plugins.LnOnchainSwaps.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
@@ -21,6 +23,7 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
         {
+            await _pluginService.InitSettings(storeId);
             var model = new LnOnchainSwapsViewModel()
             {
                 StoreId = storeId,
@@ -83,19 +86,18 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
             }
         }
 
-        [HttpGet]
-        [Route("GetRefundSignature")]
-        public async Task<ActionResult> GetRefundSignature(string swapId)
+        [HttpGet("DownloadRefundJson")]
+        public async Task<FileContentResult> DownloadRefundJson([FromRoute] string storeId)
         {
-            try
+            var settings = await _pluginService.GetStoreSettings(storeId);
+
+            var data = new { mnemonic = settings.RefundMnemonic }; 
+            string jsonString = JsonSerializer.Serialize(data);
+            byte[] fileBytes = Encoding.UTF8.GetBytes(jsonString);
+            return new FileContentResult(fileBytes, "application/json")
             {
-                var sign = await _pluginService.DoGetRefundSignature(swapId);
-                return Ok(sign);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+                FileDownloadName = $"boltz-rescue-key-btcpay-{storeId}.json"
+            };
         }
     }
 }
