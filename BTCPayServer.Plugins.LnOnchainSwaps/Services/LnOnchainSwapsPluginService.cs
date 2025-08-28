@@ -80,7 +80,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     var extKeyStore = await GetStoreKey(store);
 
                     var mnemonicBoltz = new Mnemonic(Wordlist.English, WordCount.Twelve);
-                    var masterExtKeyBoltz = mnemonicBoltz.DeriveExtKey("");
+                    var masterExtKeyBoltz = mnemonicBoltz.DeriveExtKey();
                     var derivedBoltz = masterExtKeyBoltz.Derive(new KeyPath("m/44/0/0/0"));
 
                     var settings = new Settings
