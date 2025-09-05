@@ -78,20 +78,26 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             {
                 if (!await _context.Settings.AnyAsync(a => a.StoreId == storeId))
                 {
-                    var store = await _storeRepository.FindStore(storeId);
-                    var extKeyStore = await GetStoreKey(store);
-
-                    var mnemonicBoltz = new Mnemonic(Wordlist.English, WordCount.Twelve);
-                    var masterExtKeyBoltz = mnemonicBoltz.DeriveExtKey();
-                    var derivedBoltz = masterExtKeyBoltz.Derive(new KeyPath("m/44/0/0/0"));
-
                     var settings = new Settings
                     {
                         StoreId = storeId,
-                        Pwd = extKeyStore.PrivateKey.PubKey.ToHex(),
-                        RefundMnemonic = mnemonicBoltz.ToString(),
-                        RefundPubKey = derivedBoltz.PrivateKey.PubKey.ToHex(),
+                        Pwd = string.Empty,
+                        RefundMnemonic = string.Empty,
+                        RefundPubKey = string.Empty
                     };
+
+                    var store = await _storeRepository.FindStore(storeId);
+                    var extKeyStore = await GetStoreKey(store);
+                    if (extKeyStore != null)
+                    {
+                        var mnemonicBoltz = new Mnemonic(Wordlist.English, WordCount.Twelve);
+                        var masterExtKeyBoltz = mnemonicBoltz.DeriveExtKey();
+                        var derivedBoltz = masterExtKeyBoltz.Derive(new KeyPath("m/44/0/0/0"));
+
+                        settings.Pwd = extKeyStore.PrivateKey.PubKey.ToHex();
+                        settings.RefundMnemonic = mnemonicBoltz.ToString();
+                        settings.RefundPubKey = derivedBoltz.PrivateKey.PubKey.ToHex();
+                    }
                     _context.Settings.Add(settings);
                     await _context.SaveChangesAsync();
                 }
@@ -275,7 +281,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
         }
 
-        private async Task<ExtKey> GetStoreKey(StoreData store)
+        private async Task<ExtKey?> GetStoreKey(StoreData store)
         {
             try
             {
@@ -285,6 +291,10 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 var masterKeyString = await explorer.GetMetadataAsync<string>(
                     derivationScheme.AccountDerivation,
                     WellknownMetadataKeys.MasterHDKey);
+
+                if (string.IsNullOrEmpty(masterKeyString))
+                    return null;
+
                 return ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
             }
             catch (Exception e)
