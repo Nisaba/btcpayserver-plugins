@@ -99,7 +99,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     ["to"] = "BTC",
                     ["claimPublicKey"] = privateKey.PubKey.ToHex(),
                     ["address"] = btcReceptionAdress,
-                    ["addressSignature"] = SignMessage(btcReceptionAdress, privateKey),
+           //         ["addressSignature"] = SignMessage(btcReceptionAdress, privateKey),
                     ["onchainAmount"] = btcAmount * 100000000,
                     ["referralId"] = Referral,
                     ["preimageHash"] = preImageHash

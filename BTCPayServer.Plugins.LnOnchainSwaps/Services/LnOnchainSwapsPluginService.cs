@@ -270,13 +270,21 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
 
         private async Task<ExtKey> GetStoreKey(StoreData store)
         {
-            var derivationScheme = store.GetDerivationSchemeSettings(_handlers, "BTC");
-            var btcNetwork = _networkProvider.DefaultNetwork as BTCPayNetwork;
-            var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
-            var masterKeyString = await explorer.GetMetadataAsync<string>(
-                derivationScheme.AccountDerivation,
-                WellknownMetadataKeys.MasterHDKey);
-            return ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
+            try
+            {
+                var derivationScheme = store.GetDerivationSchemeSettings(_handlers, "BTC");
+                var btcNetwork = _networkProvider.DefaultNetwork as BTCPayNetwork;
+                var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
+                var masterKeyString = await explorer.GetMetadataAsync<string>(
+                    derivationScheme.AccountDerivation,
+                    WellknownMetadataKeys.MasterHDKey);
+                return ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "LnOnchainSwapsPlugin:GetStoreKey()");
+                throw;
+            }
         }
 
         public async Task CreatePayout(StoreData store, BoltzSwap boltzSwap, CancellationToken cancellationToken = default)
