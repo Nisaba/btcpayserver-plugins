@@ -48,7 +48,7 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
                         {
                             BtcAmount = reqClient.BtcAmount,
                             ToInternalOnChainWallet = reqClient.IsInternal,
-                            ExternalOnChainAddress = reqClient.ExternalAddressOrInvoice
+                            ExternalOnChainAddress = reqClient.ExternalAddressOrInvoice,
                         };
                         swap = await _pluginService.DoLnToOnchainSwap(storeId, sRoot, req);
                         break;

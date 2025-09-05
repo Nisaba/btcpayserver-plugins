@@ -122,7 +122,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 return new BoltzSwap
                 {
                     DateT = DateTime.UtcNow,
-                    Type = BoltzSwap.SwapTypeOnChainToLn,
+                    Type = BoltzSwap.SwapTypeLnToOnChain,
                     Status = string.Empty,
                     PreImage = preImage,
                     PreImageHash = preImageHash,
