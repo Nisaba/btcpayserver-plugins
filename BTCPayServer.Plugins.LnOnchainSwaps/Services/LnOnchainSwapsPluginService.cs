@@ -231,7 +231,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
 
                 var boltz = await _boltzService.CreateLnToOnChainSwapAsync(btcAddress, extKey.PrivateKey, swap.BtcAmount);
                 _logger.LogWarning($"Lightning Invoice: {boltz.Destination}");
-                boltz.ExpectedAmount = (decimal)ExtractAmountFromLnInvoice(boltz.Destination);
+                boltz.ExpectedAmount = ExtractAmountFromLnInvoice(boltz.Destination);
                 _logger.LogWarning($"Expected Amount: {boltz.ExpectedAmount} BTC");
 
                 await CreatePayout(store, boltz);
@@ -545,38 +545,46 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             return null;
         }
 
-        private decimal? ExtractAmountFromLnInvoice(string invoice)
+        private decimal ExtractAmountFromLnInvoice(string invoice)
         {
-            if (string.IsNullOrWhiteSpace(invoice) || !invoice.StartsWith("lnbc"))
-                throw new ArgumentException("Invalid Lightning Invoice", nameof(invoice));
-
-            string amountPart = invoice.Substring(4);
-
-            int index = amountPart.IndexOf('1');
-            if (index == -1) throw new FormatException("Malformed invoice");
-
-            string numberAndUnit = amountPart.Substring(0, index);
-
-            if (string.IsNullOrEmpty(numberAndUnit))
-                return null;
-
-            char lastChar = numberAndUnit[^1];
-            string numberStr;
-            decimal multiplier = 1m; // BTC
-
-            switch (lastChar)
+            if (string.IsNullOrEmpty(invoice) || !invoice.ToLower().StartsWith("lnbc"))
             {
-                case 'm': multiplier = 0.001m; numberStr = numberAndUnit[..^1]; break;
-                case 'u': multiplier = 0.000001m; numberStr = numberAndUnit[..^1]; break;
-                case 'n': multiplier = 0.000000001m; numberStr = numberAndUnit[..^1]; break;
-                case 'p': multiplier = 0.000000000001m; numberStr = numberAndUnit[..^1]; break;
-                default: numberStr = numberAndUnit; break; // pas de suffixe
+                return 0;
+            }
+            int separatorIndex = invoice.LastIndexOf('1');
+            if (separatorIndex == -1)
+            {
+                return 0;
+            }
+            string hrp = invoice.Substring(0, separatorIndex);
+            string dataPart = hrp.Substring(4);
+            string amountString = new string(dataPart.TakeWhile(char.IsDigit).ToArray());
+            if (string.IsNullOrEmpty(amountString))
+            {
+                return 0;
             }
 
-            if (!decimal.TryParse(numberStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out decimal value))
-                throw new FormatException("Invalid number in invoice");
-
-            return value * multiplier;
+            decimal amount = decimal.Parse(amountString);
+            if (dataPart.Length > amountString.Length)
+            {
+                char multiplier = dataPart[amountString.Length];
+                switch (multiplier)
+                {
+                    case 'm': // milli-bitcoin (10^-3)
+                        amount /= 1_000m;
+                        break;
+                    case 'u': // micro-bitcoin (10^-6)
+                        amount /= 1_000_000m;
+                        break;
+                    case 'n': // nano-bitcoin (10^-9)
+                        amount /= 1_000_000_000m;
+                        break;
+                    case 'p': // pico-bitcoin (10^-12)
+                        amount /= 1_000_000_000_000m;
+                        break;
+                }
+            }
+            return amount;
         }
     }
 }
