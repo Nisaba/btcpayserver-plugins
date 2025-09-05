@@ -230,7 +230,9 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 var extKey = await GetStoreKey(store);
 
                 var boltz = await _boltzService.CreateLnToOnChainSwapAsync(btcAddress, extKey.PrivateKey, swap.BtcAmount);
+                _logger.LogWarning($"Lightning Invoice: {boltz.Destination}");
                 boltz.ExpectedAmount = (decimal)ExtractAmountFromLnInvoice(boltz.Destination);
+                _logger.LogWarning($"Expected Amount: {boltz.ExpectedAmount} BTC");
 
                 await CreatePayout(store, boltz);
                 boltz.StoreId = store.Id;
