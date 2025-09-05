@@ -20,10 +20,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
+using NBitpayClient;
 using NBXplorer;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -228,6 +230,8 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 var extKey = await GetStoreKey(store);
 
                 var boltz = await _boltzService.CreateLnToOnChainSwapAsync(btcAddress, extKey.PrivateKey, swap.BtcAmount);
+                boltz.ExpectedAmount = (decimal)ExtractAmountFromLnInvoice(boltz.Destination);
+
                 await CreatePayout(store, boltz);
                 boltz.StoreId = store.Id;
                 boltz.BTCPayInvoiceId = invoiceId;
@@ -537,6 +541,40 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
 
             return null;
+        }
+
+        private decimal? ExtractAmountFromLnInvoice(string invoice)
+        {
+            if (string.IsNullOrWhiteSpace(invoice) || !invoice.StartsWith("lnbc"))
+                throw new ArgumentException("Invalid Lightning Invoice", nameof(invoice));
+
+            string amountPart = invoice.Substring(4);
+
+            int index = amountPart.IndexOf('1');
+            if (index == -1) throw new FormatException("Malformed invoice");
+
+            string numberAndUnit = amountPart.Substring(0, index);
+
+            if (string.IsNullOrEmpty(numberAndUnit))
+                return null;
+
+            char lastChar = numberAndUnit[^1];
+            string numberStr;
+            decimal multiplier = 1m; // BTC
+
+            switch (lastChar)
+            {
+                case 'm': multiplier = 0.001m; numberStr = numberAndUnit[..^1]; break;
+                case 'u': multiplier = 0.000001m; numberStr = numberAndUnit[..^1]; break;
+                case 'n': multiplier = 0.000000001m; numberStr = numberAndUnit[..^1]; break;
+                case 'p': multiplier = 0.000000000001m; numberStr = numberAndUnit[..^1]; break;
+                default: numberStr = numberAndUnit; break; // pas de suffixe
+            }
+
+            if (!decimal.TryParse(numberStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out decimal value))
+                throw new FormatException("Invalid number in invoice");
+
+            return value * multiplier;
         }
     }
 }

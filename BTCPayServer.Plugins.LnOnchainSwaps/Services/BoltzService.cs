@@ -128,7 +128,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     PreImageHash = preImageHash,
                     SwapId = JsonRep.id,
                     Destination = JsonRep.invoice,
-                    ExpectedAmount = (decimal)JsonRep.expectedAmount / 100000000m,
                     Json = sRep
                 };
             }
@@ -192,7 +191,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
         }
 
-        private string SignMessage(string message, Key privKey)
+    /*    private string SignMessage(string message, Key privKey)
         {
             try
             {
@@ -217,7 +216,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 _logger.LogError(e, "LnOnchainSwapsPlugin:SignMessage()");
                 throw;
             }
-        }
+        }*/
 
     }
 }
