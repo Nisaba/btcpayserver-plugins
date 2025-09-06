@@ -72,13 +72,14 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         private readonly UIInvoiceController _invoiceController = invoiceController;
         private readonly LnOnchainSwapsDbContext _context = context;
 
-        public async Task InitSettings (string storeId)
+        public async Task<bool> InitSettings (string storeId)
         {
             try
             {
-                if (!await _context.Settings.AnyAsync(a => a.StoreId == storeId))
+                var settings = await _context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId);
+                if (settings == null)
                 {
-                    var settings = new Settings
+                    settings = new Settings
                     {
                         StoreId = storeId,
                         Pwd = string.Empty,
@@ -101,6 +102,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     _context.Settings.Add(settings);
                     await _context.SaveChangesAsync();
                 }
+                return settings.HasPrivateKey;
             }
             catch (Exception e)
             {

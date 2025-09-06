@@ -18,6 +18,9 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
         private const int Iterations = 100_000;
 
         [NotMapped]
+        public bool HasPrivateKey => !string.IsNullOrEmpty(RefundPubKey) && !string.IsNullOrEmpty(EncryptedRefundMnemonic);
+
+        [NotMapped]
         public string Pwd { get; set; }
 
         [NotMapped]

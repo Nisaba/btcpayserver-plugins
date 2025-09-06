@@ -40,27 +40,34 @@
 
     <br />
     <h4>Boltz Rescue file</h4>
-    <p>In case of a swap fails, blablabla...</p>
-    <button class="btn btn-primary" onclick="onDownloadRescue()">Download Boltz Rescue file</button>
-    <br /><br />
+    @if (Model.HasPrivateKey)
+    {
+        <p>In case of a swap fails, blablabla...</p>
+        <button class="btn btn-primary" onclick="onDownloadRescue()">Download Boltz Rescue file</button>
+        <br /><br />
     
-    <script type="text/javascript">
-        function onDownloadRescue(){
-            const form = document.createElement('form');
-            form.method = 'GET';
-            form.action = 'LnOnchainSwaps/DownloadRefundJson';
+        <script type="text/javascript">
+            function onDownloadRescue(){
+                const form = document.createElement('form');
+                form.method = 'GET';
+                form.action = 'LnOnchainSwaps/DownloadRefundJson';
 
-            const inputFg = document.createElement('input');
-            inputFg.type = 'hidden';
-            inputFg.name = '__RequestVerificationToken';
-            inputFg.value = antiForgeryToken;
-            form.appendChild(inputFg);
+                const inputFg = document.createElement('input');
+                inputFg.type = 'hidden';
+                inputFg.name = '__RequestVerificationToken';
+                inputFg.value = antiForgeryToken;
+                form.appendChild(inputFg);
             
-            document.body.appendChild(form);
-            form.submit();
-        }
-    </script>
-    
+                document.body.appendChild(form);
+                form.submit();
+            }
+        </script>
+    }
+    else
+    {
+        <p>Downloading the Boltz Rescue file is only possible if you have set the private key in BTCPay for your onchain wallet</p>
+    }
+
     <h4>Operations</h4>
     <br />
     @{
@@ -156,7 +163,7 @@
                 <td>
                     @Html.RadioButton("chkToSwapLightning", "external", !walletConfig.OffChainAvailable, new { @class = "form-check-input mt-0 me-2", id = "chkLightningExternal" })
                     &nbsp;External Lightning Wallet : &nbsp;
-                    <input id="txtLightningExternal" type="text" class="form-control form-control-sm" placeholder="Paste a Lightning invoice, offer or LNURL" onchange="setSwapValues()" />
+                    <input id="txtLightningExternal" type="text" class="form-control form-control-sm" placeholder="Paste a Lightning invoice" onchange="setSwapValues()" />
                 </td>
             </tr>
         }
@@ -234,12 +241,37 @@
                 $('#btSend').hide();
 
                 const isOnChain =  $("input[name='chkFromSwap']:checked").val() === "FromOnchain";
+                const externalVal = isOnChain ? $('#txtLightningExternal').val() : $('#txtToOnchainExternal').val();
+                const isInternal = isOnChain ? $('#chkToLightningInternal').is(':checked') : $('#chkToOnchainInternal').is(':checked');
+                if (externalVal) {
+                   const bFlag = isOnChain ? isValidLightningInvoice(externalVal) : isValidBitcoinAddress(externalVal);
+                   if (!bFlag) {
+                        alert(isOnChain ? 'The Lightning invoice is not valid' : 'The Bitcoin address is not valid');
+                        $('#btSend').show();
+                        return;
+                   }
+                } else if (!isInternal) {
+                    alert('You must select an internal wallet or provide an external address/invoice');
+                    $('#btSend').show();
+                    return;
+                }
 
                 $('#SwapType').val(isOnChain ? '@BoltzSwap.SwapTypeOnChainToLn' : '@BoltzSwap.SwapTypeLnToOnChain');
                 $('#BtcAmount').val(lblToSendBTC.textContent);
-                $('#IsInternal').val(isOnChain ? $('#chkToLightningInternal').is(':checked') : $('#chkToOnchainInternal').is(':checked'));
-                $('#ExternalAddressOrInvoice').val(isOnChain ? $('#txtLightningExternal').val() : $('#txtToOnchainExternal').val());
+                $('#IsInternal').val(isInternal);
+                $('#ExternalAddressOrInvoice').val(externalVal);
                 $('#frmSwap')[0].submit();
+            }
+
+            function isValidBitcoinAddress(address) {
+                const base58Regex = /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/;
+                const bech32Regex = /^(bc1)[0-9a-z]{25,39}$/;
+                return base58Regex.test(address) || bech32Regex.test(address);
+            }
+
+             function isValidLightningInvoice(invoice) {
+                const lightningRegex = /^(ln(bc|tb|bcrt))[0-9a-z]+$/;
+                return lightningRegex.test(invoice) && invoice.length >= 20 && invoice.length <= 2000;
             }
         </script>
         <form method="post" autocomplete="off" action="LnOnchainSwaps/CreateSwap" id="frmSwap">

@@ -23,10 +23,11 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
         {
-            await _pluginService.InitSettings(storeId);
+            var bHasPrivateKey = await _pluginService.InitSettings(storeId);
             var model = new LnOnchainSwapsViewModel()
             {
                 StoreId = storeId,
+                HasPrivateKey = bHasPrivateKey,
                 Swaps = await _pluginService.GetStoreSwaps(storeId),
                 IsPayoutCreated = (TempData[WellKnownTempData.SuccessMessage] ?? "").ToString().Contains("Payout created!")
             };
@@ -90,7 +91,10 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
         public async Task<FileContentResult> DownloadRefundJson([FromRoute] string storeId)
         {
             var settings = await _pluginService.GetStoreSettings(storeId);
-
+            if (settings == null || !settings.HasPrivateKey)
+            {
+                throw new InvalidOperationException("No private key for this store");
+            }
             var data = new { mnemonic = settings.RefundMnemonic }; 
             string jsonString = JsonSerializer.Serialize(data);
             byte[] fileBytes = Encoding.UTF8.GetBytes(jsonString);
