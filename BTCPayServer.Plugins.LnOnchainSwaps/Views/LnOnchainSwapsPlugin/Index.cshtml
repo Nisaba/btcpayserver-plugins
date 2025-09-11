@@ -71,10 +71,23 @@
                         headers: { "Origin": window.location.origin }
                     });
 
-                    const res = await fetch(vaultBase, {
+                    let res = await fetch(vaultBase, {
                         method: "POST",
                         headers: { "Origin": window.location.origin },
-                        body: JSON.stringify({ params: ["getxpub", derivationPath] })
+                        body: JSON.stringify({ params: ["enumerate"] })
+                    });
+                    let devices = await res.json();
+
+                    if (!Array.isArray(devices) || devices.length === 0) {
+                        alert("No device found.");
+                        return;
+                    }
+                    const derivationPath = "m/44/0/0/0";
+
+                    res = await fetch(vaultBase, {
+                        method: "POST",
+                        headers: { "Origin": window.location.origin },
+                        body: JSON.stringify({ params: ["--fingerprint", devices[0].fingerprint, "getxpub", derivationPath] })
                     });
                     const data = await res.json();
 
