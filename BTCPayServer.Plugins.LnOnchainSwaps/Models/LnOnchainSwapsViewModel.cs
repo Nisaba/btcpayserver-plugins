@@ -7,6 +7,8 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
         public string StoreId;
         public bool HasPrivateKey;
         public List<BoltzSwap> Swaps { get; set; }
+
+        public StoreWalletConfig WalletConfig { get; set; }
         public bool IsPayoutCreated { get; set; }
     }
 }

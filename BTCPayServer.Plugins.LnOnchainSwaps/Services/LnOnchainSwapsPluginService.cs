@@ -72,7 +72,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         private readonly UIInvoiceController _invoiceController = invoiceController;
         private readonly LnOnchainSwapsDbContext _context = context;
 
-        public async Task<bool> InitSettings (string storeId)
+        public async Task<bool> InitSettings(string storeId)
         {
             try
             {
@@ -89,6 +89,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
 
                     var store = await _storeRepository.FindStore(storeId);
                     var extKeyStore = await GetStoreKey(store);
+
                     if (extKeyStore != null)
                     {
                         var mnemonicBoltz = new Mnemonic(Wordlist.English, WordCount.Twelve);
@@ -111,6 +112,32 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
         }
 
+        public async Task InitSettingsFromHW(string storeId, dynamic vaultData)
+        {
+            try
+            {
+                var settings = await _context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId);
+                var store = await _storeRepository.FindStore(storeId);
+                var extKeyStore = await GetStoreKeyFromHW(store, vaultData);
+
+                if (extKeyStore != null)
+                {
+                    var mnemonicBoltz = new Mnemonic(Wordlist.English, WordCount.Twelve);
+                    var masterExtKeyBoltz = mnemonicBoltz.DeriveExtKey();
+                    var derivedBoltz = masterExtKeyBoltz.Derive(new KeyPath("m/44/0/0/0"));
+
+                    settings.Pwd = extKeyStore.PrivateKey.PubKey.ToHex();
+                    settings.RefundMnemonic = mnemonicBoltz.ToString();
+                    settings.RefundPubKey = derivedBoltz.PrivateKey.PubKey.ToHex();
+                }
+                _context.Settings.Update(settings);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "LnOnchainSwapsPlugin:InitSettingsFromHW()");
+                throw;
+            }
+        }
         public async Task<Settings> GetStoreSettings(string storeId)
         {
             try
@@ -302,6 +329,22 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             catch (Exception e)
             {
                 _logger.LogError(e, "LnOnchainSwapsPlugin:GetStoreKey()");
+                throw;
+            }
+        }
+
+        private async Task<ExtKey> GetStoreKeyFromHW(StoreData store, dynamic vaultData)
+        {
+            try
+            {
+                var derivationScheme = store.GetDerivationSchemeSettings(_handlers, "BTC");
+                var btcNetwork = _networkProvider.DefaultNetwork as BTCPayNetwork;
+                var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
+                return ExtKey.Parse(vaultData.SignedKey, btcNetwork.NBitcoinNetwork); ;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "LnOnchainSwapsPlugin:GetStoreKeyFromHW()");
                 throw;
             }
         }
