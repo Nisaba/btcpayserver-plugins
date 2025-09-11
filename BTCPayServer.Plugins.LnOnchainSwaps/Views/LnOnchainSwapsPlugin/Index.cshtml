@@ -66,11 +66,14 @@
                 const derivationPath = "m/44/0/0/0";
 
                 try {
-                    await fetch("http://127.0.0.1:65092/hwi-bridge/v1/request-permission");
+                    await fetch(vaultBase + "/request-permission", {
+                        method: "GET",
+                        headers: { "Origin": window.location.origin }
+                    });
 
                     const res = await fetch(vaultBase, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: { "Origin": window.location.origin },
                         body: JSON.stringify({ params: ["getxpub", derivationPath] })
                     });
                     const data = await res.json();
