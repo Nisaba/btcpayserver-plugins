@@ -54,7 +54,7 @@
                     If you are using a hardware wallet, you can use BTCPay Vault:
                     <button id="vaultAction"
                             class="btn btn-primary mt-2"
-                            data-vault-action="signmessage"
+                            data-vault-action="DoVault()"
                             onclick="window.parent.postMessage({action: 'vault-request'}, window.origin);">
                         Sign with BTCPay Vault
                     </button>
@@ -62,29 +62,25 @@
             </ol>
         </div>
         <script>
-            window.addEventListener("message", async function (e) {
-                if (e.data.action === "vault-response") {
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = 'LnOnchainSwaps/GetInfosFromHW';
-                    console.log('Received vault response:', e.data);
+            async function DoVault() {
+                const vaultBase = "http://127.0.0.1:65092/hwi-bridge/v1";
+                const derivationPath = "m/44/0/0/0";
 
-                    const inputSign = document.createElement('input');
-                    inputSign.type = 'hidden';
-                    inputSign.name = 'vaultResponse';
-                    inputSign.value = JSON.stringify(e.data);
-                    form.appendChild(inputSign);
+                try {
+                    await fetch("http://127.0.0.1:65092/hwi-bridge/v1/request-permission");
 
-                    const inputFg = document.createElement('input');
-                    inputFg.type = 'hidden';
-                    inputFg.name = '__RequestVerificationToken';
-                    inputFg.value = antiForgeryToken;
-                    form.appendChild(inputFg);
+                    const res = await fetch(vaultBase, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ params: ["getxpub", derivationPath] })
+                    });
+                    const data = await res.json();
 
-                    document.body.appendChild(form);
-                    form.submit();
+                    console.log(data);
+                } catch (e) {
+                    alert ("Erreur: " + e);
                 }
-            });
+            }
         </script>
 
     }
