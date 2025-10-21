@@ -21,14 +21,11 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
         public bool HasPrivateKey => !string.IsNullOrEmpty(RefundPubKey) && !string.IsNullOrEmpty(EncryptedRefundMnemonic);
 
         [NotMapped]
-        public string Pwd { get; set; }
-
-        [NotMapped]
         public string RefundMnemonic
         {
             get 
             {
-                if (string.IsNullOrEmpty(EncryptedRefundMnemonic) || string.IsNullOrEmpty(Pwd))
+                if (string.IsNullOrEmpty(EncryptedRefundMnemonic))
                     return string.Empty;
 
                 var fullData = Convert.FromBase64String(EncryptedRefundMnemonic);
@@ -36,7 +33,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
                 var salt = new byte[SaltSize];
                 Buffer.BlockCopy(fullData, 0, salt, 0, SaltSize);
 
-                using var keyDerivation = new Rfc2898DeriveBytes(Pwd, salt, Iterations, HashAlgorithmName.SHA256);
+                using var keyDerivation = new Rfc2898DeriveBytes(StoreId, salt, Iterations, HashAlgorithmName.SHA256);
                 var key = keyDerivation.GetBytes(KeySize);
 
                 using var aes = Aes.Create();
@@ -57,13 +54,13 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
             }
             set
             {
-                if (string.IsNullOrEmpty(value) || string.IsNullOrEmpty(Pwd))
+                if (string.IsNullOrEmpty(value))
                 {
                     EncryptedRefundMnemonic = string.Empty;
                     return;
                 }
                 var salt = RandomNumberGenerator.GetBytes(SaltSize);
-                using var keyDerivation = new Rfc2898DeriveBytes(Pwd, salt, Iterations, HashAlgorithmName.SHA256);
+                using var keyDerivation = new Rfc2898DeriveBytes(StoreId, salt, Iterations, HashAlgorithmName.SHA256);
                 var key = keyDerivation.GetBytes(KeySize);
 
                 using var aes = Aes.Create();

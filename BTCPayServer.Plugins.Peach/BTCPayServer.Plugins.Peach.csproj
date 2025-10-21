@@ -7,7 +7,7 @@
 	<!-- Plugin specific properties -->
 	<PropertyGroup>
 		<Product>Peach</Product>
-		<Description>Allows you to forward received funds to Peach.</Description>
+		<Description>Peach plugin allows merchants to place peer2peer sell offers to convert their sats into fiat. KYC-free.</Description>
 		<Version>1.0.1</Version>
 	</PropertyGroup>
 
