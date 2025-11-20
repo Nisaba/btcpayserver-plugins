@@ -1,5 +1,6 @@
 ﻿using BTCPayServer.Abstractions.Constants;
 using BTCPayServer.Client;
+using BTCPayServer.Plugins.Shopstr.Models;
 using BTCPayServer.Plugins.Shopstr.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -19,7 +20,8 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
         {
-            return View();
+            var model = await _pluginService.GetStoreViewModel(storeId);
+            return View(model);
         }
 
     }

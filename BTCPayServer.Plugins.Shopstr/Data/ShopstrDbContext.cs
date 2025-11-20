@@ -13,7 +13,8 @@ public class ShopstrDbContext : DbContext
         _designTime = designTime;
     }
 
-    public DbSet<Settings> Settings { get; set; }
+    public DbSet<ShopstrSettings> ShopstrSettings { get; set; }
+    public DbSet<ShopAppStoreItem> ShopAppStoreItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -47,10 +47,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Migrations\" />
-	</ItemGroup>
-
-	<ItemGroup>
 	  <ProjectReference Include="..\..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
 	</ItemGroup>
 

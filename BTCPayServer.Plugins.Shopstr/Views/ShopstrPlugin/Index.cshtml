@@ -1,8 +1,15 @@
-﻿
+﻿@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.Shopstr.Views
+
+@model BTCPayServer.Plugins.Shopstr.Models.ShopstrViewModel
+@{
+    ViewData.SetActivePage(PluginNavPages.Index, "Shopstr plugin");
+}
+
 <table>
     <tr>
         <td>
-            <a href="https://peachbitcoin.com/referral/?code=PROB44" target="pch">
+            <a href="https://shopstr.market/">
                 <img src="/Resources/img/Shopstr.webp" />
             </a>
         </td>
@@ -16,3 +23,11 @@
     </tr>
 </table>
 <br />
+@if (Model.Nip5Settings == null || !Model.Nip5Settings.IsConfigured)
+{
+    <p>Your Nostr plugin is not configured yet. Please go to the Nostr plugin settings page to configure it.</p>
+} else
+{
+    <p>Your Nostr Pubkey: <strong>@Model.Nip5Settings.PubKey</strong></p>
+    <p>Your Nostr relays: <strong>@Model.Nip5Settings.Relays.ToString()</strong></p>
+}
