@@ -12,7 +12,7 @@ namespace BTCPayServer.Plugins.Shopstr.Models
 
         public string[]? Relays { get; set; }
 
-        public bool IsConfigured => !string.IsNullOrEmpty(PubKey) && !string.IsNullOrEmpty(Name)
+        public bool IsConfigured => !string.IsNullOrEmpty(PubKey) && !string.IsNullOrEmpty(PrivateKey)
                                     && Relays != null && Relays.Length > 0;
     }
 }

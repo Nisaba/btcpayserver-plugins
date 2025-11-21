@@ -4,6 +4,8 @@
 @model BTCPayServer.Plugins.Shopstr.Models.ShopstrViewModel
 @{
     ViewData.SetActivePage(PluginNavPages.Index, "Shopstr plugin");
+    bool bNostr;
+    bool bApp;
 }
 
 <table>
@@ -25,9 +27,71 @@
 <br />
 @if (Model.Nip5Settings == null || !Model.Nip5Settings.IsConfigured)
 {
-    <p>Your Nostr plugin is not configured yet. Please go to the Nostr plugin settings page to configure it.</p>
-} else
+    <div class="alert alert-warning d-flex align-items-center" role="alert">
+        <span class="me-2"><i class="fa fa-exclamation-triangle"></i></span>
+        Your Nostr plugin is not configured yet.
+        <a href="/stores/@Model.storeId/plugins/nip5" class="alert-link ms-2">Configure now</a>
+    </div>
+    bNostr = false;
+}
+else
 {
-    <p>Your Nostr Pubkey: <strong>@Model.Nip5Settings.PubKey</strong></p>
-    <p>Your Nostr relays: <strong>@Model.Nip5Settings.Relays.ToString()</strong></p>
+    <div class="card mb-3">
+        <div class="card-header">
+            <strong>Nostr Configuration</strong>
+        </div>
+        <div class="card-body">
+            <div class="mb-2">
+                <span class="badge bg-success me-2">Pubkey</span>
+                <span class="text-monospace">@Model.Nip5Settings.PubKey</span>
+            </div>
+            <div>
+                <span class="badge bg-info me-2">Relays</span>
+                <span>@String.Join(", ", Model.Nip5Settings.Relays)</span>
+            </div>
+        </div>
+    </div>
+    bNostr = true;
+}
+@if (Model.StoreApps.Count == 0)
+{
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+        <span class="me-2"><i class="fa fa-info-circle"></i></span>
+        You do not have any Shop apps in your BTCPay store yet.
+        <a href="/stores/@Model.storeId/apps/create/PointOfSale" class="alert-link ms-2">Create an app</a>
+    </div>
+    bApp = false;
+}
+else
+{
+    <div class="alert alert-success d-flex align-items-center" role="alert">
+        <span class="me-2"><i class="fa fa-check-circle"></i></span>
+        @Model.StoreApps.Count Shop app(s) ready to be synchronized in this store.
+    </div>
+    bApp = true;
+}
+@if (bNostr && bApp)
+{
+    <br />
+    <p>You are all set! You can now start selling your products on Shopstr. Go to <a href="https://shopstr.market/" target="_blank">Shopstr Market</a> and connect your BTCPay store using your Nostr pubkey.</p>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>App Name</th>
+                <th>App ID</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var app in Model.StoreApps)
+            {
+                <tr>
+                    <td>@app.Name</td>
+                    <td>@app.Id</td>
+                    <td>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }

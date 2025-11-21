@@ -8,6 +8,8 @@ using System;
 using BTCPayServer.Plugins.Shopstr.Models;
 using static Dapper.SqlMapper;
 using System.Linq;
+using BTCPayServer.Services.Apps;
+using BTCPayServer.Data;
 
 namespace BTCPayServer.Plugins.Shopstr.Services
 {
@@ -16,21 +18,38 @@ namespace BTCPayServer.Plugins.Shopstr.Services
         private readonly ILogger<ShopstrPluginService> _logger;
         private readonly ShopstrDbContextFactory _dbContextFactory;
         private readonly StoreRepository _storeRepository;
+        private readonly AppService _appService;
 
         public ShopstrPluginService(
             ILogger<ShopstrPluginService> logger,
             ShopstrDbContextFactory contextFactory,
-            StoreRepository storeRepository)
+            StoreRepository storeRepository,
+            AppService appService   )
         {
             _logger = logger;
             _dbContextFactory = contextFactory;
             _storeRepository = storeRepository;
+            _appService = appService;
         }
 
         public async Task<ShopstrViewModel> GetStoreViewModel(string storeId)
         {
             try
             {
+                var storeApps = (await _appService.GetApps("PointOfSale"))
+                    .Where(a => !a.Archived && a.StoreDataId == storeId)
+                    .ToList();
+
+                var filteredApps = new List<AppData>();
+                foreach (var app in storeApps)
+                {
+                    var appSettings = app.GetSettings<PointOfSaleSettings>();
+                    if ( appSettings.DefaultView != PointOfSale.PosViewType.Light)
+                    {
+                        filteredApps.Add(app);
+                    }
+                }
+
                 using (var context = _dbContextFactory.CreateContext())
                 {
                     var settings = await context.ShopstrSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
@@ -42,13 +61,13 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                         };
                     }
 
-                    var items = await context.ShopAppStoreItems.Where(a => a.StoreId == storeId).ToListAsync();
-
                     return new ShopstrViewModel
                     {
+                        storeId = storeId,
                         ShopstrSettings = settings,
-                        ShopAppStoreItems = items,
-                        Nip5Settings = await _storeRepository.GetSettingAsync<Nip5StoreSettings>(storeId, "NIP05")
+                        ShopAppStoreItems = await context.ShopAppStoreItems.Where(a => a.StoreId == storeId).ToListAsync(),
+                        Nip5Settings = await _storeRepository.GetSettingAsync<Nip5StoreSettings>(storeId, "NIP05"),
+                        StoreApps = filteredApps
                     };
                 }
 
