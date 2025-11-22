@@ -43,11 +43,18 @@ else
         <div class="card-body">
             <div class="mb-2">
                 <span class="badge bg-success me-2">Pubkey</span>
-                <span class="text-monospace">@Model.Nip5Settings.PubKey</span>
+                <span class="badge badge-expired">@Model.Nip5Settings.PubKey</span>
             </div>
             <div>
                 <span class="badge bg-info me-2">Relays</span>
-                <span>@String.Join(", ", Model.Nip5Settings.Relays)</span>
+                <span>
+                    @foreach (var rel in Model.Nip5Settings.Relays)
+                    {
+                        <span class="badge badge-expired">
+                            @rel
+                        </span>
+                    }
+                </span>
             </div>
         </div>
     </div>
@@ -78,18 +85,23 @@ else
         <thead>
             <tr>
                 <th>App Name</th>
-                <th>App ID</th>
+                <th>To Add</th>
+                <th>To Update</th>
+                <th>To Remove</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var app in Model.StoreApps)
             {
+                var lstAppSentItemsToShopstr = Model.SentItemsToShopstr.Where(o => o.AppId == app.Id).ToList();
+                app.GetListItemsToSync(lstAppSentItemsToShopstr);
                 <tr>
                     <td>@app.Name</td>
-                    <td>@app.Id</td>
-                    <td>
-                    </td>
+                    <td>@app.ItemsToAdd.Count</td>
+                    <td>@app.ItemsToUpdate.Count</td>
+                    <td>@app.ItemsToRemove.Count</td>
+                    <td></td>
                 </tr>
             }
         </tbody>

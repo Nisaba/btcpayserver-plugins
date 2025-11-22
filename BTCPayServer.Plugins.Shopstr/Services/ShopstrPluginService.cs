@@ -40,13 +40,19 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     .Where(a => !a.Archived && a.StoreDataId == storeId)
                     .ToList();
 
-                var filteredApps = new List<AppData>();
+                var filteredApps = new List<ShopstrAppData>();
                 foreach (var app in storeApps)
                 {
                     var appSettings = app.GetSettings<PointOfSaleSettings>();
                     if ( appSettings.DefaultView != PointOfSale.PosViewType.Light)
                     {
-                        filteredApps.Add(app);
+                        filteredApps.Add(new ShopstrAppData
+                        {
+                            Id = app.Id,
+                            Name = app.Name,
+                            StoreDataId = app.StoreDataId,
+                            ShopItems = AppService.Parse(appSettings.Template).ToList()
+                        });
                     }
                 }
 
@@ -65,7 +71,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     {
                         storeId = storeId,
                         ShopstrSettings = settings,
-                        ShopAppStoreItems = await context.ShopAppStoreItems.Where(a => a.StoreId == storeId).ToListAsync(),
+                        SentItemsToShopstr = await context.ShopAppStoreItems.Where(a => a.StoreId == storeId).ToListAsync(),
                         Nip5Settings = await _storeRepository.GetSettingAsync<Nip5StoreSettings>(storeId, "NIP05"),
                         StoreApps = filteredApps
                     };
