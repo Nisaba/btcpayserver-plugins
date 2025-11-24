@@ -1,6 +1,9 @@
 ﻿using BTCPayServer.Abstractions.Constants;
+using BTCPayServer.Abstractions.Extensions;
+using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Client;
 using BTCPayServer.Plugins.Shopstr.Models;
+using BTCPayServer.Plugins.Shopstr.Models.Shopstr;
 using BTCPayServer.Plugins.Shopstr.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -24,5 +27,27 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
             return View(model);
         }
 
+   /*     [HttpPost]
+        [Route("SaveSettings")]
+        public async Task<IActionResult> SaveSettings([FromRoute] string storeId, string shopstrShop)
+        {
+            try {
+                await _pluginService.UpdateSettings(storeId, shopstrShop);
+                TempData.SetStatusMessageModel(new StatusMessageModel()
+                {
+                    Message = "Shopstr settings updated",
+                    Severity = StatusMessageModel.StatusSeverity.Success
+                });
+            }
+            catch (System.Exception ex)
+            {
+                TempData.SetStatusMessageModel(new StatusMessageModel()
+                {
+                    Message = $"Error updating Shopstr settings: {ex.Message}",
+                    Severity = StatusMessageModel.StatusSeverity.Error
+                });
+            }
+            return RedirectToAction("Index", new { storeId = storeId });
+        }*/
     }
 }

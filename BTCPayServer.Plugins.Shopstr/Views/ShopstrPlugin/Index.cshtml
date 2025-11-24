@@ -1,7 +1,8 @@
 ﻿@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.Shopstr.Models.Shopstr
 @using BTCPayServer.Plugins.Shopstr.Views
 
-@model BTCPayServer.Plugins.Shopstr.Models.ShopstrViewModel
+@model ShopstrViewModel
 @{
     ViewData.SetActivePage(PluginNavPages.Index, "Shopstr plugin");
     bool bNostr;
@@ -25,6 +26,9 @@
     </tr>
 </table>
 <br />
+
+<!-- <partial name="_StatusMessage" /> -->
+
 @if (Model.Nip5Settings == null || !Model.Nip5Settings.IsConfigured)
 {
     <div class="alert alert-warning d-flex align-items-center" role="alert">
@@ -80,7 +84,34 @@ else
 @if (bNostr && bApp)
 {
     <br />
-    <p>You are all set! You can now start selling your products on Shopstr. Go to <a href="https://shopstr.market/" target="_blank">Shopstr Market</a> and connect your BTCPay store using your Nostr pubkey.</p>
+    <p>You are all set! You can now start selling your products on Shopstr.
+        <!-- Go to <a href="https://shopstr.market/" target="_blank">Shopstr Market</a> and connect your BTCPay store using your Nostr pubkey. --> </p>
+
+<!--    <form asp-action="SaveSettings" method="post" class="mb-3">
+        at Html.AntiForgeryToken()
+        <table class="table table-sm mt-0 mx-0" width="100%">
+            <tr>
+                <td width="150">
+                    <label for="ShopStrShop" class="form-label">Your Shopstr shop Id</label>
+                </td>
+                <td width="300" class="border-0 ps-0 align-middle">
+                    <input type="text"
+                           class="form-control"
+                           id="ShopStrShop"
+                           name="ShopStrShop"
+                           value="@Model.ShopstrSettings.ShopStrShop"
+                           required
+                           placeholder="Find this value in your Shopstr shop profile" />
+                </td>
+                <td align="center">
+                    <button id="SaveButton" type="submit" class="btn btn-primary" value="Save" name="Command">Save</button>
+                </td>
+            </tr>
+        </table>
+        </form> -->
+
+
+    <br/>
     <table class="table table-hover">
         <thead>
             <tr>
@@ -88,7 +119,7 @@ else
                 <th>To Add</th>
                 <th>To Update</th>
                 <th>To Remove</th>
-                <th>Actions</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -101,9 +132,15 @@ else
                     <td>@app.ItemsToAdd.Count</td>
                     <td>@app.ItemsToUpdate.Count</td>
                     <td>@app.ItemsToRemove.Count</td>
-                    <td></td>
+                    <td> <button id="SaveButton" class="btn btn-primary" onclick="DoSynchronize('@app.Id')">Save</button></td>
                 </tr>
             }
         </tbody>
     </table>
+
+    <script type="text/javascript" >
+        function DoSynchronize() {
+
+        }
+    </script>
 }

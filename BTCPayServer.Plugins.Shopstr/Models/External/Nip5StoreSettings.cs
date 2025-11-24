@@ -1,7 +1,8 @@
 ﻿#nullable enable
+using BTCPayServer;
 using System.ComponentModel.DataAnnotations;
 
-namespace BTCPayServer.Plugins.Shopstr.Models
+namespace BTCPayServer.Plugins.Shopstr.Models.External
 {
     public class Nip5StoreSettings
     {

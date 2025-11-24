@@ -5,32 +5,25 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
-using BTCPayServer.Plugins.Shopstr.Models;
 using static Dapper.SqlMapper;
 using System.Linq;
 using BTCPayServer.Services.Apps;
 using BTCPayServer.Data;
+using BTCPayServer.Plugins.Shopstr.Models.External;
+using BTCPayServer.Plugins.Shopstr.Models.Shopstr;
+using NBitcoin.Secp256k1;
 
 namespace BTCPayServer.Plugins.Shopstr.Services
 {
-    public class ShopstrPluginService
+    public class ShopstrPluginService(ILogger<ShopstrPluginService> logger,
+                                    ShopstrDbContextFactory contextFactory,
+                                    StoreRepository storeRepository,
+                                    AppService appService)
     {
-        private readonly ILogger<ShopstrPluginService> _logger;
-        private readonly ShopstrDbContextFactory _dbContextFactory;
-        private readonly StoreRepository _storeRepository;
-        private readonly AppService _appService;
-
-        public ShopstrPluginService(
-            ILogger<ShopstrPluginService> logger,
-            ShopstrDbContextFactory contextFactory,
-            StoreRepository storeRepository,
-            AppService appService   )
-        {
-            _logger = logger;
-            _dbContextFactory = contextFactory;
-            _storeRepository = storeRepository;
-            _appService = appService;
-        }
+        private readonly ILogger<ShopstrPluginService> _logger = logger;
+        private readonly ShopstrDbContextFactory _dbContextFactory = contextFactory;
+        private readonly StoreRepository _storeRepository = storeRepository;
+        private readonly AppService _appService = appService;
 
         public async Task<ShopstrViewModel> GetStoreViewModel(string storeId)
         {
@@ -80,10 +73,42 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "ShopstrPlugin:GetStoreSettings()");
+                _logger.LogError(e, "ShopstrPlugin:GetStoreViewModel()");
                 throw;
             }
         }
+
+
+    /*    public async Task UpdateSettings(string storeId, string shopstrShop)
+        {
+            try
+            {
+                using (var context = _dbContextFactory.CreateContext())
+                {
+                    var dbSettings = await context.ShopstrSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
+                    if (dbSettings == null)
+                    {
+                        context.ShopstrSettings.Add( new ShopstrSettings
+                        {
+                            StoreId = storeId,
+                            ShopStrShop = shopstrShop.Trim()
+                        });
+                    }
+                    else
+                    {
+                        dbSettings.ShopStrShop = shopstrShop.Trim();
+                        context.ShopstrSettings.Update(dbSettings);
+                    }
+
+                    await context.SaveChangesAsync();
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "ShopstrPlugin:UpdateSettings()");
+                throw;
+            }
+        }*/
 
     }
 }

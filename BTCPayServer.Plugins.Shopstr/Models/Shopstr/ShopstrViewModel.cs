@@ -1,8 +1,9 @@
 ﻿using BTCPayServer.Data;
+using BTCPayServer.Plugins.Shopstr.Models.External;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace BTCPayServer.Plugins.Shopstr.Models
+namespace BTCPayServer.Plugins.Shopstr.Models.Shopstr
 {
     public class ShopstrViewModel
     {

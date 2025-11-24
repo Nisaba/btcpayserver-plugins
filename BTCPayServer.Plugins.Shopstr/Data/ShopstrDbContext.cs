@@ -1,4 +1,4 @@
-using BTCPayServer.Plugins.Shopstr.Models;
+using BTCPayServer.Plugins.Shopstr.Models.Shopstr;
 using Microsoft.EntityFrameworkCore;
 
 namespace BTCPayServer.Plugins.Shopstr.Data;

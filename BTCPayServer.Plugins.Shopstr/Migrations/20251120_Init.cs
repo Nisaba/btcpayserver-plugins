@@ -21,7 +21,7 @@ namespace BTCPayServer.Plugins.Peach.Migrations
                 columns: table => new
                 {
                     StoreId = table.Column<string>(nullable: false),
-                    ShopStrMarketplace = table.Column<string>()
+                    ShopStrShop = table.Column<string>()
                 },
                 constraints: table =>
                 {

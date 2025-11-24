@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BTCPayServer.Plugins.Shopstr.Models
+namespace BTCPayServer.Plugins.Shopstr.Models.Shopstr
 {
     public class ShopAppStoreItem
     {

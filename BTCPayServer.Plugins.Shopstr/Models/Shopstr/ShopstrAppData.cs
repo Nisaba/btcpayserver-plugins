@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using static System.Net.Mime.MediaTypeNames;
 using System.IO;
 
-namespace BTCPayServer.Plugins.Shopstr.Models
+namespace BTCPayServer.Plugins.Shopstr.Models.Shopstr
 {
     public class ShopstrAppData : AppData
     {

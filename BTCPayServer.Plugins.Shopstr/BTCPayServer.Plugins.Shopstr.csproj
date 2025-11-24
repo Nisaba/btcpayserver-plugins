@@ -47,6 +47,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="NNostr.Client" Version="0.0.54" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <ProjectReference Include="..\..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
 	</ItemGroup>
 
