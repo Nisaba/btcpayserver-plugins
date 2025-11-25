@@ -12,6 +12,7 @@ using BTCPayServer.Data;
 using BTCPayServer.Plugins.Shopstr.Models.External;
 using BTCPayServer.Plugins.Shopstr.Models.Shopstr;
 using NBitcoin.Secp256k1;
+using BTCPayServer.Plugins.PointOfSale;
 
 namespace BTCPayServer.Plugins.Shopstr.Services
 {
@@ -44,6 +45,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                             Id = app.Id,
                             Name = app.Name,
                             StoreDataId = app.StoreDataId,
+                            CurrencyCode = appSettings.Currency,
                             ShopItems = AppService.Parse(appSettings.Template).ToList()
                         });
                     }
@@ -110,5 +112,40 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             }
         }*/
 
+        public async Task<ShopstrAppData> GetStoreApp (string appId)
+        {
+            try {
+                var app = await _appService.GetApp(appId, PointOfSaleAppType.AppType);
+                if (app == null)
+                    throw new Exception("App not found");
+                var appSettings = app.GetSettings<PointOfSaleSettings>();
+                return new ShopstrAppData
+                {
+                    Id = app.Id,
+                    Name = app.Name,
+                    StoreDataId = app.StoreDataId,
+                    CurrencyCode = appSettings.Currency,
+                    ShopItems = AppService.Parse(appSettings.Template).ToList()
+                };
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "ShopstrPlugin:GetStoreApp()");
+                throw;
+            }
+        }
+
+        public async Task<Nip5StoreSettings> GetNostrSettings(string storeId)
+        {
+            try
+            {
+                return await _storeRepository.GetSettingAsync<Nip5StoreSettings>(storeId, "NIP05");
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "ShopstrPlugin:GetNostrSettings()");
+                throw;
+            }
+        }
     }
 }

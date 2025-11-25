@@ -9,6 +9,6 @@ namespace BTCPayServer.Plugins.Shopstr.Models.Nostr
         public string Description { get; set; }
         public decimal Price { get; set; }
         public string Currency { get; set; }
-        public List<string> Images { get; set; }
+        public string[] Images { get; set; }
     }
 }

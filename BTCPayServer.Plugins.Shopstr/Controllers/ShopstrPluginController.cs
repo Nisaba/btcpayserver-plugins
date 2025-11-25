@@ -8,6 +8,7 @@ using BTCPayServer.Plugins.Shopstr.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.Shopstr.Controllers
@@ -16,10 +17,10 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
     [Authorize(Policy = Policies.CanModifyStoreSettings, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
     [AutoValidateAntiforgeryToken]
 
-    public class ShopstrPluginController (ShopstrPluginService pluginService) : Controller
+    public class ShopstrPluginController (ShopstrPluginService pluginService, ShopstrService shopstrService) : Controller
     {
         private readonly ShopstrPluginService _pluginService = pluginService;
-
+        private readonly ShopstrService _shopstrService = shopstrService;
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
         {
@@ -49,5 +50,15 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
             }
             return RedirectToAction("Index", new { storeId = storeId });
         }*/
+
+        [HttpPost]
+        [Route("SendToShopstr")]
+        public async Task SendToShopstr([FromRoute] string storeId, [FromForm] string appId)
+        {
+            var app = await _pluginService.GetStoreApp(appId);
+            var nostrSettings = await _pluginService.GetNostrSettings(storeId);
+            await _shopstrService.CreateShopstrProduct(app.ShopItems.First(), app.CurrencyCode, nostrSettings.PubKey, nostrSettings.Relays);
+        }
+
     }
 }

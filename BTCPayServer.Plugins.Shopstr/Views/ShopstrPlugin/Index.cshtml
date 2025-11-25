@@ -132,15 +132,35 @@ else
                     <td>@app.ItemsToAdd.Count</td>
                     <td>@app.ItemsToUpdate.Count</td>
                     <td>@app.ItemsToRemove.Count</td>
-                    <td> <button id="SaveButton" class="btn btn-primary" onclick="DoSynchronize('@app.Id')">Save</button></td>
+                    <td> <button id="BtSync@{@app.Id}" class="btn btn-secondary" onclick="DoSynchronize('@app.Id')">Synchronize</button></td>
                 </tr>
             }
         </tbody>
     </table>
 
-    <script type="text/javascript" >
-        function DoSynchronize() {
+    @Html.AntiForgeryToken()
 
+    <script type="text/javascript" >
+        var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        function DoSynchronize(appId) {
+            $('#BtSync' + appId).hide();
+            $.ajax({
+                url: 'Shopstr/SendToShopstr',
+                type: 'POST',
+                data: { appId: appId },
+                headers: {
+                    'RequestVerificationToken': antiForgeryToken
+                },
+                success: function(result) {
+                    alert("Sync to Shopstr OK");
+                    $('#BtSync' + appId).show();
+                },
+                error: function (xhr, status, error) {
+                    alert("Error: " + error + " - " + xhr.responseText);
+                    $('#BtSync' + appId).show();
+                }
+            });
         }
     </script>
 }
