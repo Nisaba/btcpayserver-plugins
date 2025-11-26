@@ -240,8 +240,6 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     derivationScheme.AccountDerivation,
                     WellknownMetadataKeys.MasterHDKey);
 
-                _logger.LogInformation("MtPelerinPlugin:GetSigningAdressInfo() - Master Key: {MasterKey}", masterKeyString);
-                _logger.LogInformation("MtPelerinPlugin:GetSigningAdressInfo() - UTXO KeyPath: {KeyPath}", utxo.KeyPath);
                 if (!string.IsNullOrEmpty(masterKeyString) && utxo.KeyPath != null)
                 {
                     var extKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
