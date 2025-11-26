@@ -10,6 +10,7 @@ using BTCPayServer.Plugins.Shopstr.Models.Nostr;
 using Microsoft.Extensions.Logging;
 using AngleSharp.Dom.Events;
 using BTCPayServer.Client.Models;
+using BTCPayServer.Plugins.Shopstr.Models.External;
 
 namespace BTCPayServer.Plugins.Shopstr.Services
 {
@@ -23,6 +24,14 @@ namespace BTCPayServer.Plugins.Shopstr.Services
 
             var relayUris = relays.Select(r => new Uri(r)).ToArray();
             var client = new CompositeNostrClient(relayUris);
+          /*  client.MessageReceived += (s, e) =>
+            {
+                _logger.LogInformation($"Shopstr Plugin: Nostr message received: {e}");
+            };*/
+            client.InvalidMessageReceived += (s, e) =>
+            {
+                _logger.LogWarning($"Shopstr Plugin: Nostr invalid message received: {e}");
+            };
 
             var filter = new NostrSubscriptionFilter()
             {
@@ -33,10 +42,38 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             try
             {
                 await client.ConnectAndWaitUntilConnected(CancellationToken.None);
-               
-                var events = client.SubscribeForEvents([filter], false, CancellationToken.None);
-               
-                await foreach (var nostrEvent in events)
+                var events = new List<NostrEvent>();
+
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                var asyncEnumerator = client.SubscribeForEvents([filter], false, cts.Token).GetAsyncEnumerator();
+
+                try
+                {
+                    while (true)
+                    {
+                        NostrEvent nostrEvent = null;
+                        try
+                        {
+                            var hasNext = await asyncEnumerator.MoveNextAsync();
+                            if (!hasNext)
+                                break;
+
+                            nostrEvent = asyncEnumerator.Current;
+                            events.Add(nostrEvent);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "MoveNextAsync() error");
+                            break;
+                        }
+                    }
+                }
+                finally
+                {
+                    await asyncEnumerator.DisposeAsync();
+                }
+                //             var events = await client.SubscribeForEvents([filter], false, CancellationToken.None).ToListAsync();
+                foreach (var nostrEvent in events)
                 {
                     try
                     {
@@ -56,22 +93,29 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Shopstr Plugin: Error while parsing Nostr products");
+            }
             finally
             {
                 client.Dispose();
             }
 
-            return products;
+            return products
+                .GroupBy(p => p.Id)
+                .Select(g => g.First())
+                .ToList();
         }
 
-        public async Task CreateShopstrProduct(AppItem appItem, string shopCurrency, string merchantPubKeyHex, string[] relays)
+        public async Task CreateShopstrProduct(AppItem appItem, string shopCurrency, Nip5StoreSettings nostrSettings)
         {
             try
             {
-                var relayUris = relays.Select(r => new Uri(r)).ToArray();
+                var relayUris = nostrSettings.Relays.Select(r => new Uri(r)).ToArray();
                 var nostrEvent = new NostrEvent()
                 {
-                    PublicKey = merchantPubKeyHex,
+                    PublicKey = nostrSettings.PubKey,
                     Kind = 30402,
                     CreatedAt = DateTimeOffset.UtcNow,
                     Content = appItem.Description,
@@ -84,12 +128,14 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 nostrEvent.SetTag("title", appItem.Title);
                 nostrEvent.SetTag("summary", appItem.Description);
                 nostrEvent.SetTag("price", [appItem.Price.ToString(), shopCurrency]);
-                nostrEvent.SetTag("price", appItem.Id);
                 nostrEvent.SetTag("t", "shopstr");
                 if (appItem.Categories != null && appItem.Categories.Length > 0)
                     nostrEvent.SetTag("t", appItem.Categories);
                 nostrEvent.SetTag("status", appItem.Disabled ? "sold" : "active");
                 nostrEvent.SetTag("image", appItem.Image);
+
+                var ecPrivKey = ECPrivKey.Create(Convert.FromHexString(nostrSettings.PrivateKey));
+                nostrEvent.Signature = NostrExtensions.ComputeSignature(nostrEvent, ecPrivKey);
 
                 using (var client = new CompositeNostrClient(relayUris))
                 {
