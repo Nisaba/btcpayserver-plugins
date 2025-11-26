@@ -250,6 +250,12 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
                     signInfo.Signature = SignBitcoinMessage(derivedKey.PrivateKey, messageToSign);
+                    _logger.LogInformation($"Signing message: {messageToSign} with address {signInfo.SenderBtcAddress} (derivedKey)");
+                    _logger.LogInformation($"Message: {messageToSign}");
+
+                    var sSigne2d = SignBitcoinMessage(extKey.PrivateKey, messageToSign);
+                    _logger.LogInformation($"Signing message: {messageToSign} with address {signInfo.SenderBtcAddress} (ExtKey)");
+                    _logger.LogInformation($"Message: {sSigne2d}");
                 }
             }
             catch (Exception e)
