@@ -23,6 +23,7 @@ using Newtonsoft.Json;
 using Org.BouncyCastle.Pqc.Crypto;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -248,7 +249,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
 
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
-                    signInfo.Signature = SignBitcoinMessage(messageToSign, derivedKey.PrivateKey, btcNetwork.NBitcoinNetwork);
+                    signInfo.Signature = SignBitcoinMessage(derivedKey.PrivateKey, messageToSign);
                 }
             }
             catch (Exception e)
@@ -260,57 +261,49 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
 
 
 
-        private string SignBitcoinMessage(string message, Key privKey, Network network)
+        private string SignBitcoinMessage(Key key, string message)
         {
-            var prefix = "Bitcoin Signed Message:\n";
-            var data = Encoding.UTF8.GetBytes(message);
+            var magic = "Bitcoin Signed Message:\n";
+            using var ms = new MemoryStream();
+            using var writer = new BinaryWriter(ms);
+            WriteVarString(writer, magic);
+            WriteVarString(writer, message);
+            var messageBytes = ms.ToArray();
+            var hash = NBitcoin.Crypto.Hashes.DoubleSHA256(messageBytes);
 
-            byte[] messageBytes = SerializeForBitcoinMessage(prefix, data);
-            var hash = Hashes.DoubleSHA256(messageBytes);
-            var sig = privKey.SignCompact(hash, true);
-            return Convert.ToBase64String(sig.Signature);
+            var compactSig = key.SignCompact(hash, key.PubKey.IsCompressed);
+            byte[] signatureBytes = new byte[65];
+            signatureBytes[0] = (byte)(27 + compactSig.RecoveryId + (key.PubKey.IsCompressed ? 4 : 0));
+            Array.Copy(compactSig.Signature, 0, signatureBytes, 1, 64);
+
+            return Convert.ToBase64String(signatureBytes);
         }
 
-        private byte[] SerializeForBitcoinMessage(string prefix, byte[] message)
+        private void WriteVarString(BinaryWriter writer, string str)
         {
-            using (var ms = new System.IO.MemoryStream())
-            {
-                WriteVarInt(ms, (ulong)prefix.Length);
-                ms.Write(Encoding.UTF8.GetBytes(prefix), 0, prefix.Length);
-                WriteVarInt(ms, (ulong)message.Length);
-                ms.Write(message, 0, message.Length);
-                return ms.ToArray();
-            }
+            var bytes = Encoding.UTF8.GetBytes(str);
+            WriteVarInt(writer, bytes.Length);
+            writer.Write(bytes);
         }
 
-        private void WriteVarInt(System.IO.Stream stream, ulong value)
+        private void WriteVarInt(BinaryWriter writer, int value)
         {
             if (value < 0xfd)
-            {
-                stream.WriteByte((byte)value);
-            }
+                writer.Write((byte)value);
             else if (value <= 0xffff)
             {
-                stream.WriteByte(0xfd);
-                stream.WriteByte((byte)(value & 0xff));
-                stream.WriteByte((byte)(value >> 8));
-            }
-            else if (value <= 0xffffffff)
-            {
-                stream.WriteByte(0xfe);
-                for (int i = 0; i < 4; i++)
-                    stream.WriteByte((byte)(value >> (8 * i)));
+                writer.Write((byte)0xfd);
+                writer.Write((ushort)value);
             }
             else
             {
-                stream.WriteByte(0xff);
-                for (int i = 0; i < 8; i++)
-                    stream.WriteByte((byte)(value >> (8 * i)));
+                writer.Write((byte)0xfe);
+                writer.Write(value);
             }
         }
 
 
-    public async Task<StoreWalletConfig> GetBalances(string storeId, string BaseUrl)
+        public async Task<StoreWalletConfig> GetBalances(string storeId, string BaseUrl)
         {
             StoreWalletConfig cnfg = new StoreWalletConfig();
             try
