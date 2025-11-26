@@ -20,11 +20,13 @@ using NBitcoin;
 using NBitcoin.Crypto;
 using NBXplorer;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Pqc.Crypto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -248,7 +250,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
 
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
-                    signInfo.Signature = SignMessage(messageToSign, derivedKey.PrivateKey);
+                    signInfo.Signature = SignBitcoinMessage(messageToSign, derivedKey.PrivateKey, btcNetwork.NBitcoinNetwork);
                 }
             }
             catch (Exception e)
@@ -258,35 +260,59 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
             return signInfo;
         }
 
-        private string SignMessage(string message, Key privKey)
+
+
+        private string SignBitcoinMessage(string message, Key privKey, Network network)
         {
-            try
+            var prefix = "Bitcoin Signed Message:\n";
+            var data = Encoding.UTF8.GetBytes(message);
+
+            byte[] messageBytes = SerializeForBitcoinMessage(prefix, data);
+            var hash = Hashes.DoubleSHA256(messageBytes);
+            var sig = privKey.SignCompact(hash, true);
+            return Convert.ToBase64String(sig.Signature);
+        }
+
+        private byte[] SerializeForBitcoinMessage(string prefix, byte[] message)
+        {
+            using (var ms = new System.IO.MemoryStream())
             {
-                using (SHA256 sha256 = SHA256.Create())
-                {
-                    byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
-                    byte[] messageHash = sha256.ComputeHash(messageBytes);
-
-                    uint256 hash = new uint256(messageHash);
-                    ECDSASignature signature = privKey.Sign(hash);
-                    byte[] compactSig = signature.ToCompact();
-
-                    if (compactSig.Length != 64)
-                    {
-                        throw new InvalidOperationException($"Compact signature length is {compactSig.Length}, expected 64.");
-                    }
-                    return BitConverter.ToString(compactSig).Replace("-", "").ToLower();
-                }
+                WriteVarInt(ms, (ulong)prefix.Length);
+                ms.Write(Encoding.UTF8.GetBytes(prefix), 0, prefix.Length);
+                WriteVarInt(ms, (ulong)message.Length);
+                ms.Write(message, 0, message.Length);
+                return ms.ToArray();
             }
-            catch (Exception e)
+        }
+
+        private void WriteVarInt(System.IO.Stream stream, ulong value)
+        {
+            if (value < 0xfd)
             {
-                _logger.LogError(e, "MtPelerinPlugin:SignMessage()");
-                throw;
+                stream.WriteByte((byte)value);
+            }
+            else if (value <= 0xffff)
+            {
+                stream.WriteByte(0xfd);
+                stream.WriteByte((byte)(value & 0xff));
+                stream.WriteByte((byte)(value >> 8));
+            }
+            else if (value <= 0xffffffff)
+            {
+                stream.WriteByte(0xfe);
+                for (int i = 0; i < 4; i++)
+                    stream.WriteByte((byte)(value >> (8 * i)));
+            }
+            else
+            {
+                stream.WriteByte(0xff);
+                for (int i = 0; i < 8; i++)
+                    stream.WriteByte((byte)(value >> (8 * i)));
             }
         }
 
 
-        public async Task<StoreWalletConfig> GetBalances(string storeId, string BaseUrl)
+    public async Task<StoreWalletConfig> GetBalances(string storeId, string BaseUrl)
         {
             StoreWalletConfig cnfg = new StoreWalletConfig();
             try
