@@ -17,16 +17,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
-using NBitcoin.Crypto;
 using NBXplorer;
 using Newtonsoft.Json;
-using Org.BouncyCastle.Pqc.Crypto;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -244,8 +241,22 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 if (!string.IsNullOrEmpty(masterKeyString) && utxo.KeyPath != null)
                 {
                     var extKey = ExtKey.Parse(masterKeyString, btcNetwork.NBitcoinNetwork);
-                    
-                    var derivedKey = extKey.Derive(utxo.KeyPath);
+
+                    var accountKeyPath = new KeyPath("m/84'/0'/0'");
+                    var fullKeyPath = accountKeyPath.Derive(utxo.KeyPath);
+
+                    _logger.LogInformation($"UTXO KeyPath (relative): {utxo.KeyPath}");
+                    _logger.LogInformation($"Full KeyPath: {fullKeyPath}");
+
+                    var derivedKey = extKey.Derive(fullKeyPath);
+
+                    // Vérification (optionnelle mais recommandée)
+                    var derivedAddress = derivedKey.PrivateKey.PubKey.GetAddress(ScriptPubKeyType.Segwit, btcNetwork.NBitcoinNetwork);
+                    _logger.LogInformation($"Derived Address: {derivedAddress}");
+                    _logger.LogInformation($"Expected Address: {signInfo.SenderBtcAddress}");
+                    _logger.LogInformation($"Key is compressed: {derivedKey.PrivateKey.PubKey.IsCompressed}");
+                    var wif = derivedKey.PrivateKey.GetWif(btcNetwork.NBitcoinNetwork).ToString();
+                    _logger.LogInformation($"Derived WIF: {wif}");
 
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
