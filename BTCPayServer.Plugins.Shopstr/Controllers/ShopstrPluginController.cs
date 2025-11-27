@@ -57,8 +57,9 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
         {
             var app = await _pluginService.GetStoreApp(appId);
             var nostrSettings = await _pluginService.GetNostrSettings(storeId);
-          //  await _shopstrService.CreateShopstrProduct(app.ShopItems.First(), app.CurrencyCode, nostrSettings);
-            var lst = await _shopstrService.GetShopstrProducts(nostrSettings.PubKey, nostrSettings.Relays);
+            var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+            await _shopstrService.CreateShopstrProduct(app.ShopItems.First(), app.CurrencyCode, nostrSettings, baseUrl);
+          //  var lst = await _shopstrService.GetShopstrProducts(nostrSettings.PubKey, nostrSettings.Relays);
         }
 
     }

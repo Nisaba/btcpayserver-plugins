@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 using NBitcoin.Secp256k1; 
 using NNostr.Client;
 using Newtonsoft.Json;
@@ -24,13 +25,13 @@ namespace BTCPayServer.Plugins.Shopstr.Services
 
             var relayUris = relays.Select(r => new Uri(r)).ToArray();
             var client = new CompositeNostrClient(relayUris);
-          /*  client.MessageReceived += (s, e) =>
+            client.MessageReceived += (s, e) =>
             {
-                _logger.LogInformation($"Shopstr Plugin: Nostr message received: {e}");
-            };*/
+                _logger.LogInformation($"Shopstr Plugin: Message received: {e}");
+            };
             client.InvalidMessageReceived += (s, e) =>
             {
-                _logger.LogWarning($"Shopstr Plugin: Nostr invalid message received: {e}");
+                _logger.LogWarning($"Shopstr Plugin: Invalid message: {e}");
             };
 
             var filter = new NostrSubscriptionFilter()
@@ -108,7 +109,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 .ToList();
         }
 
-        public async Task CreateShopstrProduct(AppItem appItem, string shopCurrency, Nip5StoreSettings nostrSettings)
+        public async Task CreateShopstrProduct(AppItem appItem, string shopCurrency, Nip5StoreSettings nostrSettings, string baseUrl)
         {
             try
             {
@@ -118,7 +119,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     PublicKey = nostrSettings.PubKey,
                     Kind = 30402,
                     CreatedAt = DateTimeOffset.UtcNow,
-                    Content = appItem.Description,
+                    Content = appItem.Description ?? "",
                 };
                 nostrEvent.SetTag("d", appItem.Id);
                 nostrEvent.SetTag("alt", "Product listing: " + appItem.Title);
@@ -126,20 +127,102 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                                          "31990:45cb19e028027e0f726459086eafeadd661d0f57486069c81a80e5163538522a:5b4b1e9d6ecaded5a1250ae7117aa5974e50d2e4af3b24d40a125b7e0c0dd68f",
                                          "wss://eden.nostr.land/"]);
                 nostrEvent.SetTag("title", appItem.Title);
-                nostrEvent.SetTag("summary", appItem.Description);
+                nostrEvent.SetTag("summary", appItem.Description ?? "");
                 nostrEvent.SetTag("price", [appItem.Price.ToString(), shopCurrency]);
                 nostrEvent.SetTag("t", "shopstr");
                 if (appItem.Categories != null && appItem.Categories.Length > 0)
                     nostrEvent.SetTag("t", appItem.Categories);
                 nostrEvent.SetTag("status", appItem.Disabled ? "sold" : "active");
-                nostrEvent.SetTag("image", appItem.Image);
+                
+                var imageUrl = appItem.Image;
+                if (!string.IsNullOrEmpty(imageUrl))
+                {
+                    if (imageUrl.StartsWith("~/", StringComparison.Ordinal))
+                    {
+                        imageUrl = imageUrl.Substring(1);
+                    }
+                    
+                    if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        imageUrl = baseUrl.TrimEnd('/') + imageUrl;
+                    }
+                    nostrEvent.SetTag("image", imageUrl);
+                }
+                
+                var tagsForSerialization = nostrEvent.Tags
+                    .Select(tag => tag.TagIdentifier == null 
+                        ? tag.Data.ToArray() 
+                        : new[] { tag.TagIdentifier }.Concat(tag.Data ?? Enumerable.Empty<string>()).ToArray())
+                    .ToList();
 
+                var createdAt = (nostrEvent.CreatedAt ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds();
+
+                // Sérialisation selon NIP-01 : [0, pubkey, created_at, kind, tags, content]
+                var eventData = new object[]
+                {
+                    0,
+                    nostrEvent.PublicKey,
+                    createdAt,
+                    nostrEvent.Kind,
+                    tagsForSerialization,
+                    nostrEvent.Content ?? ""
+                };
+
+                var serialized = JsonConvert.SerializeObject(eventData, 
+                    Formatting.None, 
+                    new JsonSerializerSettings 
+                    { 
+                        NullValueHandling = NullValueHandling.Include 
+                    });
+
+                _logger.LogDebug($"Shopstr Plugin: Event serialized for ID computation: {serialized}");
+
+                using var sha256 = System.Security.Cryptography.SHA256.Create();
+                var hash = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(serialized));
+                nostrEvent.Id = Convert.ToHexString(hash).ToLowerInvariant();
+                
                 var ecPrivKey = ECPrivKey.Create(Convert.FromHexString(nostrSettings.PrivateKey));
                 nostrEvent.Signature = NostrExtensions.ComputeSignature(nostrEvent, ecPrivKey);
 
+                _logger.LogInformation($"Shopstr Plugin: Event created with ID: {nostrEvent.Id}");
+                _logger.LogDebug($"Shopstr Plugin: Event signature: {nostrEvent.Signature}");
+                _logger.LogDebug($"Shopstr Plugin: Image URL: {imageUrl}");
+
                 using (var client = new CompositeNostrClient(relayUris))
                 {
+                    client.MessageReceived += (s, e) =>
+                    {
+                        _logger.LogInformation($"Shopstr Plugin: Message received: {e}");
+                    };
+                    client.InvalidMessageReceived += (s, e) =>
+                    {
+                        _logger.LogWarning($"Shopstr Plugin: Invalid message: {e}");
+                    };
+
+                    await client.ConnectAndWaitUntilConnected(CancellationToken.None);
+                    _logger.LogInformation($"Shopstr Plugin: Connected to {relayUris.Length} relay(s)");
+
                     await client.PublishEvent(nostrEvent, CancellationToken.None);
+                    _logger.LogInformation($"Shopstr Plugin: Event {nostrEvent.Id} published to relay(s)");
+
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+
+                    var filter = new NostrSubscriptionFilter()
+                    {
+                        Ids = new[] { nostrEvent.Id }
+                    };
+
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    var verification = await client.SubscribeForEvents([filter], false, cts.Token).FirstOrDefaultAsync();
+
+                    if (verification != null)
+                    {
+                        _logger.LogInformation($"Shopstr Plugin: Event {nostrEvent.Id} confirmed on relay(s)");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Shopstr Plugin: Event {nostrEvent.Id} could not be verified on relay(s)");
+                    }
                 }
             }
             catch (Exception ex)
