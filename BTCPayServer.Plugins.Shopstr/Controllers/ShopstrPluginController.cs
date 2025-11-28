@@ -1,12 +1,7 @@
 ﻿using BTCPayServer.Abstractions.Constants;
-using BTCPayServer.Abstractions.Extensions;
-using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Client;
-using BTCPayServer.Plugins.Shopstr.Models;
-using BTCPayServer.Plugins.Shopstr.Models.Shopstr;
 using BTCPayServer.Plugins.Shopstr.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Threading.Tasks;
@@ -28,38 +23,69 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
             return View(model);
         }
 
-   /*     [HttpPost]
-        [Route("SaveSettings")]
-        public async Task<IActionResult> SaveSettings([FromRoute] string storeId, string shopstrShop)
-        {
-            try {
-                await _pluginService.UpdateSettings(storeId, shopstrShop);
-                TempData.SetStatusMessageModel(new StatusMessageModel()
-                {
-                    Message = "Shopstr settings updated",
-                    Severity = StatusMessageModel.StatusSeverity.Success
-                });
-            }
-            catch (System.Exception ex)
-            {
-                TempData.SetStatusMessageModel(new StatusMessageModel()
-                {
-                    Message = $"Error updating Shopstr settings: {ex.Message}",
-                    Severity = StatusMessageModel.StatusSeverity.Error
-                });
-            }
-            return RedirectToAction("Index", new { storeId = storeId });
-        }*/
+        /*     [HttpPost]
+             [Route("SaveSettings")]
+             public async Task<IActionResult> SaveSettings([FromRoute] string storeId, string shopstrShop)
+             {
+                 try {
+                     await _pluginService.UpdateSettings(storeId, shopstrShop);
+                     TempData.SetStatusMessageModel(new StatusMessageModel()
+                     {
+                         Message = "Shopstr settings updated",
+                         Severity = StatusMessageModel.StatusSeverity.Success
+                     });
+                 }
+                 catch (System.Exception ex)
+                 {
+                     TempData.SetStatusMessageModel(new StatusMessageModel()
+                     {
+                         Message = $"Error updating Shopstr settings: {ex.Message}",
+                         Severity = StatusMessageModel.StatusSeverity.Error
+                     });
+                 }
+                 return RedirectToAction("Index", new { storeId = storeId });
+             }*/
 
         [HttpPost]
-        [Route("SendToShopstr")]
-        public async Task SendToShopstr([FromRoute] string storeId, [FromForm] string appId)
+        [Route("PublishToShopstr")]
+        public async Task PublishToShopstr([FromRoute] string storeId, [FromForm] string appId)
         {
             var app = await _pluginService.GetStoreApp(appId);
-            var nostrSettings = await _pluginService.GetNostrSettings(storeId);
+            if (!app.ShopItems.Any())
+            {
+                return;
+            }
             var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
-            await _shopstrService.CreateShopstrProduct(app.ShopItems.First(), app.CurrencyCode, nostrSettings, baseUrl);
-          //  var lst = await _shopstrService.GetShopstrProducts(nostrSettings.PubKey, nostrSettings.Relays);
+            var nostrSettings = await _pluginService.GetNostrSettings(storeId);
+            var productsFromShopstr = await _shopstrService.GetShopstrProducts(nostrSettings.PubKey, nostrSettings.Relays);
+
+            foreach (var item in app.ShopItems)
+            {
+                var existingProduct = productsFromShopstr.FirstOrDefault(p => p.Id == item.Id);
+                var bPublishToShopStr = existingProduct == null ? true : !existingProduct.Compare(item);
+                if (bPublishToShopStr)
+                {
+                    await _shopstrService.CreateShopstrProduct(item, app.CurrencyCode, nostrSettings, baseUrl);
+                }
+            }
+        }
+
+        [HttpPost]
+        [Route("UnPublishToShopstr")]
+        public async Task UnPublishToShopstr([FromRoute] string storeId, [FromForm] string appId)
+        {
+            var app = await _pluginService.GetStoreApp(appId);
+            if (!app.ShopItems.Any())
+            {
+                return;
+            }
+            var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+            var nostrSettings = await _pluginService.GetNostrSettings(storeId);
+
+            foreach (var item in app.ShopItems)
+            {
+                await _shopstrService.CreateShopstrProduct(item, app.CurrencyCode, nostrSettings, baseUrl, true);
+            }
         }
 
     }

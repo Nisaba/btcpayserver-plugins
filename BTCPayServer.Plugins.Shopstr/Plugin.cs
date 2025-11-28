@@ -1,9 +1,6 @@
 ﻿using BTCPayServer.Abstractions.Contracts;
 using BTCPayServer.Abstractions.Models;
-using BTCPayServer.Abstractions.Services;
-using BTCPayServer.Plugins.Shopstr.Data;
 using BTCPayServer.Plugins.Shopstr.Services;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BTCPayServer.Plugins.Shopstr;
@@ -21,13 +18,6 @@ public class Plugin : BaseBTCPayServerPlugin
         services.AddUIExtension("header-nav", "ShopstrPluginNav");
 
         services.AddHostedService<ApplicationPartsLogger>();
-        services.AddHostedService<PluginMigrationRunner>();
-        services.AddSingleton<ShopstrDbContextFactory>();
-        services.AddDbContext<ShopstrDbContext>((provider, o) =>
-        {
-            var factory = provider.GetRequiredService<ShopstrDbContextFactory>();
-            factory.ConfigureBuilder(o);
-        });
         services.AddSingleton<ShopstrPluginService>();
         services.AddSingleton<ShopstrService>();
 

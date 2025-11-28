@@ -1,17 +1,16 @@
-﻿using System;
+﻿using BTCPayServer.Client.Models;
+using BTCPayServer.Plugins.Shopstr.Models.External;
+using BTCPayServer.Plugins.Shopstr.Models.Nostr;
+using Microsoft.CodeAnalysis;
+using Microsoft.Extensions.Logging;
+using NBitcoin.Secp256k1;
+using Newtonsoft.Json;
+using NNostr.Client;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
-using NBitcoin.Secp256k1; 
-using NNostr.Client;
-using Newtonsoft.Json;
-using BTCPayServer.Plugins.Shopstr.Models.Nostr;
-using Microsoft.Extensions.Logging;
-using AngleSharp.Dom.Events;
-using BTCPayServer.Client.Models;
-using BTCPayServer.Plugins.Shopstr.Models.External;
 
 namespace BTCPayServer.Plugins.Shopstr.Services
 {
@@ -25,14 +24,14 @@ namespace BTCPayServer.Plugins.Shopstr.Services
 
             var relayUris = relays.Select(r => new Uri(r)).ToArray();
             var client = new CompositeNostrClient(relayUris);
-            client.MessageReceived += (s, e) =>
+           /* client.MessageReceived += (s, e) =>
             {
                 _logger.LogInformation($"Shopstr Plugin: Message received: {e}");
             };
             client.InvalidMessageReceived += (s, e) =>
             {
                 _logger.LogWarning($"Shopstr Plugin: Invalid message: {e}");
-            };
+            };*/
 
             var filter = new NostrSubscriptionFilter()
             {
@@ -73,7 +72,15 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 {
                     await asyncEnumerator.DisposeAsync();
                 }
-                //             var events = await client.SubscribeForEvents([filter], false, CancellationToken.None).ToListAsync();
+
+                events.RemoveAll(e =>
+                {
+                    var clientTag = e.Tags?.FirstOrDefault(tag => tag.TagIdentifier == "client");
+                    if (clientTag == null)
+                        return true;
+                    return !clientTag.Data?.Any(data => data?.Contains("BTCPayServer-Shopstr", StringComparison.OrdinalIgnoreCase) == true) ?? true;
+                });
+
                 foreach (var nostrEvent in events)
                 {
                     try
@@ -84,7 +91,8 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                                 Name = nostrEvent.GetTaggedData("title")[0],
                                 Description = nostrEvent.GetTaggedData("summary")[0],
                                 Price = decimal.Parse(nostrEvent.GetTaggedData("price")[0]),
-                                Images = nostrEvent.GetTaggedData("image")
+                                Status = nostrEvent.GetTaggedData("status")[0] == "active",
+                                Image = nostrEvent.GetTaggedData("image")[0]
                             });
 
                     }
@@ -109,7 +117,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 .ToList();
         }
 
-        public async Task CreateShopstrProduct(AppItem appItem, string shopCurrency, Nip5StoreSettings nostrSettings, string baseUrl)
+        public async Task CreateShopstrProduct(AppItem appItem, string shopCurrency, Nip5StoreSettings nostrSettings, string baseUrl, bool bUnpublished = false)
         {
             try
             {
@@ -122,31 +130,39 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     Content = appItem.Description ?? "",
                 };
                 nostrEvent.SetTag("d", appItem.Id);
-                nostrEvent.SetTag("alt", "Product listing: " + appItem.Title);
-                nostrEvent.SetTag("client", ["Shopstr",
-                                         "31990:45cb19e028027e0f726459086eafeadd661d0f57486069c81a80e5163538522a:5b4b1e9d6ecaded5a1250ae7117aa5974e50d2e4af3b24d40a125b7e0c0dd68f",
-                                         "wss://eden.nostr.land/"]);
-                nostrEvent.SetTag("title", appItem.Title);
-                nostrEvent.SetTag("summary", appItem.Description ?? "");
-                nostrEvent.SetTag("price", [appItem.Price.ToString(), shopCurrency]);
-                nostrEvent.SetTag("t", "shopstr");
-                if (appItem.Categories != null && appItem.Categories.Length > 0)
-                    nostrEvent.SetTag("t", appItem.Categories);
-                nostrEvent.SetTag("status", appItem.Disabled ? "sold" : "active");
-                
-                var imageUrl = appItem.Image;
-                if (!string.IsNullOrEmpty(imageUrl))
+                nostrEvent.SetTag("client", ["BTCPayServer-Shopstr",
+                             $"31990:{nostrSettings.PubKey}:btcpayserver-shopstr",
+                             relayUris[0].ToString()]);
+
+                if (bUnpublished)
                 {
-                    if (imageUrl.StartsWith("~/", StringComparison.Ordinal))
+                    nostrEvent.SetTag("title", "[UNPUBLISHED] " + appItem.Title);
+                    nostrEvent.SetTag("status", "deleted");
+                } else
+                {
+                    nostrEvent.SetTag("title", appItem.Title);
+                    nostrEvent.SetTag("alt", "Product listing: " + appItem.Title);
+                    nostrEvent.SetTag("summary", appItem.Description ?? "");
+                    nostrEvent.SetTag("price", [appItem.Price.ToString(), shopCurrency]);
+                    nostrEvent.SetTag("t", "shopstr");
+                    if (appItem.Categories != null && appItem.Categories.Length > 0)
+                        nostrEvent.SetTag("t", appItem.Categories);
+                    nostrEvent.SetTag("status", appItem.Disabled || appItem.Inventory == 0 ? "sold" : "active");
+                    var imageUrl = appItem.Image;
+
+                    if (!string.IsNullOrEmpty(imageUrl))
                     {
-                        imageUrl = imageUrl.Substring(1);
+                        if (imageUrl.StartsWith("~/", StringComparison.Ordinal))
+                        {
+                            imageUrl = imageUrl.Substring(1);
+                        }
+
+                        if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                        {
+                            imageUrl = baseUrl.TrimEnd('/') + imageUrl;
+                        }
+                        nostrEvent.SetTag("image", imageUrl);
                     }
-                    
-                    if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                    {
-                        imageUrl = baseUrl.TrimEnd('/') + imageUrl;
-                    }
-                    nostrEvent.SetTag("image", imageUrl);
                 }
                 
                 var tagsForSerialization = nostrEvent.Tags
@@ -175,8 +191,6 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                         NullValueHandling = NullValueHandling.Include 
                     });
 
-                _logger.LogDebug($"Shopstr Plugin: Event serialized for ID computation: {serialized}");
-
                 using var sha256 = System.Security.Cryptography.SHA256.Create();
                 var hash = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(serialized));
                 nostrEvent.Id = Convert.ToHexString(hash).ToLowerInvariant();
@@ -184,26 +198,22 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 var ecPrivKey = ECPrivKey.Create(Convert.FromHexString(nostrSettings.PrivateKey));
                 nostrEvent.Signature = NostrExtensions.ComputeSignature(nostrEvent, ecPrivKey);
 
-                _logger.LogInformation($"Shopstr Plugin: Event created with ID: {nostrEvent.Id}");
-                _logger.LogDebug($"Shopstr Plugin: Event signature: {nostrEvent.Signature}");
-                _logger.LogDebug($"Shopstr Plugin: Image URL: {imageUrl}");
-
                 using (var client = new CompositeNostrClient(relayUris))
                 {
-                    client.MessageReceived += (s, e) =>
+                   /* client.MessageReceived += (s, e) =>
                     {
                         _logger.LogInformation($"Shopstr Plugin: Message received: {e}");
                     };
                     client.InvalidMessageReceived += (s, e) =>
                     {
                         _logger.LogWarning($"Shopstr Plugin: Invalid message: {e}");
-                    };
+                    };*/
 
                     await client.ConnectAndWaitUntilConnected(CancellationToken.None);
-                    _logger.LogInformation($"Shopstr Plugin: Connected to {relayUris.Length} relay(s)");
+                    //_logger.LogInformation($"Shopstr Plugin: Connected to {relayUris.Length} relay(s)");
 
                     await client.PublishEvent(nostrEvent, CancellationToken.None);
-                    _logger.LogInformation($"Shopstr Plugin: Event {nostrEvent.Id} published to relay(s)");
+                    //_logger.LogInformation($"Shopstr Plugin: Event {nostrEvent.Id} published to relay(s)");
 
                     await Task.Delay(TimeSpan.FromSeconds(2));
 

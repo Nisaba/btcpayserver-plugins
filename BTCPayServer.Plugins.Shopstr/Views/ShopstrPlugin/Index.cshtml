@@ -99,7 +99,7 @@ else
                            class="form-control"
                            id="ShopStrShop"
                            name="ShopStrShop"
-                           value="@Model.ShopstrSettings.ShopStrShop"
+                           value=""
                            required
                            placeholder="Find this value in your Shopstr shop profile" />
                 </td>
@@ -116,23 +116,23 @@ else
         <thead>
             <tr>
                 <th>App Name</th>
-                <th>To Add</th>
-                <th>To Update</th>
-                <th>To Remove</th>
+                <th></th>
                 <th></th>
             </tr>
         </thead>
         <tbody>
             @foreach (var app in Model.StoreApps)
             {
-                var lstAppSentItemsToShopstr = Model.SentItemsToShopstr.Where(o => o.AppId == app.Id).ToList();
-                app.GetListItemsToSync(lstAppSentItemsToShopstr);
                 <tr>
                     <td>@app.Name</td>
-                    <td>@app.ItemsToAdd.Count</td>
-                    <td>@app.ItemsToUpdate.Count</td>
-                    <td>@app.ItemsToRemove.Count</td>
-                    <td> <button id="BtSync@{@app.Id}" class="btn btn-secondary" onclick="DoSynchronize('@app.Id')">Synchronize</button></td>
+                    <td>
+                        <button id="BtPublish@{@app.Id}" class="btn btn-secondary" onclick="DoPublish('@app.Id')">Publish on Nostr</button>
+                        <img id="WaitPublish@{@app.Id}" src="/Resources/img/waiting.webp" style="display:none" />
+                    </td>
+                    <td>
+                        <button id="BtUnpublish@{@app.Id}" class="btn btn-secondary" onclick="DoUnpublish('@app.Id')">Unpublish</button>
+                        <img id="WaitUnpublish@{@app.Id}" src="/Resources/img/waiting.webp" style="display:none" />
+                    </td>
                 </tr>
             }
         </tbody>
@@ -143,22 +143,28 @@ else
     <script type="text/javascript" >
         var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
-        function DoSynchronize(appId) {
-            $('#BtSync' + appId).hide();
+        function DoPublish(appId) {
+            if (confirm("Are you sure you want to publish ? This will add and/or update your BTCPay products to Shpstr marketplace... ") == false) {
+                return;
+            }
+            $('#BtPublish' + appId).hide();
+            $('#WaitPublish' + appId).show();
             $.ajax({
-                url: 'Shopstr/SendToShopstr',
+                url: 'Shopstr/PublishToShopstr',
                 type: 'POST',
                 data: { appId: appId },
                 headers: {
                     'RequestVerificationToken': antiForgeryToken
                 },
                 success: function(result) {
-                    alert("Sync to Shopstr OK");
-                    $('#BtSync' + appId).show();
+                    alert("Publish to Shopstr OK");
+                    $('#WaitPublish' + appId).hide();
+                    $('#BtPublish' + appId).show();
                 },
                 error: function (xhr, status, error) {
                     alert("Error: " + error + " - " + xhr.responseText);
-                    $('#BtSync' + appId).show();
+                    $('#WaitPublish' + appId).hide();
+                    $('#BtPublish' + appId).show();
                 }
             });
         }
