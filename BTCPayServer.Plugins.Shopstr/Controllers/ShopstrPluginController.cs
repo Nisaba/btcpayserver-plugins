@@ -3,6 +3,7 @@ using BTCPayServer.Client;
 using BTCPayServer.Plugins.Shopstr.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -48,45 +49,76 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
 
         [HttpPost]
         [Route("PublishToShopstr")]
-        public async Task PublishToShopstr([FromRoute] string storeId, [FromForm] string appId)
+        public async Task<IActionResult> PublishToShopstr([FromRoute] string storeId, [FromForm] string appId)
         {
-            var app = await _pluginService.GetStoreApp(appId);
-            if (!app.ShopItems.Any())
+            try
             {
-                return;
-            }
-            var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
-            var nostrSettings = await _pluginService.GetNostrSettings(storeId);
-            var productsFromShopstr = await _shopstrService.GetShopstrProducts(nostrSettings.PubKey, nostrSettings.Relays);
-
-            foreach (var item in app.ShopItems)
-            {
-                var existingProduct = productsFromShopstr.FirstOrDefault(p => p.Id == item.Id);
-                var bPublishToShopStr = existingProduct == null ? true : !existingProduct.Compare(item);
-                if (bPublishToShopStr)
+                var app = await _pluginService.GetStoreApp(appId);
+                if (!app.ShopItems.Any())
                 {
-                    await _shopstrService.CreateShopstrProduct(item, app.CurrencyCode, nostrSettings, baseUrl);
+                    return Ok();
                 }
+                var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+                var nostrSettings = await _pluginService.GetNostrSettings(storeId);
+
+                await _shopstrService.InitializeClient(nostrSettings.Relays);
+
+                var productsFromShopstr = await _shopstrService.GetShopstrProducts(nostrSettings.PubKey);
+
+                foreach (var item in app.ShopItems)
+                {
+                    var existingProduct = productsFromShopstr.FirstOrDefault(p => p.Id == item.Id);
+                    var bPublishToShopStr = existingProduct == null ? true : !existingProduct.Compare(item);
+                    if (bPublishToShopStr)
+                    {
+                        await _shopstrService.CreateShopstrProduct(item, app.CurrencyCode, nostrSettings, baseUrl);
+                    }
+                }
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            finally
+            {
+                _shopstrService.DisposeClient();
             }
         }
 
         [HttpPost]
-        [Route("UnPublishToShopstr")]
-        public async Task UnPublishToShopstr([FromRoute] string storeId, [FromForm] string appId)
+        [Route("UnPublishFromShopstr")]
+        public async Task<IActionResult> UnPublishFromShopstr([FromRoute] string storeId, [FromForm] string appId)
         {
-            var app = await _pluginService.GetStoreApp(appId);
-            if (!app.ShopItems.Any())
+            try
             {
-                return;
-            }
-            var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
-            var nostrSettings = await _pluginService.GetNostrSettings(storeId);
+                var app = await _pluginService.GetStoreApp(appId);
+                if (!app.ShopItems.Any())
+                {
+                    return Ok(); ;
+                }
 
-            foreach (var item in app.ShopItems)
+                var nostrSettings = await _pluginService.GetNostrSettings(storeId);
+
+                await _shopstrService.InitializeClient(nostrSettings.Relays);
+                var productsFromShopstr = await _shopstrService.GetShopstrProducts(nostrSettings.PubKey);
+
+                foreach (var item in app.ShopItems)
+                {
+                    var existingProduct = productsFromShopstr.FirstOrDefault(p => p.Id == item.Id);
+                    if (existingProduct != null)
+                        await _shopstrService.CreateShopstrProduct(item, app.CurrencyCode, nostrSettings, "", true);
+                }
+                return Ok();
+            }
+            catch (Exception ex)
             {
-                await _shopstrService.CreateShopstrProduct(item, app.CurrencyCode, nostrSettings, baseUrl, true);
+                return BadRequest(ex.Message);
+            }
+            finally
+            {
+                _shopstrService.DisposeClient();
             }
         }
-
     }
 }

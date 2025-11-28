@@ -18,20 +18,44 @@ namespace BTCPayServer.Plugins.Shopstr.Services
     {
         private readonly ILogger<ShopstrService> _logger = logger;
 
-        public async Task<List<NostrProduct>> GetShopstrProducts(string merchantPubKeyHex, string[] relays) 
+        private CompositeNostrClient _client;
+
+        public async Task InitializeClient(string[] relayUrls)
+        {
+            try {
+                var relayUris = relayUrls.Select(r => new Uri(r)).ToArray();
+                _client = new CompositeNostrClient(relayUris);
+                /* _client.MessageReceived += (s, e) =>
+                 {
+                     _logger.LogInformation($"Shopstr Plugin: Message received: {e}");
+                 };
+                 _client.InvalidMessageReceived += (s, e) =>
+                 {
+                     _logger.LogWarning($"Shopstr Plugin: Invalid message: {e}");
+                 };*/
+                await _client.ConnectAndWaitUntilConnected(CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Shopstr Plugin: Error while opening Nostr connection");
+            }
+        }
+
+        public void DisposeClient()
+        {
+            try
+            {
+                _client?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Shopstr Plugin: Error while disposing Nostr connection");
+            }
+        }
+
+        public async Task<List<NostrProduct>> GetShopstrProducts(string merchantPubKeyHex) 
         {
             var products = new List<NostrProduct>();
-
-            var relayUris = relays.Select(r => new Uri(r)).ToArray();
-            var client = new CompositeNostrClient(relayUris);
-           /* client.MessageReceived += (s, e) =>
-            {
-                _logger.LogInformation($"Shopstr Plugin: Message received: {e}");
-            };
-            client.InvalidMessageReceived += (s, e) =>
-            {
-                _logger.LogWarning($"Shopstr Plugin: Invalid message: {e}");
-            };*/
 
             var filter = new NostrSubscriptionFilter()
             {
@@ -41,11 +65,10 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             
             try
             {
-                await client.ConnectAndWaitUntilConnected(CancellationToken.None);
                 var events = new List<NostrEvent>();
 
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                var asyncEnumerator = client.SubscribeForEvents([filter], false, cts.Token).GetAsyncEnumerator();
+                var asyncEnumerator = _client.SubscribeForEvents([filter], false, cts.Token).GetAsyncEnumerator();
 
                 try
                 {
@@ -105,10 +128,6 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Shopstr Plugin: Error while parsing Nostr products");
-            }
-            finally
-            {
-                client.Dispose();
             }
 
             return products
@@ -198,41 +217,26 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 var ecPrivKey = ECPrivKey.Create(Convert.FromHexString(nostrSettings.PrivateKey));
                 nostrEvent.Signature = NostrExtensions.ComputeSignature(nostrEvent, ecPrivKey);
 
-                using (var client = new CompositeNostrClient(relayUris))
+                await _client.PublishEvent(nostrEvent, CancellationToken.None);
+                //_logger.LogInformation($"Shopstr Plugin: Event {nostrEvent.Id} published to relay(s)");
+
+                await Task.Delay(TimeSpan.FromSeconds(2));
+
+                var filter = new NostrSubscriptionFilter()
                 {
-                   /* client.MessageReceived += (s, e) =>
-                    {
-                        _logger.LogInformation($"Shopstr Plugin: Message received: {e}");
-                    };
-                    client.InvalidMessageReceived += (s, e) =>
-                    {
-                        _logger.LogWarning($"Shopstr Plugin: Invalid message: {e}");
-                    };*/
+                    Ids = new[] { nostrEvent.Id }
+                };
 
-                    await client.ConnectAndWaitUntilConnected(CancellationToken.None);
-                    //_logger.LogInformation($"Shopstr Plugin: Connected to {relayUris.Length} relay(s)");
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                var verification = await _client.SubscribeForEvents([filter], false, cts.Token).FirstOrDefaultAsync();
 
-                    await client.PublishEvent(nostrEvent, CancellationToken.None);
-                    //_logger.LogInformation($"Shopstr Plugin: Event {nostrEvent.Id} published to relay(s)");
-
-                    await Task.Delay(TimeSpan.FromSeconds(2));
-
-                    var filter = new NostrSubscriptionFilter()
-                    {
-                        Ids = new[] { nostrEvent.Id }
-                    };
-
-                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                    var verification = await client.SubscribeForEvents([filter], false, cts.Token).FirstOrDefaultAsync();
-
-                    if (verification != null)
-                    {
-                        _logger.LogInformation($"Shopstr Plugin: Event {nostrEvent.Id} confirmed on relay(s)");
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"Shopstr Plugin: Event {nostrEvent.Id} could not be verified on relay(s)");
-                    }
+                if (verification != null)
+                {
+                    _logger.LogInformation($"Shopstr Plugin: Event {nostrEvent.Id} confirmed on relay(s)");
+                }
+                else
+                {
+                    _logger.LogWarning($"Shopstr Plugin: Event {nostrEvent.Id} could not be verified on relay(s)");
                 }
             }
             catch (Exception ex)

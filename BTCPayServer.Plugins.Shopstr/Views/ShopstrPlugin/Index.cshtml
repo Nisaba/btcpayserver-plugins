@@ -143,30 +143,56 @@ else
     <script type="text/javascript" >
         var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
-        function DoPublish(appId) {
-            if (confirm("Are you sure you want to publish ? This will add and/or update your BTCPay products to Shpstr marketplace... ") == false) {
+    function DoPublish(appId) {
+        if (confirm("Are you sure you want to publish ? This will add and/or update your BTCPay products to Shopstr marketplace... ") == false) {
+            return;
+        }
+        $('#BtPublish' + appId).hide();
+        $('#WaitPublish' + appId).show();
+        $.ajax({
+            url: 'Shopstr/PublishToShopstr',
+            type: 'POST',
+            data: { appId: appId },
+            headers: {
+                'RequestVerificationToken': antiForgeryToken
+            },
+            success: function(result) {
+                alert("Publish to Shopstr OK");
+                $('#WaitPublish' + appId).hide();
+                $('#BtPublish' + appId).show();
+            },
+            error: function (xhr, status, error) {
+                alert("Error: " + error + " - " + xhr.responseText);
+                $('#WaitPublish' + appId).hide();
+                $('#BtPublish' + appId).show();
+            }
+        });
+    }
+
+        function DoUnpublish(appId) {
+            if (confirm("Are you sure you want to unpublish ? This will remove your BTCPay products from Shopstr marketplace... ") == false) {
                 return;
             }
-            $('#BtPublish' + appId).hide();
-            $('#WaitPublish' + appId).show();
+            $('#BtUnpublish' + appId).hide();
+            $('#WaitUnpublish' + appId).show();
             $.ajax({
-                url: 'Shopstr/PublishToShopstr',
+                url: 'Shopstr/UnPublishFromShopstr',
                 type: 'POST',
                 data: { appId: appId },
                 headers: {
                     'RequestVerificationToken': antiForgeryToken
                 },
                 success: function(result) {
-                    alert("Publish to Shopstr OK");
-                    $('#WaitPublish' + appId).hide();
-                    $('#BtPublish' + appId).show();
+                    alert("Unpublish from Shopstr OK");
+                    $('#WaitUnpublish' + appId).hide();
+                    $('#BtUnpublish' + appId).show();
                 },
                 error: function (xhr, status, error) {
                     alert("Error: " + error + " - " + xhr.responseText);
-                    $('#WaitPublish' + appId).hide();
-                    $('#BtPublish' + appId).show();
+                    $('#WaitUnpublish' + appId).hide();
+                    $('#BtUnpublish' + appId).show();
                 }
             });
         }
-    </script>
+</script>
 }
