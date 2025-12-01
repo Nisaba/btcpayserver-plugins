@@ -96,6 +96,8 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
 
                     _context.Settings.Add(settings);
                     await _context.SaveChangesAsync();
+
+                    _logger.LogInformation($"LnOnchainSwapsPlugin: InitSettings created new settings for store {storeId}");
                 }
             }
             catch (Exception e)
