@@ -76,6 +76,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         {
             try
             {
+                var bAdd = false;
                 var settings = await _context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
@@ -83,18 +84,23 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     {
                         StoreId = storeId
                     };
-
-                    var mnemonicBoltz = new Mnemonic(Wordlist.English, WordCount.Twelve);
-                    var masterExtKeyBoltz = mnemonicBoltz.DeriveExtKey();
-                    var derivedKeyBoltz = masterExtKeyBoltz.Derive(new KeyPath("m/0"));
-                    settings.RefundMnemonic = mnemonicBoltz.ToString();
-                    settings.RefundPubKey = derivedKeyBoltz.PrivateKey.PubKey.ToHex();
-
-                    _context.Settings.Add(settings);
-                    await _context.SaveChangesAsync();
-
-                    _logger.LogInformation($"LnOnchainSwapsPlugin: InitSettings created new settings for store {storeId}");
+                    bAdd = true;
                 }
+
+                var mnemonicBoltz = new Mnemonic(Wordlist.English, WordCount.Twelve);
+                var masterExtKeyBoltz = mnemonicBoltz.DeriveExtKey();
+                var derivedKeyBoltz = masterExtKeyBoltz.Derive(new KeyPath("m/0"));
+                settings.RefundMnemonic = mnemonicBoltz.ToString();
+                settings.RefundPubKey = derivedKeyBoltz.PrivateKey.PubKey.ToHex();
+
+                if (bAdd)
+                    _context.Settings.Add(settings);
+                else
+                    _context.Settings.Update(settings);
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"LnOnchainSwapsPlugin: InitSettings created new settings for store {storeId}");
             }
             catch (Exception e)
             {
