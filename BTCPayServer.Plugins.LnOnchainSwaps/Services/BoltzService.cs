@@ -87,7 +87,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
         }
 
-        public async Task<BoltzSwap> CreateLnToOnChainSwapAsync(string btcReceptionAdress, Key privateKey, decimal btcAmount)
+        public async Task<BoltzSwap> CreateLnToOnChainSwapAsync(string btcReceptionAdress, string pubKey, decimal btcAmount)
         {
             string sRep = "";
             try
@@ -97,7 +97,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 {
                     ["from"] = "BTC",
                     ["to"] = "BTC",
-                    ["claimPublicKey"] = privateKey.PubKey.ToHex(),
+                    ["claimPublicKey"] = pubKey,
                     ["address"] = btcReceptionAdress,
            //         ["addressSignature"] = SignMessage(btcReceptionAdress, privateKey),
                     ["onchainAmount"] = btcAmount * 100000000,

@@ -26,11 +26,10 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
         {
-            var bHasPrivateKey = await _pluginService.InitSettings(storeId);
+            await _pluginService.InitSettings(storeId);
             var model = new LnOnchainSwapsViewModel()
             {
                 StoreId = storeId,
-                HasPrivateKey = bHasPrivateKey,
                 WalletConfig = await _pluginService.GetBalances(storeId, $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}"),
                 Swaps = await _pluginService.GetStoreSwaps(storeId),
                 IsPayoutCreated = (TempData[WellKnownTempData.SuccessMessage] ?? "").ToString().Contains("Payout created!")
@@ -99,7 +98,7 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
         public async Task<FileContentResult> DownloadRefundJson([FromRoute] string storeId)
         {
             var settings = await _pluginService.GetStoreSettings(storeId);
-            if (settings == null || !settings.HasPrivateKey)
+            if (settings == null)
             {
                 throw new InvalidOperationException("No private key for this store");
             }
@@ -110,25 +109,6 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
             {
                 FileDownloadName = $"boltz-rescue-key-btcpay-{storeId}.json"
             };
-        }
-
-        [HttpPost]
-        [Route("GetInfosFromHW")]
-        public async Task<IActionResult> GetInfosFromHW([FromRoute] string storeId, [FromForm] string vaultResponse)
-        {
-            try
-            {
-                dynamic vaultData = JsonConvert.DeserializeObject<dynamic>(vaultResponse);
-                if (!vaultData.Success)
-                    return BadRequest($"Vault signing failed: {vaultData.Error}");
-
-                await _pluginService.InitSettingsFromHW(storeId, vaultData);
-                return RedirectToAction("Index", routeValues: new { storeId = storeId });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest("Failed to generate rescue file");
-            }
         }
 
     }
