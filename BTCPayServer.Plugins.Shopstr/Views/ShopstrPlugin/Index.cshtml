@@ -75,7 +75,7 @@ else
 }
 else
 {
-    <div class="alert alert-success d-flex align-items-center" role="alert">
+    <div class="alert d-flex align-items-center" role="alert">
         <span class="me-2"><i class="fa fa-check-circle"></i></span>
         @Model.StoreApps.Count Shop app(s) ready to be synchronized in this store.
     </div>
@@ -116,6 +116,7 @@ else
         <thead>
             <tr>
                 <th>App Name</th>
+                <th>Items</th>
                 <th></th>
                 <th></th>
             </tr>
@@ -125,11 +126,12 @@ else
             {
                 <tr>
                     <td>@app.Name</td>
-                    <td>
+                    <td>@app.ShopItems.Count</td>
+                    <td align="center">
                         <button id="BtPublish@{@app.Id}" class="btn btn-secondary" onclick="DoPublish('@app.Id')">Publish on Nostr</button>
                         <img id="WaitPublish@{@app.Id}" src="/Resources/img/waiting.webp" style="display:none" />
                     </td>
-                    <td>
+                    <td align="center">
                         <button id="BtUnpublish@{@app.Id}" class="btn btn-secondary" onclick="DoUnpublish('@app.Id')">Unpublish</button>
                         <img id="WaitUnpublish@{@app.Id}" src="/Resources/img/waiting.webp" style="display:none" />
                     </td>

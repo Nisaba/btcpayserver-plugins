@@ -102,11 +102,11 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
 
                 await _shopstrService.InitializeClient(nostrSettings.Relays);
                 var productsFromShopstr = await _shopstrService.GetShopstrProducts(nostrSettings.PubKey);
+                productsFromShopstr.RemoveAll(e => !e.Status);
 
                 foreach (var item in app.ShopItems)
                 {
-                    var existingProduct = productsFromShopstr.FirstOrDefault(p => p.Id == item.Id);
-                    if (existingProduct != null)
+                    if (productsFromShopstr.Any(p => p.Id == item.Id))
                         await _shopstrService.CreateShopstrProduct(item, app.CurrencyCode, nostrSettings, "", true);
                 }
                 return Ok();

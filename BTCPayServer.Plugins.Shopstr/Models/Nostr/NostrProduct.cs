@@ -6,6 +6,7 @@ namespace BTCPayServer.Plugins.Shopstr.Models.Nostr
     public class NostrProduct
     {
         public string Id { get; set; }
+        public int TimeStamp { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public decimal Price { get; set; }

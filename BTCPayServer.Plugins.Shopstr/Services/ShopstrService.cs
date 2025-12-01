@@ -110,10 +110,11 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     {
                             products.Add(new NostrProduct
                             {
-                                Id = nostrEvent.Id,
+                                Id = nostrEvent.GetTaggedData("d")[0],
+                                TimeStamp = int.TryParse(nostrEvent.GetTaggedData("published_at")?.FirstOrDefault(), out var timestamp) ? timestamp : 0,
                                 Name = nostrEvent.GetTaggedData("title")[0],
                                 Description = nostrEvent.GetTaggedData("summary")[0],
-                                Price = decimal.Parse(nostrEvent.GetTaggedData("price")[0]),
+                                Price = decimal.TryParse(nostrEvent.GetTaggedData("price")?.FirstOrDefault(), out var price) ? price : 0,
                                 Status = nostrEvent.GetTaggedData("status")[0] == "active",
                                 Image = nostrEvent.GetTaggedData("image")[0]
                             });
@@ -131,6 +132,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             }
 
             return products
+                .OrderByDescending(p => p.TimeStamp)
                 .GroupBy(p => p.Id)
                 .Select(g => g.First())
                 .ToList();
@@ -141,11 +143,12 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             try
             {
                 var relayUris = nostrSettings.Relays.Select(r => new Uri(r)).ToArray();
+                var dtNow = DateTimeOffset.UtcNow;
                 var nostrEvent = new NostrEvent()
                 {
                     PublicKey = nostrSettings.PubKey,
                     Kind = 30402,
-                    CreatedAt = DateTimeOffset.UtcNow,
+                    CreatedAt = dtNow,
                     Content = appItem.Description ?? "",
                 };
                 nostrEvent.SetTag("d", appItem.Id);
@@ -167,6 +170,8 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     if (appItem.Categories != null && appItem.Categories.Length > 0)
                         nostrEvent.SetTag("t", appItem.Categories);
                     nostrEvent.SetTag("status", appItem.Disabled || appItem.Inventory == 0 ? "sold" : "active");
+                    nostrEvent.SetTag("published_at", dtNow.ToUnixTimeSeconds().ToString());
+
                     var imageUrl = appItem.Image;
 
                     if (!string.IsNullOrEmpty(imageUrl))
