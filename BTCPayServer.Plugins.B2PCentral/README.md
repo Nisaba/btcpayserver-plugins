@@ -1,7 +1,7 @@
 # BTCPayServer.Plugins.B2PCentral
 
 If you want to sell bitcoins you earn with your store activity, this plugin allows you to get P2P bitcoin buy offers from <a href="https://www.b2p-central.com" target="b2p">B2P Central</a>, according to your onchain and lightning wallets balances and the store's default currency.
-Offers are provided by HodlHodl, Paxful, NoOnes, LocalCoinSwap and Peach for onchain bitcoins. And by LNp2pBot and RoboSats for Lightning bitcoins.
+Offers are provided by HodlHodl, NoOnes, LocalCoinSwap and Peach for onchain bitcoins. And by LNp2pBot, Mostro and RoboSats for Lightning bitcoins.
 
 First, you need to get a B2P Central API key <a href="https://getapi.b2p-central.com" target="b2pApi">here</a>.
 The configuration section is available for users having CanModifyStoreSettings rights. Click on Save button, then you have a Test button to check it's OK.
