@@ -76,7 +76,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         {
             try
             {
-                var bAdd = false;
                 var settings = await _context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
@@ -84,23 +83,14 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     {
                         StoreId = storeId
                     };
-                    bAdd = true;
-                }
+                    var mnemonicBoltz = new Mnemonic(Wordlist.English, WordCount.Twelve);
+                    settings.RefundMnemonic = mnemonicBoltz.ToString();
 
-                var mnemonicBoltz = new Mnemonic(Wordlist.English, WordCount.Twelve);
-                var masterExtKeyBoltz = mnemonicBoltz.DeriveExtKey();
-                var derivedKeyBoltz = masterExtKeyBoltz.Derive(new KeyPath("m/0"));
-                settings.RefundMnemonic = mnemonicBoltz.ToString();
-                settings.RefundPubKey = derivedKeyBoltz.PrivateKey.PubKey.ToHex();
-
-                if (bAdd)
                     _context.Settings.Add(settings);
-                else
-                    _context.Settings.Update(settings);
+                    await _context.SaveChangesAsync();
 
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"LnOnchainSwapsPlugin: InitSettings created new settings for store {storeId}");
+                    _logger.LogInformation($"LnOnchainSwapsPlugin: InitSettings created new settings for store {storeId}");
+                }
             }
             catch (Exception e)
             {
@@ -166,6 +156,14 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
         }
 
+        private string GetRefundPublicKeyForSwap(string refundMnemonic)
+        {
+            var mnemonic = new Mnemonic(refundMnemonic, Wordlist.English);
+            var masterKey = mnemonic.DeriveExtKey();
+            var derivedKey = masterKey.Derive(new KeyPath("m/44/0/0/0"));
+            return derivedKey.PrivateKey.PubKey.ToHex();
+        }
+
         public async Task<BoltzSwap> DoOnchainToLnSwap (string storeId, string RequestGetAbsoluteRoot, OnChainToLnSwap swap)
         {
             try 
@@ -186,11 +184,12 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 }
 
                 var settings = _context.Settings.First(a => a.StoreId == storeId);
+                var refundPubKey = GetRefundPublicKeyForSwap(settings.RefundMnemonic);
 
                 var bolt11 = BOLT11PaymentRequest.Parse(lnInvoice, Network.Main);
                 var paymentHash = bolt11.PaymentHash.ToString();
 
-                var boltz = await _boltzService.CreateOnChainToLnSwapAsync(lnInvoice, settings.RefundPubKey, paymentHash);
+                var boltz = await _boltzService.CreateOnChainToLnSwapAsync(lnInvoice, refundPubKey, paymentHash);
                 await CreatePayout(store, boltz);
                 boltz.StoreId = store.Id;
                 boltz.BTCPayInvoiceId = invoiceId;
@@ -227,12 +226,11 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 {
                     btcAddress = swap.ExternalOnChainAddress;
                 }
-#if DEBUG
-                btcAddress = "bc1qe2zu5x08dyy0fmh87q4qc745qjx5cuzjd4ygf0";
-#endif
 
                 var settings = _context.Settings.First(a => a.StoreId == storeId);
-                var boltz = await _boltzService.CreateLnToOnChainSwapAsync(btcAddress, settings.RefundPubKey, swap.BtcAmount);
+                var claimPubKey = GetRefundPublicKeyForSwap(settings.RefundMnemonic);
+
+                var boltz = await _boltzService.CreateLnToOnChainSwapAsync(btcAddress, claimPubKey, swap.BtcAmount);
                 boltz.ExpectedAmount = ExtractAmountFromLnInvoice(boltz.Destination);
 
                 await CreatePayout(store, boltz);

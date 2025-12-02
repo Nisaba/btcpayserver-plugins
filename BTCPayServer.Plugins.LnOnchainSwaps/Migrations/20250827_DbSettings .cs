@@ -19,8 +19,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
                 columns: table => new
                 {
                     StoreId = table.Column<string>(nullable: false),
-                    EncryptedRefundMnemonic = table.Column<string>(nullable: false),
-                    RefundPubKey = table.Column<string>(nullable: false)
+                    EncryptedRefundMnemonic = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {

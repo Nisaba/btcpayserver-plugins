@@ -11,7 +11,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
         [Key]
         public string StoreId { get; set; }
         public string EncryptedRefundMnemonic { get; set; }
-        public string RefundPubKey { get; set; }
 
         private const int SaltSize = 16;
         private const int KeySize = 32;
