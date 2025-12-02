@@ -43,6 +43,10 @@ What's new in v 1.2.6 :
 What's new in v 1.3.1 :
 - Add Mostro as Lightning provider
 
+What's new in v 1.3.2 :
+- Remove Paxful as onchain provider (not working anymore)
+- Minor improvements
+
 
 
 

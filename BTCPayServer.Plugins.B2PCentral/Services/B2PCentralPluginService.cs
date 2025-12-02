@@ -33,7 +33,6 @@ public class B2PCentralPluginService
     private readonly B2PCentralPluginDbContextFactory _pluginDbContextFactory;
     private readonly StoreRepository _storeRepository;
     private readonly ILogger _logger;
-    private readonly B2PCentralPluginDbContext context;
     private readonly HttpClient _httpClient;
     private readonly HttpClient _httpClient2;
     private readonly BTCPayNetworkProvider _networkProvider;
@@ -60,7 +59,6 @@ public class B2PCentralPluginService
         _pluginDbContextFactory = pluginDbContextFactory;
         _storeRepository = storeRepository;
         _logger = logger;
-        context = _pluginDbContextFactory.CreateContext();
         _networkProvider = networkProvider;
         _paymentMethodHandlerDictionary = paymentMethodHandlerDictionary;
         _walletProvider = walletProvider;
@@ -98,6 +96,7 @@ public class B2PCentralPluginService
     {
         try
         {
+            using var context = _pluginDbContextFactory.CreateContext();
             var settings = await context.B2PSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
             if (settings == null)
             {
@@ -117,6 +116,7 @@ public class B2PCentralPluginService
     {
         try
         {
+            using var context = _pluginDbContextFactory.CreateContext();
             var dbSettings = await context.B2PSettings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
             if (dbSettings == null)
             {

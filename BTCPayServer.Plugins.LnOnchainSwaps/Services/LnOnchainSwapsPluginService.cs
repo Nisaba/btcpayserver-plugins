@@ -236,6 +236,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 await CreatePayout(store, boltz);
                 boltz.StoreId = store.Id;
                 boltz.BTCPayInvoiceId = invoiceId;
+
                 boltz.OriginalAmount = swap.BtcAmount;
 
                 _context.BoltzSwaps.Add(boltz);

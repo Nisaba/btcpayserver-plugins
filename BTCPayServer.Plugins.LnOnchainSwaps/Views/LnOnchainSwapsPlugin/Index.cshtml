@@ -151,7 +151,7 @@
         <tr>
             <td>
                 Percent to swap:&nbsp;
-                <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setSwapValues()" />
+                <input id="percentToSend" type="number" min="0" max="100" value="95" oninput="setSwapValues()" />
                 <br />
             </td>
             <td width="25"></td>
@@ -295,9 +295,12 @@
                         var detailsId = $"swapDetails_{swap.SwapId}";
                         <tr class="mass-action-row item">
                             <td class="text-break align-middle invoiceId-col">
-                                <a href="#" onclick="GetSwapStatus('@swap.SwapId');return false;" class="invoice-details-link">@swap.SwapId</a>
+                                @swap.SwapId
                             </td>
-                            <td><div class="badge badge-expired" id="status-@swap.SwapId">@swap.Status</div></td>
+                            <td>
+                                <a href="#" onclick="GetSwapStatus('@swap.SwapId');return false;"><i class="fa fa-rotate"></i></a>&nbsp;
+                                <div class="badge badge-expired" id="status-@swap.SwapId">@swap.Status</div>
+                            </td>
                             <td>@swap.DateT</td>
                             <td><div class="badge badge-expired">@swap.Type</div></td>
                             <td align="right">@swap.OriginalAmount</td>
