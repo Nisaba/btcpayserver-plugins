@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.Shopstr.Services
@@ -39,6 +40,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                             Name = app.Name,
                             StoreDataId = app.StoreDataId,
                             CurrencyCode = appSettings.Currency,
+                            Location = ExtractGeoRegion(appSettings.HtmlMetaTags),
                             ShopItems = AppService.Parse(appSettings.Template).ToList()
                         });
                     }
@@ -59,37 +61,47 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             }
         }
 
-
-    /*    public async Task UpdateSettings(string storeId, string shopstrShop)
+        private string ExtractGeoRegion(string htmlMetaTags)
         {
-            try
-            {
-                using (var context = _dbContextFactory.CreateContext())
-                {
-                    var dbSettings = await context.ShopstrSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
-                    if (dbSettings == null)
-                    {
-                        context.ShopstrSettings.Add( new ShopstrSettings
-                        {
-                            StoreId = storeId,
-                            ShopStrShop = shopstrShop.Trim()
-                        });
-                    }
-                    else
-                    {
-                        dbSettings.ShopStrShop = shopstrShop.Trim();
-                        context.ShopstrSettings.Update(dbSettings);
-                    }
+            if (string.IsNullOrEmpty(htmlMetaTags))
+                return null;
 
-                    await context.SaveChangesAsync();
-                }
-            }
-            catch (Exception e)
+            var pattern = @"<meta\s+name=[""']?geo\.region[""']?\s+content=[""']?([^""'>\s]+)[""']?";
+            var match = Regex.Match(htmlMetaTags, pattern, RegexOptions.IgnoreCase);
+
+            return match.Success ? match.Groups[1].Value : null;
+        }
+
+        /*    public async Task UpdateSettings(string storeId, string shopstrShop)
             {
-                _logger.LogError(e, "ShopstrPlugin:UpdateSettings()");
-                throw;
-            }
-        }*/
+                try
+                {
+                    using (var context = _dbContextFactory.CreateContext())
+                    {
+                        var dbSettings = await context.ShopstrSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
+                        if (dbSettings == null)
+                        {
+                            context.ShopstrSettings.Add( new ShopstrSettings
+                            {
+                                StoreId = storeId,
+                                ShopStrShop = shopstrShop.Trim()
+                            });
+                        }
+                        else
+                        {
+                            dbSettings.ShopStrShop = shopstrShop.Trim();
+                            context.ShopstrSettings.Update(dbSettings);
+                        }
+
+                        await context.SaveChangesAsync();
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "ShopstrPlugin:UpdateSettings()");
+                    throw;
+                }
+            }*/
 
         public async Task<ShopstrAppData> GetStoreApp (string appId)
         {
@@ -104,6 +116,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     Name = app.Name,
                     StoreDataId = app.StoreDataId,
                     CurrencyCode = appSettings.Currency,
+                    Location = ExtractGeoRegion(appSettings.HtmlMetaTags),
                     ShopItems = AppService.Parse(appSettings.Template).ToList()
                 };
             }

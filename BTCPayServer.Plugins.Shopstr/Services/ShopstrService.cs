@@ -96,6 +96,9 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     await asyncEnumerator.DisposeAsync();
                 }
 
+                var serializedEvent = JsonConvert.SerializeObject(events[0], Formatting.Indented);
+                _logger.LogInformation($"Shopstr Plugin: First event received: {serializedEvent}");
+
                 events.RemoveAll(e =>
                 {
                     var clientTag = e.Tags?.FirstOrDefault(tag => tag.TagIdentifier == "client");
@@ -111,9 +114,12 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                             products.Add(new NostrProduct
                             {
                                 Id = nostrEvent.GetTaggedData("d")[0],
-                                TimeStamp = int.TryParse(nostrEvent.GetTaggedData("published_at")?.FirstOrDefault(), out var timestamp) ? timestamp : 0,
                                 Name = nostrEvent.GetTaggedData("title")[0],
                                 Description = nostrEvent.GetTaggedData("summary")[0],
+                                Categories = nostrEvent.GetTaggedData("t").Where(t => t != "shopstr").ToArray(),
+                                Location = nostrEvent.GetTaggedData("location")?.FirstOrDefault() ?? "",
+                                TimeStamp = int.TryParse(nostrEvent.GetTaggedData("published_at")?.FirstOrDefault(), out var timestamp) ? timestamp : 0,
+                                Qty = int.TryParse(nostrEvent.GetTaggedData("quantity")?.FirstOrDefault(), out var qty) ? qty : 0,
                                 Price = decimal.TryParse(nostrEvent.GetTaggedData("price")?.FirstOrDefault(), out var price) ? price : 0,
                                 Status = nostrEvent.GetTaggedData("status")[0] == "active",
                                 Image = nostrEvent.GetTaggedData("image")[0]
@@ -138,7 +144,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 .ToList();
         }
 
-        public async Task CreateShopstrProduct(AppItem appItem, string shopCurrency, Nip5StoreSettings nostrSettings, string baseUrl, bool bUnpublished = false)
+        public async Task CreateShopstrProduct(AppItem appItem, string shopCurrency, string shopLocation,  Nip5StoreSettings nostrSettings, string baseUrl, bool bUnpublished = false)
         {
             try
             {
@@ -166,6 +172,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     nostrEvent.SetTag("alt", "Product listing: " + appItem.Title);
                     nostrEvent.SetTag("summary", appItem.Description ?? "");
                     nostrEvent.SetTag("price", [appItem.Price.ToString(), shopCurrency]);
+                    nostrEvent.SetTag("location", shopLocation);
                     nostrEvent.SetTag("t", "shopstr");
                     if (appItem.Categories != null && appItem.Categories.Length > 0)
                         nostrEvent.SetTag("t", appItem.Categories);
