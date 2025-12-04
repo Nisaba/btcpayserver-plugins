@@ -310,7 +310,7 @@
                             <td class="text-break align-middle invoiceId-col">
                                 <div class="badge badge-settled">@swap.SwapId</div>
                             </td>
-                            <td>
+                            <td align="center">
                                 <a href="#" onclick="GetSwapStatus('@swap.SwapId');return false;">
                                     <vc:icon symbol="actions-refresh" class="icon-refresh"/>
                                 </a>&nbsp;
@@ -347,6 +347,7 @@
         </div>
         <script>
             function GetSwapStatus(swapId) {
+                $('#status-' + swapId).hide();
                 $.ajax({
                     url: 'LnOnchainSwaps/GetSwapStatus',
                     type: 'GET',
@@ -357,9 +358,11 @@
                         } else {
                             console.log('No status returned for swap ID:', swapId);
                         }
+                        $('#status-' + swapId).show();
                     },
                     error: function (dataError) {
                         console.log('Error fetching swap status:', dataError);
+                        $('#status-' + swapId).show();
                     }
                 });
             }
