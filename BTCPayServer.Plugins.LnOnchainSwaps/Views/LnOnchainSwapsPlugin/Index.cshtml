@@ -156,7 +156,7 @@
         <tr>
             <td>
                 Percent to swap:&nbsp;
-                <input id="percentToSend" type="number" min="0" max="100" value="95" oninput="setSwapValues()" />
+                <input id="percentToSend" type="number" min="0" max="99" value="95" oninput="setSwapValues()" />
                 <br />
             </td>
             <td width="25"></td>
@@ -193,7 +193,12 @@
         const percentToSend = document.getElementById('percentToSend');
 
         function setSwapValues() {
-            const percent = parseFloat(percentToSend.value) || 0;
+            const percent = parseFloat(percentToSend.value);
+            if (percent > 99) {
+                alert('You must keep some sats for the transaction fees... Please reduce the amount');
+                percentToSend.value = 99;
+                return;
+            }
             const isOnChain =  $("input[name='chkFromSwap']:checked").val() === "FromOnchain";
             const fiatBalance = isOnChain ? @Model.WalletConfig.OnChainFiatBalance : @Model.WalletConfig.OffChainFiatBalance;
             const btcBalance = isOnChain ? OnChainBalance : OffChainBalance;
@@ -303,7 +308,7 @@
                                 @swap.SwapId
                             </td>
                             <td>
-                                <a href="#" onclick="GetSwapStatus('@swap.SwapId');return false;"><i class="fa fa-rotate"></i></a>&nbsp;
+                                <a href="#" onclick="GetSwapStatus('@swap.SwapId');return false;"><vc:icon symbol="refresh" /></a>&nbsp;
                                 <div class="badge badge-expired" id="status-@swap.SwapId">@swap.Status</div>
                             </td>
                             <td>@swap.DateT</td>
