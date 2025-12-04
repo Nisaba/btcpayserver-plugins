@@ -305,7 +305,7 @@
                         var detailsId = $"swapDetails_{swap.SwapId}";
                         <tr class="mass-action-row item">
                             <td class="text-break align-middle invoiceId-col">
-                                @swap.SwapId
+                                <div class="badge">@swap.SwapId</div>
                             </td>
                             <td>
                                 <a href="#" onclick="GetSwapStatus('@swap.SwapId');return false;"><vc:icon symbol="refresh" /></a>&nbsp;
