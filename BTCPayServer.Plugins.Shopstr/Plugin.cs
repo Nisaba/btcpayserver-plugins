@@ -1,5 +1,6 @@
 ﻿using BTCPayServer.Abstractions.Contracts;
 using BTCPayServer.Abstractions.Models;
+using BTCPayServer.Plugins.Shopstr.Data;
 using BTCPayServer.Plugins.Shopstr.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,11 +16,12 @@ public class Plugin : BaseBTCPayServerPlugin
 
     public override void Execute(IServiceCollection services)
     {
-        services.AddUIExtension("header-nav", "ShopstrPluginNav");
-
-        services.AddHostedService<ApplicationPartsLogger>();
-        services.AddSingleton<ShopstrPluginService>();
-        services.AddSingleton<ShopstrService>();
+        services.AddUIExtension("header-nav", "ShopstrPluginNav")
+                .AddHostedService<ApplicationPartsLogger>()
+                .AddHostedService<PluginMigrationRunner>()
+                .AddSingleton<ShopstrDbContextFactory>()
+                .AddSingleton<ShopstrService>()
+                .AddSingleton<ShopstrPluginService>();
 
     }
 

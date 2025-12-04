@@ -12,9 +12,6 @@
 @{
     ViewData.SetActivePage(PluginNavPages.Index, "Lightning/Onchain Swaps plugin");
 }
-@section PageHeadContent {
-    <link href="~/css/plugin.css" rel="stylesheet" asp-append-version="true" />
-}
 
 <table><tr>
     <td>
@@ -311,10 +308,10 @@
                                 <div class="badge badge-settled">@swap.SwapId</div>
                             </td>
                             <td align="center">
+                                <div class="badge badge-expired" id="status-@swap.SwapId">@swap.Status</div><br />
                                 <a href="#" onclick="GetSwapStatus('@swap.SwapId');return false;">
-                                    <vc:icon symbol="actions-refresh" class="icon-refresh"/>
-                                </a>&nbsp;
-                                <div class="badge badge-expired" id="status-@swap.SwapId">@swap.Status</div>
+                                    <vc:icon symbol="actions-refresh" class="icon-refresh" />
+                                </a>
                             </td>
                             <td>@swap.DateT</td>
                             <td><div class="badge badge-expired">@swap.Type</div></td>

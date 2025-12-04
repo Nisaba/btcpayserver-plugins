@@ -1,8 +1,11 @@
 ﻿using BTCPayServer.Plugins.PointOfSale;
+using BTCPayServer.Plugins.Shopstr.Data;
+using BTCPayServer.Plugins.Shopstr.Models;
 using BTCPayServer.Plugins.Shopstr.Models.External;
 using BTCPayServer.Plugins.Shopstr.Models.Shopstr;
 using BTCPayServer.Services.Apps;
 using BTCPayServer.Services.Stores;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -14,11 +17,13 @@ namespace BTCPayServer.Plugins.Shopstr.Services
 {
     public class ShopstrPluginService(ILogger<ShopstrPluginService> logger,
                                     StoreRepository storeRepository,
-                                    AppService appService)
+                                    AppService appService,
+                                    ShopstrDbContextFactory shopstrDbContextFactory)
     {
         private readonly ILogger<ShopstrPluginService> _logger = logger;
         private readonly StoreRepository _storeRepository = storeRepository;
         private readonly AppService _appService = appService;
+        private readonly ShopstrDbContextFactory _dbContextFactory = shopstrDbContextFactory;
 
         public async Task<ShopstrViewModel> GetStoreViewModel(string storeId)
         {
@@ -34,13 +39,14 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     var appSettings = app.GetSettings<PointOfSaleSettings>();
                     if ( appSettings.DefaultView != PointOfSale.PosViewType.Light)
                     {
-                        filteredApps.Add(new ShopstrAppData
+                       var storeAppSettings = await GetSettings(storeId, app.Id);
+                       filteredApps.Add(new ShopstrAppData
                         {
                             Id = app.Id,
                             Name = app.Name,
                             StoreDataId = app.StoreDataId,
                             CurrencyCode = appSettings.Currency,
-                            Location = ExtractGeoRegion(appSettings.HtmlMetaTags),
+                            Location = storeAppSettings?.Location ?? string.Empty,
                             ShopItems = AppService.Parse(appSettings.Template).ToList()
                         });
                     }
@@ -61,36 +67,41 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             }
         }
 
-        private string ExtractGeoRegion(string htmlMetaTags)
+        public async Task<ShopstrSettings> GetSettings(string storeId, string appId)
         {
-            if (string.IsNullOrEmpty(htmlMetaTags))
-                return null;
-
-            var pattern = @"<meta\s+name=[""']?geo\.region[""']?\s+content=[""']?([^""'>\s]+)[""']?";
-            var match = Regex.Match(htmlMetaTags, pattern, RegexOptions.IgnoreCase);
-
-            return match.Success ? match.Groups[1].Value : null;
+            try
+            {
+                using (var context = _dbContextFactory.CreateContext())
+                {
+                    return await context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId && a.AppId == appId);
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "ShopstrPlugin:GetSettings()");
+                throw;
+            }
         }
-
-        /*    public async Task UpdateSettings(string storeId, string shopstrShop)
+        public async Task UpdateSettings(string storeId, string appId, string location)
             {
                 try
                 {
                     using (var context = _dbContextFactory.CreateContext())
                     {
-                        var dbSettings = await context.ShopstrSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
+                        var dbSettings = await context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                         if (dbSettings == null)
                         {
-                            context.ShopstrSettings.Add( new ShopstrSettings
+                            context.Settings.Add( new ShopstrSettings
                             {
                                 StoreId = storeId,
-                                ShopStrShop = shopstrShop.Trim()
+                                AppId = appId,
+                                Location = location.Trim()
                             });
                         }
                         else
                         {
-                            dbSettings.ShopStrShop = shopstrShop.Trim();
-                            context.ShopstrSettings.Update(dbSettings);
+                            dbSettings.Location = location.Trim();
+                            context.Settings.Update(dbSettings);
                         }
 
                         await context.SaveChangesAsync();
@@ -101,7 +112,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     _logger.LogError(e, "ShopstrPlugin:UpdateSettings()");
                     throw;
                 }
-            }*/
+            }
 
         public async Task<ShopstrAppData> GetStoreApp (string appId)
         {
@@ -110,13 +121,14 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 if (app == null)
                     throw new Exception("App not found");
                 var appSettings = app.GetSettings<PointOfSaleSettings>();
+                var shopstrSettings = await GetSettings(app.StoreDataId, app.Id);
                 return new ShopstrAppData
                 {
                     Id = app.Id,
                     Name = app.Name,
                     StoreDataId = app.StoreDataId,
                     CurrencyCode = appSettings.Currency,
-                    Location = ExtractGeoRegion(appSettings.HtmlMetaTags),
+                    Location = shopstrSettings?.Location ?? string.Empty,
                     ShopItems = AppService.Parse(appSettings.Template).ToList()
                 };
             }

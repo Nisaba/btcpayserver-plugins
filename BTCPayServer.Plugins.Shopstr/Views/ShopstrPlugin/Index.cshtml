@@ -117,6 +117,8 @@ else
             <tr>
                 <th>App Name</th>
                 <th>Items</th>
+                <th>Location</th>
+                <th></th>
                 <th></th>
                 <th></th>
             </tr>
@@ -125,8 +127,10 @@ else
             @foreach (var app in Model.StoreApps)
             {
                 <tr>
-                    <td>@app.Name</td>
-                    <td>@app.ShopItems.Count</td>
+                    <td><div class="badge badge-settled">@app.Name</div></td>
+                    <td><div class="badge badge-expired">@app.ShopItems.Count</div></td>
+                    <td width="150"><input id="txtAppLocation@{@app.Id}" type="text" value="@app.Location" placeholder="must match shopstr filters" /></td>
+                    <td><button class="btn btn-secondary" onclick="BtSaveApp('@app.Id')">Save</button></td>
                     <td align="center">
                         <button id="BtPublish@{@app.Id}" class="btn btn-secondary" onclick="DoPublish('@app.Id')">Publish on Nostr</button>
                         <img id="WaitPublish@{@app.Id}" src="/Resources/img/waiting.webp" style="display:none" />
@@ -144,6 +148,27 @@ else
 
     <script type="text/javascript" >
         var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+    
+    function BtSaveApp(appId) {
+        var location = $('#txtAppLocation' + appId).val();
+        $('#BtSave' + appId).hide();
+        $.ajax({
+            url: 'Shopstr/SaveSettings',
+            type: 'POST',
+            data: { appId: appId, location: location },
+            headers: {
+                'RequestVerificationToken': antiForgeryToken
+            },
+            success: function(result) {
+                alert("App settings saved");
+                $('#BtSave' + appId).show();
+            },
+            error: function (xhr, status, error) {
+                alert("Error: " + error + " - " + xhr.responseText);
+                $('#BtSave' + appId).show();
+            }
+        });
+    }
 
     function DoPublish(appId) {
         if (confirm("Are you sure you want to publish ? This will add and/or update your BTCPay products to Shopstr marketplace... ") == false) {
