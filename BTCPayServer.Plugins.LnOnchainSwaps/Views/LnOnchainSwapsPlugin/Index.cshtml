@@ -14,19 +14,19 @@
 }
 
 <table><tr>
-        <td>
-            <img src="/Resources/img/LnOnchainSwaps.webp" />
-        </td>
-        <td width="20"></td>
-        <td>
-            <h2>@ViewData["Title"]</h2>
-            <br />
-            <p>
-                Allows you to forward received funds to <a href="https://www.LnOnchainSwaps.com/" target="_blank">LnOnchainSwaps</a>, a Swiss offramp provider. Get funds in fiat (EUR, CHF or other currencies) or make a swap to the crypto you want.<br />
-                Please read our documentation <a href="https://github.com/LnOnchainSwaps/btcpay-plugin/blob/master/BTCPayServer.Plugins.LnOnchainSwaps/README.md" target="_blank">here</a>.
-            </p>
-        </td>
-    </tr></table>
+    <td>
+        <img src="/Resources/img/LnOnchainSwaps.webp" />
+    </td>
+    <td width="20"></td>
+    <td>
+        <h2>@ViewData["Title"]</h2>
+        <br />
+        <p>
+            Effortlessly perform Boltz swaps to balance your internal BTC onchain and Lightning treasury. You can also easily swap to external wallets.<br />
+            Please read our documentation <a href="https://github.com/LnOnchainSwaps/btcpay-plugin/blob/master/BTCPayServer.Plugins.LnOnchainSwaps/README.md" target="_blank">here</a>.
+        </p>
+    </td>
+</tr></table>
 <br />
 
 <partial name="_StatusMessage" />
@@ -45,30 +45,35 @@
     }
 
 <h4>Boltz Rescue file</h4>
-    <p>In case of a swap fails, blablabla...</p>
-    <button class="btn btn-primary" onclick="onDownloadRescue()">Download Boltz Rescue file</button>
-    <br />
-    <br />
+<table class="table table-sm mt-0 mx-0">
+    <tr>
+        <td>
+            <p>In case of a swap fails, download this rescue file and upload it to the <a href="https://boltz.exchange/rescue/external" target="_blank">Boltz Rescue External Swap page</a>.</p>
+        </td><td width="20"></td>
+        <td><button class="btn btn-primary" onclick="onDownloadRescue()">Download Boltz Rescue file</button></td>
+    </tr>
+</table>
+   
+<script type="text/javascript">
+    function onDownloadRescue(){
+        const form = document.createElement('form');
+        form.method = 'GET';
+        form.action = 'LnOnchainSwaps/DownloadRefundJson';
 
-    <script type="text/javascript">
-        function onDownloadRescue(){
-            const form = document.createElement('form');
-            form.method = 'GET';
-            form.action = 'LnOnchainSwaps/DownloadRefundJson';
+        const inputFg = document.createElement('input');
+        inputFg.type = 'hidden';
+        inputFg.name = '__RequestVerificationToken';
+        inputFg.value = antiForgeryToken;
+        form.appendChild(inputFg);
 
-            const inputFg = document.createElement('input');
-            inputFg.type = 'hidden';
-            inputFg.name = '__RequestVerificationToken';
-            inputFg.value = antiForgeryToken;
-            form.appendChild(inputFg);
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
 
-            document.body.appendChild(form);
-            form.submit();
-        }
-    </script>
-
-    <h4>Operations</h4>
-    <br />
+<br /><hr />
+<h4>Operations</h4>
+<br />
 
     <table class="table table-sm mt-0 mx-0">
         <tr>

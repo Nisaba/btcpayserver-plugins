@@ -7,7 +7,7 @@
 	<!-- Plugin specific properties -->
 	<PropertyGroup>
 		<Product>LnOnchainSwaps</Product>
-		<Description>Allows you to swap your OnChain / Lightning balance.</Description>
+		<Description>Effortlessly perform Boltz swaps to balance your internal BTC onchain and Lightning treasury. You can also easily swap to external wallets.</Description>
 		<Version>1.0.1</Version>
 	</PropertyGroup>
 
