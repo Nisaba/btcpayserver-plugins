@@ -24,23 +24,7 @@ using BTCPayServer.Payouts;
 
 namespace BTCPayServer.Plugins.Exolix.Services
 {
-    public class ExolixPluginService
-    {
-        private readonly ILogger<ExolixPluginService> _logger;
-        private readonly ExolixPluginDbContext _context;
-        private readonly BTCPayServerClient _client;
-        private readonly StoreRepository _storeRepository;
-        private readonly HttpClient _httpClient2;
-        private readonly WalletHistogramService _walletHistogramService;
-        private readonly BTCPayWalletProvider _walletProvider;
-        private readonly BTCPayNetworkProvider _networkProvider;
-        private readonly PaymentMethodHandlerDictionary _handlers;
-        private readonly PullPaymentHostedService _pullPaymentService;
-        private readonly ApplicationDbContextFactory _btcPayDbContextFactory;
-        private readonly PayoutMethodHandlerDictionary _payoutHandlers;
-        private readonly PullPaymentHostedService _pullPaymentHostedService;
-
-        public ExolixPluginService(ExolixPluginDbContextFactory pluginDbContextFactory,
+    public class ExolixPluginService(ExolixPluginDbContextFactory pluginDbContextFactory,
                                       BTCPayNetworkProvider networkProvider,
                                       BTCPayWalletProvider walletProvider,
                                       StoreRepository storeRepository,
@@ -51,29 +35,27 @@ namespace BTCPayServer.Plugins.Exolix.Services
                                        BTCPayServerClient client,
                                       PayoutMethodHandlerDictionary payoutHandlers,
                                       PullPaymentHostedService pullPaymentHostedService,
-                                      PullPaymentHostedService pullPaymentService,
                                        ApplicationDbContextFactory btcPayDbContextFactory
                                        )
-        {
-            _logger = logger;
-            _context = pluginDbContextFactory.CreateContext();
-            _client = client;
-            _httpClient2 = httpClient2;
-            _storeRepository = storeRepository;
-            _walletHistogramService = walletHistogramService;
-            _networkProvider = networkProvider;
-            _walletProvider = walletProvider;
-            _handlers = handlers;
-            _pullPaymentService = pullPaymentService;
-            _payoutHandlers = payoutHandlers;
-            _pullPaymentHostedService = pullPaymentHostedService;
-            _btcPayDbContextFactory = btcPayDbContextFactory;
-        }
+    {
+        private readonly ILogger<ExolixPluginService> _logger = logger;
+        private readonly BTCPayServerClient _client = client;
+        private readonly StoreRepository _storeRepository = storeRepository;
+        private readonly HttpClient _httpClient2 = httpClient2;
+        private readonly WalletHistogramService _walletHistogramService = walletHistogramService;
+        private readonly BTCPayWalletProvider _walletProvider = walletProvider;
+        private readonly BTCPayNetworkProvider _networkProvider = networkProvider;
+        private readonly PaymentMethodHandlerDictionary _handlers = handlers;
+        private readonly ApplicationDbContextFactory _btcPayDbContextFactory = btcPayDbContextFactory   ;
+        private readonly PayoutMethodHandlerDictionary _payoutHandlers = payoutHandlers;
+        private readonly PullPaymentHostedService _pullPaymentHostedService = pullPaymentHostedService;
+
 
         public async Task<ExolixSettings> GetStoreSettings(string storeId)
         {
             try
             {
+                using var _context = pluginDbContextFactory.CreateContext();
                 var settings = await _context.ExolixSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
@@ -94,6 +76,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
         {
             try
             {
+                using var _context = pluginDbContextFactory.CreateContext();
                 var dbSettings = await _context.ExolixSettings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
                 if (dbSettings == null)
                 {
@@ -123,6 +106,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
         {
             try
             {
+                using var _context = pluginDbContextFactory.CreateContext();
                 var txs = await _context.ExolixTransactions.Where(a => a.StoreId == storeId).ToListAsync();
                 return txs.Reverse<ExolixTx>().ToList();
             }
@@ -137,6 +121,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
         {
             try
             {
+                using var _context = pluginDbContextFactory.CreateContext();
                 var txs = await _context.ExolixMerchantTransactions.Where(a => a.StoreId == storeId).ToListAsync();
                 return txs.Reverse<ExolixMerchantTx>().ToList();
             }
@@ -151,6 +136,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
         {
             try
             {
+                using var _context = pluginDbContextFactory.CreateContext();
                 await _context.ExolixTransactions.AddAsync(tx);
                 await _context.SaveChangesAsync();
             }
@@ -165,6 +151,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
         {
             try
             {
+                using var _context = pluginDbContextFactory.CreateContext();
                 await _context.ExolixMerchantTransactions.AddAsync(tx);
                 await _context.SaveChangesAsync();
             }
@@ -298,7 +285,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 };
 
                 var store = await _storeRepository.FindStore(storeId);
-                var ppId = await _pullPaymentService.CreatePullPayment(store, ppRequest);
+                var ppId = await _pullPaymentHostedService.CreatePullPayment(store, ppRequest);
 
                 await using var btcPayCtx = _btcPayDbContextFactory.CreateContext();
                 var pp = await btcPayCtx.PullPayments.FindAsync(ppId);

@@ -86,10 +86,15 @@
                     <label class="form-label" asp-for="@Model.Settings.AcceptedCryptos">
                         Accepted Cryptos (press Control to select multi values):
                     </label>
-                    <select asp-for="@Model.Settings.AcceptedCryptos" class="form-select w-auto" id="default-payment-method" size="25">
-                        @foreach (var crypto in ExolixSettings.AvailableCryptos)
+                    <select asp-for="@Model.Settings.AcceptedCryptos" class="form-select w-auto" id="default-payment-method" size="25" multiple>
+                        @foreach (var group in ExolixSettings.AvailableCryptos.GroupBy(c => c.Value.Category).OrderBy(g => g.Key))
                         {
-                            <option value="@crypto.Key">@crypto.Value</option>
+                            <optgroup label="@ExolixSettings.CategoryLabels[group.Key]">
+                                @foreach (var crypto in group.OrderBy(c => c.Value.Name))
+                                {
+                                    <option value="@crypto.Key">@crypto.Value.Name</option>
+                                }
+                            </optgroup>
                         }
                     </select>
                 </div>
@@ -167,9 +172,14 @@
                             </td>
                             <td>
                                 <select id="lstSwapToCrypto" class="form-select w-auto" onchange="setSwapCurrency()">
-                                    @foreach (var crypto in ExolixSettings.AvailableCryptos)
+                                    @foreach (var group in ExolixSettings.AvailableCryptos.GroupBy(c => c.Value.Category).OrderBy(g => g.Key))
                                     {
-                                        <option value="@crypto.Key">@crypto.Value</option>
+                                        <optgroup label="@ExolixSettings.CategoryLabels[group.Key]">
+                                            @foreach (var crypto in group.OrderBy(c => c.Value.Name))
+                                            {
+                                                <option value="@crypto.Key">@crypto.Value.Name</option>
+                                            }
+                                        </optgroup>
                                     }
                                 </select>
                             </td>

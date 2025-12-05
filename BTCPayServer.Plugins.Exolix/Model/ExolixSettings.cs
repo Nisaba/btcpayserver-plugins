@@ -31,32 +31,59 @@ public class ExolixSettings
         }
     }
 
-    public static readonly IReadOnlyDictionary<string, string> AvailableCryptos = new ReadOnlyDictionary<string, string>(
-        new Dictionary<string, string>
+    public enum CryptoCategory
+    {
+        Altcoin,
+        StablecoinUSD,
+        StablecoinEUR
+    }
+
+    public record CryptoInfo(string Name, CryptoCategory Category);
+
+    public static readonly IReadOnlyDictionary<string, CryptoInfo> AvailableCryptos = new ReadOnlyDictionary<string, CryptoInfo>(
+        new Dictionary<string, CryptoInfo>
         {
-            { "XMR", "Monero" },
-            { "LTC", "Litecoin" },
-            { "DOGE", "Dogecoin" },
-            { "ETH", "Ethereum" },
-            { "TRX", "Tron" },
-            { "POL", "Polygon" },
-            { "BNB", "Binance Coin" },
-            { "ADA", "Cardano" },
-            { "SOL", "Solana" },
-            { "DAI", "DAI" },
-            { "USDT-ETH", "USDT Tether (Ethereum)" },
-            { "USDT-TRX", "USDT Tether (Tron)" },
-            { "USDT-BSC", "USDT Tether (Binance)" },
-            { "USDT-SOL", "USDT Tether (Solana)" },
-            { "USDT-NEAR", "USDT Tether (NEAR)" },
-            { "USDT-MATIC", "USDT Tether (Polygon)" },
-            { "USDT-TON", "USDT Tether (TON)" },
-            { "USDT-AVAXC", "USDT Tether (Avalanche)" },
-            { "USDC-ETH", "USDC Circle (Ethereum)" },
-            { "USDC-BSC", "USDC Circle (Binance)" },
-            { "USDC-SOL", "USDC Circle (Solana)" },
-            { "USDC-NEAR", "USDC Circle (NEAR)" },
-            { "USDC-MATIC", "USDC Circle (Polygon)" },
-            { "USDC-AVAXC", "USDC Circle (Avalanche)" }
+            // Altcoins
+            { "XMR", new CryptoInfo("Monero", CryptoCategory.Altcoin) },
+            { "LTC", new CryptoInfo("Litecoin", CryptoCategory.Altcoin) },
+            { "DOGE", new CryptoInfo("Dogecoin", CryptoCategory.Altcoin) },
+            { "ETH", new CryptoInfo("Ethereum", CryptoCategory.Altcoin) },
+            { "TRX", new CryptoInfo("Tron", CryptoCategory.Altcoin) },
+            { "POL", new CryptoInfo("Polygon", CryptoCategory.Altcoin) },
+            { "BNB", new CryptoInfo("Binance Coin", CryptoCategory.Altcoin) },
+            { "ADA", new CryptoInfo("Cardano", CryptoCategory.Altcoin) },
+            { "SOL", new CryptoInfo("Solana", CryptoCategory.Altcoin) },
+            
+            // Stablecoins USD
+            { "DAI", new CryptoInfo("DAI", CryptoCategory.StablecoinUSD) },
+            { "USDT-ETH", new CryptoInfo("USDT Tether (Ethereum)", CryptoCategory.StablecoinUSD) },
+            { "USDT-TRX", new CryptoInfo("USDT Tether (Tron)", CryptoCategory.StablecoinUSD) },
+            { "USDT-BSC", new CryptoInfo("USDT Tether (Binance)", CryptoCategory.StablecoinUSD) },
+            { "USDT-SOL", new CryptoInfo("USDT Tether (Solana)", CryptoCategory.StablecoinUSD) },
+            { "USDT-NEAR", new CryptoInfo("USDT Tether (NEAR)", CryptoCategory.StablecoinUSD) },
+            { "USDT-MATIC", new CryptoInfo("USDT Tether (Polygon)", CryptoCategory.StablecoinUSD) },
+            { "USDT-TON", new CryptoInfo("USDT Tether (TON)", CryptoCategory.StablecoinUSD) },
+            { "USDT-AVAXC", new CryptoInfo("USDT Tether (Avalanche)", CryptoCategory.StablecoinUSD) },
+            { "USDC-ETH", new CryptoInfo("USDC Circle (Ethereum)", CryptoCategory.StablecoinUSD) },
+            { "USDC-BSC", new CryptoInfo("USDC Circle (Binance)", CryptoCategory.StablecoinUSD) },
+            { "USDC-SOL", new CryptoInfo("USDC Circle (Solana)", CryptoCategory.StablecoinUSD) },
+            { "USDC-NEAR", new CryptoInfo("USDC Circle (NEAR)", CryptoCategory.StablecoinUSD) },
+            { "USDC-MATIC", new CryptoInfo("USDC Circle (Polygon)", CryptoCategory.StablecoinUSD) },
+            { "USDC-AVAXC", new CryptoInfo("USDC Circle (Avalanche)", CryptoCategory.StablecoinUSD) },
+            
+            // Stablecoins EUR
+            { "EURT-ETH", new CryptoInfo("EURT Tether (Ethereum)", CryptoCategory.StablecoinEUR) },
+            { "EURI-ETH", new CryptoInfo("EURI Eurite (Ethereum)", CryptoCategory.StablecoinEUR) },
+            { "EURI-BSC", new CryptoInfo("EURI Eurite (Binance)", CryptoCategory.StablecoinEUR) },
+            { "DEURO-ETH", new CryptoInfo("DEURO Decentralized Euro (Ethereum)", CryptoCategory.StablecoinEUR) },
+
         });
+
+    [NotMapped]
+    public static readonly Dictionary<CryptoCategory, string> CategoryLabels = new()
+    {
+        { CryptoCategory.Altcoin, "Altcoins" },
+        { CryptoCategory.StablecoinUSD, "Stablecoins USD" },
+        { CryptoCategory.StablecoinEUR, "Stablecoins EUR" }
+    };
 }

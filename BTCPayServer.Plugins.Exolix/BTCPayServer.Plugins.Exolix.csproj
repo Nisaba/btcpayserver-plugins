@@ -8,7 +8,7 @@
 	<PropertyGroup>
 		<Product>Exolix</Product>
 		<Description>Allows your customers to pay in Altcoins with Exolix in a seamless way. As merchant, you can also swap your balance. Please read our documentation for updates history</Description>
-		<Version>1.2.1</Version>
+		<Version>1.3.1</Version>
 	</PropertyGroup>
 
 	<!-- Plugin development properties -->

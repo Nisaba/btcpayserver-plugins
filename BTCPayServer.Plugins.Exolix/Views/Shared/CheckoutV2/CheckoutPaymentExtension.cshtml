@@ -1,7 +1,9 @@
+@using BTCPayServer.Abstractions.Services
 @using BTCPayServer.Plugins.Exolix.Model
 @using BTCPayServer.Plugins.Exolix.Services
 @using Newtonsoft.Json
 @using Newtonsoft.Json.Linq
+@inject Safe Safe
 
 @inject ExolixPluginService pluginService
 @{
@@ -11,10 +13,24 @@
     if (settings?.Enabled is not true || settings.AcceptedCryptos.Count == 0) return;
     var invoiceId = ((JObject)JObject.Parse(JsonConvert.SerializeObject(Model)))["InvoiceId"].Value<string>();
 
+    // Grouper les cryptos acceptées par catégorie
+    var groupedCryptos = settings.AcceptedCryptos
+        .Where(crypto => ExolixSettings.AvailableCryptos.ContainsKey(crypto))
+        .Select(crypto => new
+        {
+            Code = crypto,
+            Info = ExolixSettings.AvailableCryptos[crypto]
+        })
+        .GroupBy(x => x.Info.Category)
+        .OrderBy(g => g.Key);
+
     var vueModel = new
     {
         acceptedCryptos = settings.AcceptedCryptos,
-        availableCryptos = ExolixSettings.AvailableCryptos,
+        availableCryptos = ExolixSettings.AvailableCryptos.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.Name
+        ),
         invoiceId = invoiceId,
         storeId = storeId
     };
@@ -47,7 +63,7 @@
 
 <script src="~/vendor/vue-qrcode/vue-qrcode.min.js" asp-append-version="true"></script>
 <script>
-    window.exolixData = @Html.Raw(JsonConvert.SerializeObject(vueModel));
+    window.exolixData = @Safe.Raw(JsonConvert.SerializeObject(vueModel));
 </script>
 <script src="~/Resources/js/exolixComponent.js"></script>
 <template id="exolix-checkout-template">
@@ -74,15 +90,18 @@
                 <div v-if="due > 0" class="mb-3">
                     <label class="form-label">Select Payment Method:</label>
                     <select class="form-select" v-model="selectedCrypto" :disabled="loading">
-                        @foreach (var crypto in settings.AcceptedCryptos)
+                        @foreach (var group in groupedCryptos)
                         {
-                            if (ExolixSettings.AvailableCryptos.TryGetValue(crypto, out var cryptoName))
-                            {
-                                <option value="@crypto">@cryptoName</option>
-                            }
+                            <optgroup label="@ExolixSettings.CategoryLabels[group.Key]">
+                                @foreach (var crypto in group.OrderBy(x => x.Info.Name))
+                                {
+                                    <option value="@crypto.Code">@crypto.Info.Name</option>
+                                }
+                            </optgroup>
                         }
                     </select>
                 </div>
+
                 <div v-if="loading" class="mb-3">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -107,7 +126,7 @@
                         <div class="input-group">
                             <input type="text" class="form-control" readonly :value="formatAmount(swapData.fromAmount)">
                             <input type="text" class="form-control" readonly :value="selectedCrypto">
-                            <button class="btn btn-secondary" v-on:click="copyToClipboard(swapData.fromAmount)">
+                            <button class="btn btn-secondary" v-on:click="navigator.clipboard.writeText(swapData.fromAmount)">
                                 Copy
                             </button>
                         </div>
@@ -116,7 +135,7 @@
                         <strong>to this Address:</strong>
                         <div class="input-group">
                             <input type="text" class="form-control" readonly :value="swapData.fromAddress">
-                            <button class="btn btn-secondary" v-on:click="copyToClipboard(swapData.fromAddress)">
+                            <button class="btn btn-secondary" v-on:click="navigator.clipboard.writeText(swapData.fromAddress)">
                                 Copy
                             </button>
                         </div>

@@ -46,7 +46,11 @@ const ExolixCheckout = {
                 'USDC-SOL': 'solana-usdc',
                 'USDC-NEAR': 'near-usdc',
                 'USDC-MATIC': 'polygon-usdc',
-                'USDC-AVAXC': 'avalanche-usdc'
+                'USDC-AVAXC': 'avalanche-usdc',
+                'EURT-ETH': 'ethereum-eurt',
+                'EURI-ETH': 'ethereum-euri',
+                'EURI-BSC': 'bnb-euri',
+                'DEURO-ETH': 'ethereum-deuro'
             },
             manualAmount: '',
             showAmountInput: false
