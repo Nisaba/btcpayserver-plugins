@@ -42,7 +42,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                                       HttpClient httpClient2,
                                       LightningClientFactoryService lightningClientFactory,
                                       IOptions<LightningNetworkOptions> lightningNetworkOptions,
-                                      PullPaymentHostedService pullPaymentService,
                                       PaymentMethodHandlerDictionary handlers,
                                       ApplicationDbContextFactory btcPayDbContextFactory,
                                       PayoutMethodHandlerDictionary payoutHandlers,
@@ -62,7 +61,6 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         private readonly HttpClient _httpClient2 = httpClient2;
         private readonly LightningClientFactoryService _lightningClientFactory = lightningClientFactory;
         private readonly IOptions<LightningNetworkOptions> _lightningNetworkOptions = lightningNetworkOptions;
-        private readonly PullPaymentHostedService _pullPaymentService = pullPaymentService;
         private readonly ApplicationDbContextFactory _btcPayDbContextFactory = btcPayDbContextFactory;
         private readonly PayoutMethodHandlerDictionary _payoutHandlers= payoutHandlers;
         private readonly PullPaymentHostedService _pullPaymentHostedService = pullPaymentHostedService;
@@ -140,7 +138,11 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                         DefaultPaymentMethod = network,
                         PaymentMethods = [network],
                         Expiration = TimeSpan.FromHours(24),
-                    }
+                    },
+                    Metadata = new InvoiceMetadata
+                    {
+                        ItemDesc = "Boltz swap from LnOnchainSwap plugin",
+                    }.ToJObject()
                 };
                 var invoice = await _invoiceController.CreateInvoiceCoreRaw(req, store, rootUrl);
                 var invDest = invoice.GetPaymentPrompts()
@@ -290,7 +292,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     PayoutMethods = new[] { payoutMethodId.ToString() }
                 };
 
-                var ppId = await _pullPaymentService.CreatePullPayment(store, ppRequest);
+                var ppId = await _pullPaymentHostedService.CreatePullPayment(store, ppRequest);
 
                 await using var btcPayCtx = _btcPayDbContextFactory.CreateContext();
                 var pp = await btcPayCtx.PullPayments.FindAsync(ppId);
