@@ -50,7 +50,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                                       BoltzService boltzService,
                                       InvoiceRepository invoiceRepository,
                                       UIInvoiceController invoiceController,
-                                      LnOnchainSwapsDbContext context)
+                                      LnOnchainSwapsDbContextFactory lnOnchainSwapsDbContextFactory)
     {
         private readonly ILogger<LnOnchainSwapsPluginService> _logger = logger;
         private readonly StoreRepository _storeRepository = storeRepository;
@@ -68,12 +68,13 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         private readonly BoltzService _boltzService = boltzService;
         private readonly InvoiceRepository _invoiceRepository = invoiceRepository;
         private readonly UIInvoiceController _invoiceController = invoiceController;
-        private readonly LnOnchainSwapsDbContext _context = context;
+        private readonly LnOnchainSwapsDbContextFactory _lnOnchainSwapsDbContextFactory = lnOnchainSwapsDbContextFactory;
 
         public async Task InitSettings(string storeId)
         {
             try
             {
+                using var _context = _lnOnchainSwapsDbContextFactory.CreateContext();
                 var settings = await _context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
@@ -99,6 +100,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         {
             try
             {
+                using var _context = _lnOnchainSwapsDbContextFactory.CreateContext();
                 var settings = await _context.Settings.FirstAsync(a => a.StoreId == storeId);
                 return settings;
             }
@@ -113,6 +115,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         {
             try
             {
+                using var _context = _lnOnchainSwapsDbContextFactory.CreateContext();
                 var txs = await _context.BoltzSwaps.Where(a => a.StoreId == storeId).ToListAsync();
                 return txs.Reverse<BoltzSwap>().ToList();
             }
@@ -183,6 +186,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     lnInvoice = swap.ExternalLnInvoice;
                 }
 
+                using var _context = _lnOnchainSwapsDbContextFactory.CreateContext();
                 var settings = _context.Settings.First(a => a.StoreId == storeId);
                 var nbSwaps = await _context.BoltzSwaps.CountAsync(a => a.StoreId == storeId);
                 var refundPubKey = GetRefundPublicKeyForSwap(settings.RefundMnemonic, nbSwaps);
@@ -228,6 +232,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     btcAddress = swap.ExternalOnChainAddress;
                 }
 
+                using var _context = _lnOnchainSwapsDbContextFactory.CreateContext();
                 var settings = _context.Settings.First(a => a.StoreId == storeId);
                 var nbSwaps = await _context.BoltzSwaps.CountAsync(a => a.StoreId == storeId);
                 var claimPubKey = GetRefundPublicKeyForSwap(settings.RefundMnemonic, nbSwaps);
@@ -260,6 +265,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             {
                 var status = await _boltzService.GetSwapStatusAsync(swapId);
 
+                using var _context = _lnOnchainSwapsDbContextFactory.CreateContext();
                 var dbSwap = await _context.BoltzSwaps.FirstOrDefaultAsync(s => s.SwapId == swapId);
                 if (dbSwap.Status != status)
                 {

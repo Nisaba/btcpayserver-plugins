@@ -17,18 +17,12 @@ public class Plugin : BaseBTCPayServerPlugin
 
     public override void Execute(IServiceCollection services)
     {
-        services.AddUIExtension("store-wallets-nav", "LnOnchainSwapsPluginHeaderNav");
-        
-        services.AddHostedService<ApplicationPartsLogger>();
-        services.AddHostedService<PluginMigrationRunner>();
-        services.AddSingleton<LnOnchainSwapsDbContextFactory>();
-        services.AddDbContext<LnOnchainSwapsDbContext>((provider, o) =>
-        {
-            var factory = provider.GetRequiredService<LnOnchainSwapsDbContextFactory>();
-            factory.ConfigureBuilder(o);
-        });
-        services.AddSingleton<LnOnchainSwapsPluginService>();
-        services.AddSingleton<BoltzService>();
+        services.AddUIExtension("store-wallets-nav", "LnOnchainSwapsPluginHeaderNav")
+                .AddHostedService<ApplicationPartsLogger>()
+                .AddSingleton<LnOnchainSwapsDbContextFactory>()
+                .AddHostedService<PluginMigrationRunner>()
+                .AddSingleton<LnOnchainSwapsPluginService>()
+                .AddSingleton<BoltzService>();
 
     }
 
