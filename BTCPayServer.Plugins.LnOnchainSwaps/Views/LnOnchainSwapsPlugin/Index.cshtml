@@ -35,6 +35,34 @@
     var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
 </script>
 
+@if (Model.IsPayoutCreated)
+{
+    <br />
+    <div class="card border-success mb-4">
+    <div class="card-body">
+        <div class="d-flex align-items-start gap-3">
+            <div class="text-success" style="font-size: 2.5rem; line-height: 1;">
+                <vc:icon symbol="checkmark" />
+            </div>
+            <div class="flex-grow-1">
+                <h5 class="card-title text-success mb-3">
+                    <span class="badge bg-success me-2">Success</span>
+                    Payout Created Successfully!
+                </h5>
+                <p class="card-text mb-2">Your payout has been created.</p>
+                <p class="card-text mb-2">If you have set an automatic payout processor, the payment will be sent automatically to Boltz.</p>
+                <p class="card-text mb-2">
+                    Otherwise, <a href="/stores/@Model.StoreId/payouts?payoutState=AwaitingPayment" class="fw-bold text-decoration-underline">click here</a> to validate the payout.
+                </p>
+                <p class="card-text text-muted mb-0">
+                    <small>If an issue arises, please contact hello@LnOnchainSwaps.com.</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
 <div permission="@Policies.CanCreateNonApprovedPullPayments,@Policies.CanManagePayouts">
 
     <br />
@@ -172,17 +200,6 @@
         <i><small>Please check that there is no previous pending payout in BTCPay before placing a swap.<br />
         </small></i>
     <br />
-
-    @if (Model.IsPayoutCreated)
-    {
-        <br />
-        <div>
-            <strong>Success!</strong> Your payout has been created.<br />
-            If you have set an automatic payout processor, the payment will be sent automatically to Boltz.<br/>
-            Otherwise, <a href="/stores/@Model.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.<br />
-            If an issue arises, please contact hello@LnOnchainSwaps.com.
-        </div>
-    }
    
     <script type="text/javascript">
         const OnChainBalance = @Model.WalletConfig.OnChainBalance;
@@ -226,11 +243,22 @@
                 alert('You must keep some sats for the transaction fees... Please reduce the amount');
                 return;
             }
-            $('#btSend').hide();
 
             const isOnChain =  $("input[name='chkFromSwap']:checked").val() === "FromOnchain";
-            const externalVal = isOnChain ? $('#txtLightningExternal').val() : $('#txtToOnchainExternal').val();
+            if (!isOnChain) {
+                alert('Lightning -> Onchain swaps are not yet enabled. They will be available in a future update.');
+                return;
+            }
+
             const isInternal = isOnChain ? $('#chkToLightningInternal').is(':checked') : $('#chkToOnchainInternal').is(':checked');
+            if (!isInternal) {
+                alert('Onchain Swaps to external Lightning wallets are not yet enabled. They will be available in a future update.');
+                return;
+            }
+
+            $('#btSend').hide();
+
+            const externalVal = isOnChain ? $('#txtLightningExternal').val() : $('#txtToOnchainExternal').val();
             if (externalVal) {
                 const bFlag = isOnChain ? isValidLightningInvoice(externalVal) : isValidBitcoinAddress(externalVal);
                 if (!bFlag) {
@@ -257,7 +285,7 @@
             return base58Regex.test(address) || bech32Regex.test(address);
         }
 
-            function isValidLightningInvoice(invoice) {
+        function isValidLightningInvoice(invoice) {
             const lightningRegex = /^(ln(bc|tb|bcrt))[0-9a-z]+$/;
             return lightningRegex.test(invoice) && invoice.length >= 20 && invoice.length <= 2000;
         }
