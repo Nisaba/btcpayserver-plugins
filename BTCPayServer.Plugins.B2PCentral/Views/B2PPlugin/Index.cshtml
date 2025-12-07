@@ -99,18 +99,29 @@
     }
 
     function SwitchTab(switchValue) {
-        if (switchValue === 1) {
-            $("#SectionNav-1").addClass("active").siblings().removeClass("active");
-            $("#tabOnChain").show();
-            $("#tabLightning").hide();
-            tblOfrsLightning = tblOfrs;
-            tblOfrs = tblOfrsOnChain;
-        } else {
-            $("#SectionNav-2").addClass("active").siblings().removeClass("active");
-            $("#tabOnChain").hide();
-            $("#tabLightning").show();
-            tblOfrsOnChain = tblOfrs;
-            tblOfrs = tblOfrsLightning;
+        switch(switchValue) {
+            case 1:
+                $("#SectionNav-1").addClass("active").siblings().removeClass("active");
+                $("#tabOnChain").show();
+                $("#tabLightning").hide();
+                $("#tabSwaps").hide();
+                tblOfrsLightning = tblOfrs;
+                tblOfrs = tblOfrsOnChain;
+                break;
+            case 2:
+                $("#SectionNav-2").addClass("active").siblings().removeClass("active");
+                $("#tabOnChain").hide();
+                $("#tabLightning").show();
+                $("#tabSwaps").hide();
+                tblOfrsOnChain = tblOfrs;
+                tblOfrs = tblOfrsLightning;
+                break;
+            case 3:
+                $("#SectionNav-3").addClass("active").siblings().removeClass("active");
+                $("#tabOnChain").hide();
+                $("#tabLightning").hide();
+                $("#tabSwaps").show();
+                break;
         }
     }
 
@@ -181,13 +192,14 @@
 
         <nav id="SectionNav">
             <div class="nav">
-                <a id="SectionNav-1" class="nav-link active" href="#SectionNav" onclick="SwitchTab(1)">On Chain</a>
-                <a id="SectionNav-2" class="nav-link" href="#SectionNav" onclick="SwitchTab(2)">Lightning</a>
+                <a id="SectionNav-1" class="nav-link active" href="#SectionNav" onclick="SwitchTab(1)"><vc:icon symbol="wallet-wallet" /> Sell (On Chain)</a>
+                <a id="SectionNav-2" class="nav-link" href="#SectionNav" onclick="SwitchTab(2)"><vc:icon symbol="lightning" /> Sell (Lightning)</a>
+                <a id="SectionNav-3" class="nav-link" href="#SectionNav" onclick="SwitchTab(3)"><vc:icon symbol="actions-refresh" /> Swaps (On Chain)</a>
             </div>
         </nav>
 
         <div id="tabOnChain">
-            <h4>On Chain</h4>
+            <h4>Sell (On Chain)</h4>
             @if (walletConfig.OnChainEnabled)
             {
                 <p><b>Balance</b>: @walletConfig.OnChainBalance BTC  ~ @DisplayFormatter.Currency(walletConfig.OnChainFiatBalance, walletConfig.FiatCurrency)</p>
@@ -273,7 +285,7 @@
         </div>
 
         <div id="tabLightning" style="display:none">
-            <h4>Lightning</h4>
+            <h4>Sell (Lightning)</h4>
             @if (walletConfig.OffChainEnabled)
             {
                 <p><b>Balance</b>: @walletConfig.OffChainBalance BTC  ~ @DisplayFormatter.Currency(walletConfig.OffChainFiatBalance, walletConfig.FiatCurrency)</p>
@@ -353,6 +365,87 @@
 
                 <br />
                 <div id="container-B2pLightning"></div>
+            }
+        </div>
+
+        <div id="tabSwaps" style="display:none">
+            <h4>Swaps (On Chain)</h4>
+            @if (walletConfig.OnChainEnabled)
+            {
+                <p><b>Balance</b>: @walletConfig.OnChainBalance BTC  ~ @DisplayFormatter.Currency(walletConfig.OnChainFiatBalance, walletConfig.FiatCurrency)</p>
+            }
+            else
+            {
+                <p>On Chain wallet not configured</p>
+            }
+
+            @if (walletConfig.OnChainBalance == 0)
+            {
+                <p>No bitcoins available for swap</p>
+            }
+            else
+            {
+                <table>
+                    <tr>
+                        <td>
+                            <input value="ToSend" name="rdFromTo" type="radio" checked="checked" class="form-check-input mt-0 me-2" onchange="setSwapCurrency()" />&nbsp; To Send
+                            <br />
+                            <input value="ToReceive" name="rdFromTo" type="radio" class="form-check-input mt-0 me-2" onchange="setSwapCurrency()" />&nbsp; To Receive
+                        </td>
+                        <td width="25" />
+                        <td>
+                            Amount:&nbsp;
+                            <input id="swapAmount" type="number" min="0" value="@(walletConfig.OnChainBalance * (decimal)0.95)" step="0.0001" />
+                            <br />
+                        </td>
+                        <td width="15" />
+                        <td>
+                            <label id="lblCurrency">BTC</label>
+                        </td>
+                    </tr>
+                </table>
+
+                <script type="text/javascript">
+                    window.setSwapCurrency = function () {
+                        $('#lblCurrency').text(getSwapCurrency());
+                    }
+
+                    function getSwapCurrency() {
+                        const isToSend =  $("input[name='rdFromTo']:checked").val() === "ToSend";
+                        return isToSend ? "BTC" : $('#lstSwapToCrypto').val();
+                    }
+
+                    function onSwap() {
+                        if (!testAmount()) {
+                            alert('Please enter a correct amount');
+                            return;
+                        }
+
+                        const sToAddress = $('#txtToAddress').val();
+                        if (sToAddress == '') {
+                            alert('Please enter your altcoin destination address for the swap');
+                            return;
+                        }
+
+                        let sConfirm;
+                        let btcAmount = 0;
+                        let altAmount = 0;
+                        const sCurr = getSwapCurrency();
+                        if (sCurr == 'BTC') {
+                            btcAmount = $('#swapAmount').val();
+                            sConfirm = `Are you sure you want to swap ${btcAmount} BTC to ${$('#lstSwapToCrypto').val()} ?`;
+                        } else {
+                            altAmount = $('#swapAmount').val();
+                            sConfirm = `Are you sure you want to swap BTC to ${altAmount} ${$('#lstSwapToCrypto').val()} ?`;
+                        }
+                        if (confirm(sConfirm)) {
+                            $('#btSend').hide();
+
+                            // TODO
+                        }
+                    }
+                </script>
+
             }
         </div>
     }

@@ -15,15 +15,10 @@ public class Plugin : BaseBTCPayServerPlugin
 
     public override void Execute(IServiceCollection services)
     {
-        services.AddSingleton<IUIExtension>(new UIExtension("B2PCentralPluginHeaderNav", "header-nav"));
-        services.AddHostedService<ApplicationPartsLogger>();
-        services.AddHostedService<PluginMigrationRunner>();
-        services.AddSingleton<B2PCentralPluginService>();
-        services.AddSingleton<B2PCentralPluginDbContextFactory>();
-        services.AddDbContext<B2PCentralPluginDbContext>((provider, o) =>
-        {
-            var factory = provider.GetRequiredService<B2PCentralPluginDbContextFactory>();
-            factory.ConfigureBuilder(o);
-        });
+        services.AddUIExtension("header-nav", "B2PCentralPluginHeaderNav")
+                .AddHostedService<ApplicationPartsLogger>()
+                .AddHostedService<PluginMigrationRunner>()
+                .AddSingleton<B2PCentralPluginService>()
+                .AddSingleton<B2PCentralPluginDbContextFactory>();
     }
 }
