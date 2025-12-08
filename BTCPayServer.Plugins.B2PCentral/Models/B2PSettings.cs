@@ -1,11 +1,11 @@
-using BTCPayServer.Plugins.B2PCentral.Models;
+using BTCPayServer.Plugins.B2PCentral.Models.P2P;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 
-namespace BTCPayServer.Plugins.B2PCentral.Data;
+namespace BTCPayServer.Plugins.B2PCentral.Models;
 
 public class B2PSettings
 {
@@ -23,11 +23,11 @@ public class B2PSettings
     {
         get
         {
-            return String.IsNullOrEmpty(ProvidersString) ? new  List<ProvidersEnum>() : ProvidersString.Split(",").ToList().Select(s => (ProvidersEnum)Enum.Parse(typeof(ProvidersEnum), s)).ToList();
+            return string.IsNullOrEmpty(ProvidersString) ? new  List<ProvidersEnum>() : ProvidersString.Split(",").ToList().Select(s => (ProvidersEnum)Enum.Parse(typeof(ProvidersEnum), s)).ToList();
         }
         set
         {
-            ProvidersString = String.Join(",", value.ToArray());
+            ProvidersString = string.Join(",", value.ToArray());
         }
     }
 }

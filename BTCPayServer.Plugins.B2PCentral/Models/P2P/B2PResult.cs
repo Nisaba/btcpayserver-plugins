@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace BTCPayServer.Plugins.B2PCentral.Models
+namespace BTCPayServer.Plugins.B2PCentral.Models.P2P
 {
     public class B2PResult //: BasePagingViewModel
     {

@@ -1,4 +1,4 @@
-using BTCPayServer.Plugins.B2PCentral.Data;
+using BTCPayServer.Plugins.B2PCentral.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace BTCPayServer.Plugins.B2PCentral;

@@ -16,17 +16,11 @@ public class Plugin : BaseBTCPayServerPlugin
 
     public override void Execute(IServiceCollection services)
     {
-        services.AddUIExtension("store-wallets-nav", "MtPelerinPluginHeaderNav");
-        
-        services.AddHostedService<ApplicationPartsLogger>();
-        services.AddHostedService<PluginMigrationRunner>();
-        services.AddSingleton<MtPelerinPluginDbContextFactory>();
-        services.AddDbContext<MtPelerinPluginDbContext>((provider, o) =>
-        {
-            var factory = provider.GetRequiredService<MtPelerinPluginDbContextFactory>();
-            factory.ConfigureBuilder(o);
-        });
-        services.AddSingleton<MtPelerinPluginService>();
+        services.AddUIExtension("store-wallets-nav", "MtPelerinPluginHeaderNav")       
+                .AddHostedService<ApplicationPartsLogger>()
+                .AddHostedService<PluginMigrationRunner>()
+                .AddSingleton<MtPelerinPluginDbContextFactory>()
+                .AddSingleton<MtPelerinPluginService>();
 
     }
 

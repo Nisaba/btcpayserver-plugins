@@ -30,25 +30,7 @@ using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.MtPelerin.Services
 {
-    public class MtPelerinPluginService
-    {
-        private readonly ILogger<MtPelerinPluginService> _logger;
-        private readonly StoreRepository _storeRepository;
-        private readonly MtPelerinPluginDbContext _context;
-        private readonly BTCPayNetworkProvider _networkProvider;
-        private readonly WalletHistogramService _walletHistogramService;
-        private readonly BTCPayWalletProvider _walletProvider;
-        private readonly PaymentMethodHandlerDictionary _handlers;
-        private readonly HttpClient _httpClient2;
-        private readonly LightningClientFactoryService _lightningClientFactory;
-        private readonly IOptions<LightningNetworkOptions> _lightningNetworkOptions;
-        private readonly PullPaymentHostedService _pullPaymentService;
-        private readonly ApplicationDbContextFactory _btcPayDbContextFactory;
-        private readonly PayoutMethodHandlerDictionary _payoutHandlers;
-        private readonly PullPaymentHostedService _pullPaymentHostedService;
-        private readonly ExplorerClientProvider _explorerClientProvider;
-
-        public MtPelerinPluginService(MtPelerinPluginDbContextFactory pluginDbContextFactory,
+    public class MtPelerinPluginService(MtPelerinPluginDbContextFactory pluginDbContextFactory,
                                       StoreRepository storeRepository,
                                       BTCPayNetworkProvider networkProvider,
                                       BTCPayWalletProvider walletProvider,
@@ -57,34 +39,32 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                                       HttpClient httpClient2,
                                       LightningClientFactoryService lightningClientFactory,
                                       IOptions<LightningNetworkOptions> lightningNetworkOptions,
-                                      PullPaymentHostedService pullPaymentService,
                                       PaymentMethodHandlerDictionary handlers,
                                       ApplicationDbContextFactory btcPayDbContextFactory,
                                       PayoutMethodHandlerDictionary payoutHandlers,
                                       PullPaymentHostedService pullPaymentHostedService,
                                       ExplorerClientProvider explorerClientProvider)
-        {
-            _logger = logger;
-            _context = pluginDbContextFactory.CreateContext();
-            _networkProvider = networkProvider;
-            _storeRepository = storeRepository;
-            _walletHistogramService = walletHistogramService;
-            _walletProvider = walletProvider;
-            _handlers = handlers;
-            _httpClient2 = httpClient2;
-            _lightningClientFactory = lightningClientFactory;
-            _lightningNetworkOptions = lightningNetworkOptions;
-            _pullPaymentService = pullPaymentService;
-            _btcPayDbContextFactory = btcPayDbContextFactory;
-            _payoutHandlers = payoutHandlers;
-            _pullPaymentHostedService = pullPaymentHostedService;
-            _explorerClientProvider = explorerClientProvider;
-        }
+    {
+        private readonly ILogger<MtPelerinPluginService> _logger = logger;
+        private readonly StoreRepository _storeRepository = storeRepository;
+        private readonly BTCPayNetworkProvider _networkProvider = networkProvider;
+        private readonly WalletHistogramService _walletHistogramService = walletHistogramService;
+        private readonly BTCPayWalletProvider _walletProvider = walletProvider;
+        private readonly PaymentMethodHandlerDictionary _handlers = handlers;
+        private readonly HttpClient _httpClient2 = httpClient2;
+        private readonly LightningClientFactoryService _lightningClientFactory = lightningClientFactory;
+        private readonly IOptions<LightningNetworkOptions> _lightningNetworkOptions = lightningNetworkOptions;
+        private readonly ApplicationDbContextFactory _btcPayDbContextFactory = btcPayDbContextFactory;
+        private readonly PayoutMethodHandlerDictionary _payoutHandlers = payoutHandlers;
+        private readonly PullPaymentHostedService _pullPaymentHostedService = pullPaymentHostedService;
+        private readonly ExplorerClientProvider _explorerClientProvider = explorerClientProvider;
+
 
         public async Task<MtPelerinSettings> GetStoreSettings(string storeId)
         {
             try
             {
+                using var _context = pluginDbContextFactory.CreateContext();
                 var settings = await _context.MtPelerinSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
@@ -104,6 +84,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
         {
             try
             {
+                using var _context = pluginDbContextFactory.CreateContext();
                 var dbSettings = await _context.MtPelerinSettings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
                 if (dbSettings == null)
                 {
@@ -146,7 +127,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 };
 
                 var store = await _storeRepository.FindStore(storeId);
-                var ppId = await _pullPaymentService.CreatePullPayment(store, ppRequest);
+                var ppId = await _pullPaymentHostedService.CreatePullPayment(store, ppRequest);
 
                 await using var btcPayCtx = _btcPayDbContextFactory.CreateContext();
                 var pp = await btcPayCtx.PullPayments.FindAsync(ppId);
@@ -230,8 +211,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     return signInfo;
 
                 var utxo = utxos.OrderByDescending(u => u.Value).FirstOrDefault();
-                var address = utxo.Address;
-                signInfo.SenderBtcAddress = address.ToString();
+                signInfo.SenderBtcAddress = utxo.Address.ToString();
 
                 var explorer = _explorerClientProvider.GetExplorerClient(btcNetwork);
                 var masterKeyString = await explorer.GetMetadataAsync<string>(
@@ -244,28 +224,16 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
 
                     var accountKeyPath = new KeyPath("m/84'/0'/0'");
                     var fullKeyPath = accountKeyPath.Derive(utxo.KeyPath);
-
-                    _logger.LogInformation($"UTXO KeyPath (relative): {utxo.KeyPath}");
-                    _logger.LogInformation($"Full KeyPath: {fullKeyPath}");
-
                     var derivedKey = extKey.Derive(fullKeyPath);
-
-                    // Vérification (optionnelle mais recommandée)
                     var derivedAddress = derivedKey.PrivateKey.PubKey.GetAddress(ScriptPubKeyType.Segwit, btcNetwork.NBitcoinNetwork);
-                    _logger.LogInformation($"Derived Address: {derivedAddress}");
-                    _logger.LogInformation($"Expected Address: {signInfo.SenderBtcAddress}");
-                    _logger.LogInformation($"Key is compressed: {derivedKey.PrivateKey.PubKey.IsCompressed}");
-                    var wif = derivedKey.PrivateKey.GetWif(btcNetwork.NBitcoinNetwork).ToString();
-                    _logger.LogInformation($"Derived WIF: {wif}");
+                    // _logger.LogInformation($"Derived Address: {derivedAddress}");
+                    // _logger.LogInformation($"Expected Address: {signInfo.SenderBtcAddress}");
 
                     signInfo.Code = new Random().Next(1000, 9999);
                     var messageToSign = "MtPelerin-" + signInfo.Code;
                     signInfo.Signature = SignBitcoinMessage(derivedKey.PrivateKey, messageToSign);
-                    _logger.LogInformation($"Signing message: {messageToSign} with address {signInfo.SenderBtcAddress}");
-                    _logger.LogInformation($"Signature: {signInfo.Signature} (derivedKey)");
-
-                    var sSigne2d = SignBitcoinMessage(extKey.PrivateKey, messageToSign);
-                    _logger.LogInformation($"Signature: {sSigne2d} (ExtKey)");
+                    //  _logger.LogInformation($"Signing message: {messageToSign} with address {signInfo.SenderBtcAddress}");
+                    // _logger.LogInformation($"Signature: {signInfo.Signature} (derivedKey)");
                 }
             }
             catch (Exception e)

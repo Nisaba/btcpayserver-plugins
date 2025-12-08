@@ -96,8 +96,8 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     await asyncEnumerator.DisposeAsync();
                 }
 
-                var serializedEvent = JsonConvert.SerializeObject(events[0], Formatting.Indented);
-                _logger.LogInformation($"Shopstr Plugin: First event received: {serializedEvent}");
+                // var serializedEvent = JsonConvert.SerializeObject(events[0], Formatting.Indented);
+                // _logger.LogInformation($"Shopstr Plugin: First event received: {serializedEvent}");
 
                 events.RemoveAll(e =>
                 {
@@ -242,11 +242,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
                 var verification = await _client.SubscribeForEvents([filter], false, cts.Token).FirstOrDefaultAsync();
 
-                if (verification != null)
-                {
-                    _logger.LogInformation($"Shopstr Plugin: Event {nostrEvent.Id} confirmed on relay(s)");
-                }
-                else
+                if (verification == null)
                 {
                     _logger.LogWarning($"Shopstr Plugin: Event {nostrEvent.Id} could not be verified on relay(s)");
                 }

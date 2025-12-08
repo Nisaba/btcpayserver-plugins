@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace BTCPayServer.Plugins.B2PCentral.Models
+namespace BTCPayServer.Plugins.B2PCentral.Models.P2P
 {
     /// <summary>
     /// Possible values for offers providers.

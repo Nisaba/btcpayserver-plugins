@@ -1,13 +1,47 @@
-@using BTCPayServer.Abstractions.Extensions
-@using BTCPayServer.Plugins.B2PCentral.Views
-@using BTCPayServer.Client
-@using BTCPayServer.Plugins.B2PCentral.Models
+﻿@using BTCPayServer.Abstractions.Extensions
 @using BTCPayServer.Services
+@using BTCPayServer.Client
+@using BTCPayServer.Plugins.B2PCentral.Views
+@using BTCPayServer.Plugins.B2PCentral.Models
+@using BTCPayServer.Plugins.B2PCentral.Models.P2P
+@using BTCPayServer.Plugins.B2PCentral.Models.Swaps
 
 @inject BTCPayServer.Plugins.B2PCentral.Services.B2PCentralPluginService B2PCentralPluginService
 @inject DisplayFormatter DisplayFormatter
 
-@model BTCPayServer.Plugins.B2PCentral.Data.B2PSettings
+@model B2PSettings
+@functions {
+    string GetCategoryIcon(CryptoCategory category) => category switch
+    {
+        CryptoCategory.Altcoin => "🪙",
+        CryptoCategory.StablecoinUSD => "💵",
+        CryptoCategory.StablecoinEUR => "💶",
+        _ => "💰"
+    };
+
+    string GetCryptoIcon(string cryptoCode) => cryptoCode switch
+    {
+        "BTC" => "₿",
+        "BCH" => "₿",
+        "L-BTC" => "₿",
+        "ETH" => "Ξ",
+        "XMR" => "ɱ",
+        "LTC" => "Ł",
+        "DOGE" => "Ð",
+        "TRX" => "Ⓣ",
+        _ when cryptoCode.StartsWith("USDT") => "🟢",
+        _ when cryptoCode.StartsWith("USDC") => "🔵",
+        _ when cryptoCode.StartsWith("EUR") || cryptoCode.StartsWith("DEURO") => "🟡",
+        _ => "◆"
+    };
+
+    string GetProviderDescription(SwapProvidersEnum provider)
+    {
+        var field = provider.GetType().GetField(provider.ToString());
+        var attribute = (System.ComponentModel.DescriptionAttribute)field.GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false).FirstOrDefault();
+        return attribute?.Description ?? provider.ToString();
+    }
+}
 @{
     ViewData.SetActivePage(PluginNavPages.Index, "B2P Central plugin");
 }
@@ -160,7 +194,7 @@
                 <td width="100">
                     <label asp-for="ApiKey" class="form-label"></label>
                 </td>
-                <td width="400" d class="border-0 ps-0 align-middle">
+                <td width="400" class="border-0 ps-0 align-middle">
                     <input asp-for="ApiKey" data-fill="port" class="form-control" />
                     <span asp-validation-for="ApiKey" class="text-danger"></span>
                 </td>
@@ -243,29 +277,34 @@
                 </script>
 
                 <b>Select providers:</b><br/>
-                <table><tr>
-                <td>
-                    HodlHodl &nbsp;
-                    <input id="chkHodl" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.HodlHodl)" />
-                </td><td width="15" />
-                <td>
-                    NoOnes &nbsp;
-                    <input id="chkNoo" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.NoOnes)" />
-                </td><td width="15" />
-                <td>
-                    LocalCoinSwap &nbsp;
-                    <input id="chkLocalSw" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.LocalCoinSwap)" />
-                </td><td width="15" />
-                <td>
-                    Peach &nbsp;
-                    <input id="chkPeach" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.Peach)" />
-                </td><td width="15" />
-                <td>
-                    Bisq v1 &nbsp;
-                    <input id="chkBisqV1" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.BisqV1)" />
-                </td>
-                </tr>
-                </table>
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; min-width: 150px;">
+                        <input id="chkHodl" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.HodlHodl)" />
+                        <img src="/Resources/img/HodlHodl.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <label for="chkHodl" class="form-check-label" style="cursor: pointer;">HodlHodl</label>
+                    </div>
+                    <div style="display: flex; align-items: center; min-width: 150px;">
+                        <input id="chkNoo" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.NoOnes)" />
+                        <img src="/Resources/img/NoOnes.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <label for="chkNoo" class="form-check-label" style="cursor: pointer;">NoOnes</label>
+                    </div>
+                    <div style="display: flex; align-items: center; min-width: 150px;">
+                        <input id="chkLocalSw" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.LocalCoinSwap)" />
+                        <img src="/Resources/img/LocalCoinSwap.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <label for="chkLocalSw" class="form-check-label" style="cursor: pointer;">LocalCoinSwap</label>
+                    </div>
+                    <div style="display: flex; align-items: center; min-width: 150px;">
+                        <input id="chkBisqV1" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.Peach)" />
+                        <img src="/Resources/img/Bisq.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <label for="chkBisqV1" class="form-check-label" style="cursor: pointer;">Bisq v1</label>
+                    </div>
+                    <div style="display: flex; align-items: center; min-width: 150px;">
+                        <input id="chkPeach" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.BisqV1)" />
+                        <img src="/Resources/img/Peach.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <label for="chkPeach" class="form-check-label" style="cursor: pointer;">Peach</label>
+                    </div>
+                </div>
+
                 <br />
                 <table><tr>
                     <td>
@@ -329,24 +368,23 @@
                     }
                 </script>
 
-                <table>
-                    <tr>
-                        <td>
-                            LNp2pBot &nbsp;
-                            <input id="chkLNp2p" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.LNp2pBot)" />
-                        </td>
-                        <td width="15" />
-                        <td>
-                            RoboSats &nbsp;
-                            <input id="chkRbs" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.RoboSats)" />
-                        </td>
-                        <td width="15" />
-                        <td>
-                            Mostro &nbsp;
-                            <input id="chkMst" type="checkbox" checked="@Model.Providers.Contains(ProvidersEnum.Mostro)" />
-                        </td>
-                    </tr>
-                </table>
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; min-width: 150px;">
+                        <input id="chkLNp2p" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.LNp2pBot)" />
+                        <img src="/Resources/img/LNp2pBot.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <label for="chkLNp2p" class="form-check-label" style="cursor: pointer;">LNp2pBot</label>
+                    </div>
+                    <div style="display: flex; align-items: center; min-width: 150px;">
+                        <input id="chkRbs" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.RoboSats)" />
+                        <img src="/Resources/img/RoboSats.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <label for="chkRbs" class="form-check-label" style="cursor: pointer;">RoboSats</label>
+                    </div>
+                    <div style="display: flex; align-items: center; min-width: 150px;">
+                        <input id="chkMst" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.Mostro)" />
+                        <img src="/Resources/img/Mostro.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <label for="chkMst" class="form-check-label" style="cursor: pointer;">Mostro</label>
+                    </div>
+                </div>
                 <br />
                 <table>
                     <tr>
@@ -385,67 +423,162 @@
             }
             else
             {
-                <table>
-                    <tr>
-                        <td>
-                            <input value="ToSend" name="rdFromTo" type="radio" checked="checked" class="form-check-input mt-0 me-2" onchange="setSwapCurrency()" />&nbsp; To Send
-                            <br />
-                            <input value="ToReceive" name="rdFromTo" type="radio" class="form-check-input mt-0 me-2" onchange="setSwapCurrency()" />&nbsp; To Receive
-                        </td>
-                        <td width="25" />
-                        <td>
-                            Amount:&nbsp;
-                            <input id="swapAmount" type="number" min="0" value="@(walletConfig.OnChainBalance * (decimal)0.95)" step="0.0001" />
-                            <br />
-                        </td>
-                        <td width="15" />
-                        <td>
-                            <label id="lblCurrency">BTC</label>
-                        </td>
-                    </tr>
-                </table>
+                <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 10px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; min-width: 150px;">
+                        <table>
+                            <tr><td>
+                                <input value="ToSend" id="rdSend" name="rdFromTo" type="radio" checked="checked" class="form-check-input mt-0 me-2" onchange="setSwapCurrency()" />
+                                <label for="rdSend" class="form-check-label" style="cursor: pointer;">To Send</label>
+                             </td></tr>
+                             <tr><td>
+                                <input value="ToReceive" id="rdReceive" name="rdFromTo" type="radio" class="form-check-input mt-0 me-2" onchange="setSwapCurrency()" />
+                                <label for="rdReceive" class="form-check-label" style="cursor: pointer;">To Receive</label>
+                             </td></tr>
+                        </table>
+                    </div>
+                    <div style="display: flex; align-items: center; min-width: 150px;">
+                        <label for="swapAmount" class="form-input-label">Amount &nbsp;</label>
+                        <input id="swapAmount" type="number" min="0" value="@(walletConfig.OnChainBalance * (decimal)0.95)" step="0.0001" />
+                        &nbsp;
+                        <label id="lblCurrency" class="badge badge-settled">BTC</label>
+                    </div>
+                    <div style="display: flex; align-items: center; min-width: 150px;">
+                        <label for="lstSwapToCrypto" class="form-input-label">Crypto &nbsp;</label>
+                        <select id="lstSwapToCrypto" class="form-select w-auto" onchange="setSwapCurrency()">
+                            @foreach (var group in SwapCryptos.AvailableCryptos.GroupBy(c => c.Value.Category).OrderBy(g => g.Key))
+                            {
+                                <optgroup label="@SwapCryptos.CategoryLabels[group.Key]">
+                                    @foreach (var crypto in group.OrderBy(c => c.Value.Name))
+                                    {
+                                        <option value="@crypto.Key">@GetCryptoIcon(crypto.Key) @crypto.Value.Name</option>
+                                    }
+                                </optgroup>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <br /><br />
+                <b>Select swap providers:</b>
+                <br />
+                <div style="margin-bottom: 10px;">
+                    <input type="checkbox" class="btcpay-toggle me-3" id="chkNoKYC" onchange="toggleKYCProviders()" />
+                    <label class="form-check-label" for="chkNoKYC">No KYC Providers only</label>
+                </div>
+                <div id="swapProvidersContainer" style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
+                    @foreach (var provider in SwapProviders.ActiveProviders)
+                    {
+                        var description = GetProviderDescription(provider);
+                        var imagePath = $"/Resources/img/{description}.webp";
+                        var checkboxId = $"chkSwap{provider}";
+                        var isKYC = SwapProviders.KYCProviders.Contains(provider);
+
+                        <div id="provider@(provider)" class="swap-provider-item @(isKYC ? "kyc-provider" : "")" style="display: flex; align-items: center; min-width: 150px;" data-provider="@provider" data-is-kyc="@isKYC.ToString().ToLower()">
+                            <input id="@checkboxId" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" value="@((int)provider)" />
+                            <img src="@imagePath" alt="@description" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                            <label for="@checkboxId" class="form-check-label" style="cursor: pointer;">@description</label>
+                        </div>
+                    }
+                </div>
+                <br/>
+
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px;">
+                    <button id="btSend" class="btn btn-primary" onclick="onSearchSwap()">Search</button>
+                    <i><small>Please check that there is no previous pending payout in BTCPay before placing a swap</small></i>
+                </div>
 
                 <script type="text/javascript">
+                    var tblKYCProviders = [
+                        @foreach (var provider in SwapProviders.KYCProviders)
+                        {
+                                @:'@((int)provider)',
+                        }
+                    ];
+
+                    function toggleKYCProviders() {
+                        const noKYC = document.querySelector('#chkNoKYC').checked;
+                        const providerItems = document.querySelectorAll('.swap-provider-item');
+
+                        providerItems.forEach(item => {
+                            const isKYC = item.getAttribute('data-is-kyc') === 'true';
+                            if (noKYC && isKYC) {
+                                item.style.display = 'none';
+                                const checkbox = item.querySelector('.swap-provider-checkbox');
+                                if (checkbox) {
+                                    checkbox.checked = false;
+                                }
+                            } else {
+                                item.style.display = 'flex';
+                            }
+                        });
+                    }
+
                     window.setSwapCurrency = function () {
                         $('#lblCurrency').text(getSwapCurrency());
                     }
 
                     function getSwapCurrency() {
-                        const isToSend =  $("input[name='rdFromTo']:checked").val() === "ToSend";
+                        const isToSend = $("input[name='rdFromTo']:checked").val() === "ToSend";
                         return isToSend ? "BTC" : $('#lstSwapToCrypto').val();
                     }
 
-                    function onSwap() {
-                        if (!testAmount()) {
+                    function onSearchSwap() {
+                        var selectedProviders = [];
+
+                        document.querySelectorAll('.swap-provider-checkbox').forEach(checkbox => {
+                            const parentItem = checkbox.closest('.swap-provider-item');
+                            if (checkbox.checked && parentItem.style.display !== 'none') {
+                                selectedProviders.push(parseInt(checkbox.value));
+                            }
+                        });
+
+                        if (selectedProviders.length === 0) {
+                            alert('Please select at least one swap provider');
+                            return;
+                        }
+
+                        const swapAmount = parseFloat($('#swapAmount').val());
+                        if (!swapAmount || swapAmount <= 0) {
                             alert('Please enter a correct amount');
                             return;
                         }
 
-                        const sToAddress = $('#txtToAddress').val();
-                        if (sToAddress == '') {
+                        const sToAddress = $('#txtToAddress').val().trim();
+                        if (sToAddress === '') {
                             alert('Please enter your altcoin destination address for the swap');
                             return;
                         }
 
                         let sConfirm;
-                        let btcAmount = 0;
-                        let altAmount = 0;
                         const sCurr = getSwapCurrency();
-                        if (sCurr == 'BTC') {
-                            btcAmount = $('#swapAmount').val();
-                            sConfirm = `Are you sure you want to swap ${btcAmount} BTC to ${$('#lstSwapToCrypto').val()} ?`;
+                        const targetCrypto = $('#lstSwapToCrypto').val();
+
+                        if (sCurr === 'BTC') {
+                            sConfirm = `Are you sure you want to swap ${swapAmount} BTC to ${targetCrypto}?\n\nSelected providers: ${selectedProviders.length}`;
                         } else {
-                            altAmount = $('#swapAmount').val();
-                            sConfirm = `Are you sure you want to swap BTC to ${altAmount} ${$('#lstSwapToCrypto').val()} ?`;
+                            sConfirm = `Are you sure you want to swap BTC to ${swapAmount} ${targetCrypto}?\n\nSelected providers: ${selectedProviders.length}`;
                         }
+
                         if (confirm(sConfirm)) {
                             $('#btSend').hide();
 
-                            // TODO
+                            /*const data = {
+                                Rate: at walletConfig.Rate,
+                                ApiKey: 'at Model.ApiKey',
+                                CurrencyCode: 'at walletConfig.FiatCurrency',
+                                Amount: swapAmount,
+                                ToCrypto: targetCrypto,
+                                ToAddress: sToAddress,
+                                Providers: selectedProviders,
+                                IsToSend: sCurr === 'BTC'
+                            };*/
+
+                            // TODO: Appeler l'API avec les données
+                            console.log('Swap data:', data);
+
+                            $('#btSend').show();
                         }
                     }
                 </script>
-
             }
         </div>
     }

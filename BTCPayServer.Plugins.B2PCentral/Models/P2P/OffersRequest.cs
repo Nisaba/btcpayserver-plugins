@@ -1,4 +1,4 @@
-﻿namespace BTCPayServer.Plugins.B2PCentral.Models
+﻿namespace BTCPayServer.Plugins.B2PCentral.Models.P2P
 {
     /// <summary>
     /// Offers request model

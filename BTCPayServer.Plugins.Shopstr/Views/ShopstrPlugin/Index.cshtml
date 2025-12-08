@@ -32,7 +32,7 @@
 @if (Model.Nip5Settings == null || !Model.Nip5Settings.IsConfigured)
 {
     <div class="alert alert-warning d-flex align-items-center" role="alert">
-        <span class="me-2"><i class="fa fa-exclamation-triangle"></i></span>
+        <span class="me-2"><vc:icon symbol="warning" /></span>
         Your Nostr plugin is not configured yet.
         <a href="/stores/@Model.storeId/plugins/nip5" class="alert-link ms-2">Configure now</a>
     </div>
@@ -67,7 +67,7 @@ else
 @if (Model.StoreApps.Count == 0)
 {
     <div class="alert alert-info d-flex align-items-center" role="alert">
-        <span class="me-2"><i class="fa fa-info-circle"></i></span>
+        <span class="me-2"><vc:icon symbol="warning"/></span>
         You do not have any Shop apps in your BTCPay store yet.
         <a href="/stores/@Model.storeId/apps/create/PointOfSale" class="alert-link ms-2">Create an app</a>
     </div>
@@ -76,7 +76,7 @@ else
 else
 {
     <div class="alert d-flex align-items-center" role="alert">
-        <span class="me-2"><i class="fa fa-check-circle"></i></span>
+        <span class="me-2"><vc:icon symbol="warning" /></span>
         @Model.StoreApps.Count Shop app(s) ready to be synchronized in this store.
     </div>
     bApp = true;
