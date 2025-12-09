@@ -8,6 +8,7 @@ using BTCPayServer.Payments.Bitcoin;
 using BTCPayServer.Payments.Lightning;
 using BTCPayServer.Plugins.B2PCentral.Models;
 using BTCPayServer.Plugins.B2PCentral.Models.P2P;
+using BTCPayServer.Plugins.B2PCentral.Models.Swaps;
 using BTCPayServer.Services;
 using BTCPayServer.Services.Invoices;
 using BTCPayServer.Services.Stores;
@@ -236,7 +237,7 @@ public class B2PCentralPluginService
         try
         {
             var reqJson = JsonConvert.SerializeObject(req, Formatting.None);
-            
+
             var webRequest = new HttpRequestMessage(HttpMethod.Post, "Offers")
             {
                 Content = new StringContent(reqJson, Encoding.UTF8, "application/json"),
@@ -255,7 +256,34 @@ public class B2PCentralPluginService
             return JsonConvert.DeserializeObject<List<B2POffer>>(sRep);
 
         }
-        catch { throw;  }
+        catch { throw; }
+    }
+
+    public async Task<List<B2PSwap>> GetSwapsListAsync(SwapRateRequest req, string key)
+    {
+        try
+        {
+            var reqJson = JsonConvert.SerializeObject(req, Formatting.None);
+
+            var webRequest = new HttpRequestMessage(HttpMethod.Post, "swaps")
+            {
+                Content = new StringContent(reqJson, Encoding.UTF8, "application/json"),
+            };
+            webRequest.Headers.Add("B2P-API-KEY", key);
+
+            string sRep;
+            using (var rep = await _httpClient.SendAsync(webRequest))
+            {
+                rep.EnsureSuccessStatusCode();
+                using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
+                {
+                    sRep = await rdr.ReadToEndAsync();
+                }
+            }
+            return JsonConvert.DeserializeObject<List<B2PSwap>>(sRep);
+
+        }
+        catch { throw; }
     }
 
 

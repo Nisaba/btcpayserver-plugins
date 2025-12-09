@@ -1,16 +1,17 @@
+using BTCPayServer.Abstractions.Constants;
+using BTCPayServer.Client;
+using BTCPayServer.Plugins.B2PCentral.Models;
+using BTCPayServer.Plugins.B2PCentral.Models.P2P;
+using BTCPayServer.Plugins.B2PCentral.Models.Swaps;
+using BTCPayServer.Plugins.B2PCentral.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BTCPayServer.Abstractions.Constants;
-using BTCPayServer.Client;
-using BTCPayServer.Plugins.B2PCentral.Models;
-using BTCPayServer.Plugins.B2PCentral.Models.P2P;
-using BTCPayServer.Plugins.B2PCentral.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Org.BouncyCastle.Ocsp;
 
 namespace BTCPayServer.Plugins.B2PCentral;
 
@@ -83,5 +84,33 @@ public class B2PPluginController : Controller
             model.ErrorMsg = ex.Message;
         }
         return PartialView("_B2PResults", model);
+    }
+
+    [HttpPost]
+    [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanViewStoreSettings)]
+    [Route("GetPartialB2PSwapResult")]
+    public async Task<IActionResult> GetPartialB2PSwapResult([FromBody] SwapRateRequestJS req)
+    {
+        var model = new B2PSwapResult();
+        try
+        {
+            var swapReq = new SwapRateRequest
+            {
+                FromCrypto = "BTC",
+                FromNetwork = "Bitcoin",
+                ToCrypto = req.ToCrypto.Split("-")[0],
+                ToNetwork = SwapCryptos.GetNetwork(req.ToCrypto),
+                FromAmount = req.FromAmount,
+                ToAmount = req.ToAmount,
+                FiatCurrency = req.FiatCurrency,
+                Providers = req.Providers
+            };
+            model.Swaps = await _PluginService.GetSwapsListAsync(swapReq, req.ApiKey);
+        }
+        catch (Exception ex)
+        {
+            model.ErrorMsg = ex.Message;
+        }
+        return PartialView("_B2PSwapResults", model);
     }
 }

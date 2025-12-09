@@ -50,14 +50,14 @@
     var tblOfrs = [];
     var tblOfrsOnChain = [];
     var tblOfrsLightning = [];
+    const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
 
-    function GetPartial(reqData, container, bt) {
-        var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+    function GetPartial(reqData, container, bt, controller) {
         $(container).html('<div style="display: flex; justify-content: center;"><img src="/Resources/img/Loading_icon.gif"/></div>');
         $(bt).hide();
         $.ajax({
-            url: 'b2pcentral/GetPartialB2PResult',
+            url: 'b2pcentral/' + controller,
             type: 'POST',
             contentType: "application/json; charset=utf-8",
             headers: {
@@ -272,7 +272,7 @@
                             Rate: @walletConfig.Rate, ApiKey: '@Model.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
                             Amount: document.getElementById('lblOnChainSale').textContent, Providers: tbl
                         };
-                        GetPartial(data, "#container-B2pOnChain", "#btOnChainSearch");
+                        GetPartial(data, "#container-B2pOnChain", "#btOnChainSearch", "GetPartialB2PResult");
                     }
                 </script>
 
@@ -364,7 +364,7 @@
                             Rate: @walletConfig.Rate, ApiKey: '@Model.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
                             Amount: document.getElementById('lblLightningToSale').textContent, Providers: tbl
                         };
-                        GetPartial(data, "#container-B2pLightning", "#btLightningSearch");
+                        GetPartial(data, "#container-B2pLightning", "#btLightningSearch", "GetPartialB2PResult");
                     }
                 </script>
 
@@ -482,9 +482,11 @@
                 <br/>
 
                 <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px;">
-                    <button id="btSend" class="btn btn-primary" onclick="onSearchSwap()">Search</button>
+                    <button id="btSwapSearch" class="btn btn-primary" onclick="onSearchSwap()">Search</button>
                     <i><small>Please check that there is no previous pending payout in BTCPay before placing a swap</small></i>
                 </div>
+                <br />
+                <div id="container-B2pSwap"></div>
 
                 <script type="text/javascript">
                     var tblKYCProviders = [
@@ -541,13 +543,26 @@
                             alert('Please enter a correct amount');
                             return;
                         }
+                        
+                        const isToSend = $("input[name='rdFromTo']:checked").val() === "ToSend";
+                        const data = {
+                            ToCrypto: cryptoTo,
+                            FromAmount: isToSend ? swapAmount : 0,
+                            ToAmount: isToSend ? 0 : swapAmount,
+                            FiatCurrency: '@walletConfig.FiatCurrency',
+                            Providers: selectedProviders,
+                            ApiKey: '@Model.ApiKey',
+                        };
 
+                        GetPartial(data, "#container-B2pSwap", "#btSwapSearch", "GetPartialB2PSwapResult");
+                    }
+
+                    function onDoSwap() {
                         const sToAddress = $('#txtToAddress').val().trim();
                         if (sToAddress === '') {
                             alert('Please enter your altcoin destination address for the swap');
                             return;
                         }
-
                         let sConfirm;
                         const sCurr = getSwapCurrency();
                         const targetCrypto = $('#lstSwapToCrypto').val();
@@ -559,7 +574,7 @@
                         }
 
                         if (confirm(sConfirm)) {
-                            $('#btSend').hide();
+                            $('#btSearchSwap').hide();
 
                             /*const data = {
                                 Rate: at walletConfig.Rate,
@@ -575,8 +590,9 @@
                             // TODO: Appeler l'API avec les données
                             console.log('Swap data:', data);
 
-                            $('#btSend').show();
+                            $('#btSearchSwap').show();
                         }
+
                     }
                 </script>
             }
