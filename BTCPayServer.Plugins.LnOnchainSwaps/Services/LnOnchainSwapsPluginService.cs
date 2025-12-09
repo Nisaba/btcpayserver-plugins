@@ -47,34 +47,17 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                                       PayoutMethodHandlerDictionary payoutHandlers,
                                       PullPaymentHostedService pullPaymentHostedService,
                                       ExplorerClientProvider explorerClientProvider,
-                                      BoltzService boltzService,
+                                      BoltzHttpService boltzService,
                                       InvoiceRepository invoiceRepository,
                                       UIInvoiceController invoiceController,
                                       LnOnchainSwapsDbContextFactory lnOnchainSwapsDbContextFactory)
     {
-        private readonly ILogger<LnOnchainSwapsPluginService> _logger = logger;
-        private readonly StoreRepository _storeRepository = storeRepository;
-        private readonly BTCPayNetworkProvider _networkProvider = networkProvider;
-        private readonly WalletHistogramService _walletHistogramService = walletHistogramService;
-        private readonly BTCPayWalletProvider _walletProvider = walletProvider;
-        private readonly PaymentMethodHandlerDictionary _handlers = handlers;
-        private readonly HttpClient _httpClient2 = httpClient2;
-        private readonly LightningClientFactoryService _lightningClientFactory = lightningClientFactory;
-        private readonly IOptions<LightningNetworkOptions> _lightningNetworkOptions = lightningNetworkOptions;
-        private readonly ApplicationDbContextFactory _btcPayDbContextFactory = btcPayDbContextFactory;
-        private readonly PayoutMethodHandlerDictionary _payoutHandlers= payoutHandlers;
-        private readonly PullPaymentHostedService _pullPaymentHostedService = pullPaymentHostedService;
-        private readonly ExplorerClientProvider _explorerClientProvider = explorerClientProvider;
-        private readonly BoltzService _boltzService = boltzService;
-        private readonly InvoiceRepository _invoiceRepository = invoiceRepository;
-        private readonly UIInvoiceController _invoiceController = invoiceController;
-        private readonly LnOnchainSwapsDbContextFactory _lnOnchainSwapsDbContextFactory = lnOnchainSwapsDbContextFactory;
 
         public async Task InitSettings(string storeId)
         {
             try
             {
-                using var _context = _lnOnchainSwapsDbContextFactory.CreateContext();
+                using var _context = lnOnchainSwapsDbContextFactory.CreateContext();
                 var settings = await _context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
@@ -91,7 +74,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "LnOnchainSwapsPlugin:InitSettings()");
+                logger.LogError(e, "LnOnchainSwapsPlugin:InitSettings()");
                 throw;
             }
         }
@@ -100,13 +83,13 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         {
             try
             {
-                using var _context = _lnOnchainSwapsDbContextFactory.CreateContext();
+                using var _context = lnOnchainSwapsDbContextFactory.CreateContext();
                 var settings = await _context.Settings.FirstAsync(a => a.StoreId == storeId);
                 return settings;
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "LnOnchainSwapsPlugin:GetStoreSettings()");
+                logger.LogError(e, "LnOnchainSwapsPlugin:GetStoreSettings()");
                 throw;
             }
         }
@@ -115,13 +98,13 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         {
             try
             {
-                using var _context = _lnOnchainSwapsDbContextFactory.CreateContext();
+                using var _context = lnOnchainSwapsDbContextFactory.CreateContext();
                 var txs = await _context.BoltzSwaps.Where(a => a.StoreId == storeId).ToListAsync();
                 return txs.Reverse<BoltzSwap>().ToList();
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "LnOnchainSwapsPlugin:GetStoreSwaps()");
+                logger.LogError(e, "LnOnchainSwapsPlugin:GetStoreSwaps()");
                 throw;
             }
         }
@@ -147,14 +130,14 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                         ItemDesc = "Boltz swap from LnOnchainSwap plugin",
                     }.ToJObject()
                 };
-                var invoice = await _invoiceController.CreateInvoiceCoreRaw(req, store, rootUrl);
+                var invoice = await invoiceController.CreateInvoiceCoreRaw(req, store, rootUrl);
                 var invDest = invoice.GetPaymentPrompts()
                     .FirstOrDefault(prompt => prompt.PaymentMethodId == paymentMethodId).Destination;
                 return Tuple.Create(invoice.Id, invDest);
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "LnOnchainSwapsPlugin:CreateInvoice()");
+                logger.LogError(e, "LnOnchainSwapsPlugin:CreateInvoice()");
                 throw;
             }
         }
@@ -171,7 +154,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         {
             try 
             {
-                var store = await _storeRepository.FindStore(storeId);
+                var store = await storeRepository.FindStore(storeId);
 
                 string invoiceId = string.Empty;
                 string lnInvoice = string.Empty;
@@ -186,7 +169,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     lnInvoice = swap.ExternalLnInvoice;
                 }
 
-                using var _context = _lnOnchainSwapsDbContextFactory.CreateContext();
+                using var _context = lnOnchainSwapsDbContextFactory.CreateContext();
                 var settings = _context.Settings.First(a => a.StoreId == storeId);
                 var nbSwaps = await _context.BoltzSwaps.CountAsync(a => a.StoreId == storeId);
                 var refundPubKey = GetRefundPublicKeyForSwap(settings.RefundMnemonic, nbSwaps);
@@ -194,7 +177,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 var bolt11 = BOLT11PaymentRequest.Parse(lnInvoice, Network.Main);
                 var paymentHash = bolt11.PaymentHash.ToString();
 
-                var boltz = await _boltzService.CreateOnChainToLnSwapAsync(lnInvoice, refundPubKey, paymentHash);
+                var boltz = await boltzService.CreateOnChainToLnSwapAsync(lnInvoice, refundPubKey, paymentHash);
                 await CreatePayout(store, boltz);
                 boltz.StoreId = store.Id;
                 boltz.BTCPayInvoiceId = invoiceId;
@@ -207,7 +190,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "LnOnchainSwapsPlugin:DoOnchainToLnSwap()");
+                logger.LogError(e, "LnOnchainSwapsPlugin:DoOnchainToLnSwap()");
                 throw;
             }
 
@@ -217,7 +200,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         {
             try
             {
-                var store = await _storeRepository.FindStore(storeId);
+                var store = await storeRepository.FindStore(storeId);
 
                 string invoiceId = string.Empty;
                 string btcAddress = string.Empty;
@@ -232,12 +215,12 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     btcAddress = swap.ExternalOnChainAddress;
                 }
 
-                using var _context = _lnOnchainSwapsDbContextFactory.CreateContext();
+                using var _context = lnOnchainSwapsDbContextFactory.CreateContext();
                 var settings = _context.Settings.First(a => a.StoreId == storeId);
                 var nbSwaps = await _context.BoltzSwaps.CountAsync(a => a.StoreId == storeId);
                 var claimPubKey = GetRefundPublicKeyForSwap(settings.RefundMnemonic, nbSwaps);
 
-                var boltz = await _boltzService.CreateLnToOnChainSwapAsync(btcAddress, claimPubKey, swap.BtcAmount);
+                var boltz = await boltzService.CreateLnToOnChainSwapAsync(btcAddress, claimPubKey, swap.BtcAmount);
                 boltz.ExpectedAmount = ExtractAmountFromLnInvoice(boltz.Destination);
 
                 await CreatePayout(store, boltz);
@@ -253,7 +236,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "LnOnchainSwapsPlugin:DoLnToOnchainSwap()");
+                logger.LogError(e, "LnOnchainSwapsPlugin:DoLnToOnchainSwap()");
                 throw;
             }
 
@@ -263,9 +246,9 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         {
             try
             {
-                var status = await _boltzService.GetSwapStatusAsync(swapId);
+                var status = await boltzService.GetSwapStatusAsync(swapId);
 
-                using var _context = _lnOnchainSwapsDbContextFactory.CreateContext();
+                using var _context = lnOnchainSwapsDbContextFactory.CreateContext();
                 var dbSwap = await _context.BoltzSwaps.FirstOrDefaultAsync(s => s.SwapId == swapId);
                 if (dbSwap.Status != status)
                 {
@@ -277,7 +260,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "LnOnchainSwapsPlugin:DoGetSwapStatus()");
+                logger.LogError(e, "LnOnchainSwapsPlugin:DoGetSwapStatus()");
                 throw;
             }
         }
@@ -298,13 +281,13 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     PayoutMethods = new[] { payoutMethodId.ToString() }
                 };
 
-                var ppId = await _pullPaymentHostedService.CreatePullPayment(store, ppRequest);
+                var ppId = await pullPaymentHostedService.CreatePullPayment(store, ppRequest);
 
-                await using var btcPayCtx = _btcPayDbContextFactory.CreateContext();
+                await using var btcPayCtx = btcPayDbContextFactory.CreateContext();
                 var pp = await btcPayCtx.PullPayments.FindAsync(ppId);
                 var blob = pp.GetBlob();
 
-                var payoutHandler = _payoutHandlers.TryGet(payoutMethodId);
+                var payoutHandler = payoutHandlers.TryGet(payoutMethodId);
                 if (payoutHandler == null)
                     throw new Exception($"No payout handler found for {payoutMethodId}");
 
@@ -316,7 +299,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 if (LnOnchainSwapsDestination == null)
                     throw new Exception($"Destination parsing failed: {error ?? "Unknown error"}");
 
-                var result = await _pullPaymentHostedService.Claim(new ClaimRequest
+                var result = await pullPaymentHostedService.Claim(new ClaimRequest
                 {
                     Destination = LnOnchainSwapsDestination,
                     PullPaymentId = ppId,
@@ -349,7 +332,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "LnOnchainSwapsPlugin:CreatePayout()");
+                logger.LogError(e, "LnOnchainSwapsPlugin:CreatePayout()");
                 throw;
             }
         }
@@ -359,11 +342,11 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             StoreWalletConfig cnfg = new StoreWalletConfig();
             try
             {
-                var store = await _storeRepository.FindStore(storeId);
+                var store = await storeRepository.FindStore(storeId);
                 var blob = store.GetStoreBlob();
 
                 cnfg.FiatCurrency = blob.DefaultCurrency;
-                if (_networkProvider.DefaultNetwork.IsBTC)
+                if (networkProvider.DefaultNetwork.IsBTC)
                 {
                     getPaymentMethods(store, blob,
                         out var derivationSchemes, out var lightningNodes);
@@ -374,7 +357,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                     if (cnfg.OnChainEnabled)
                     {
                         var walletId = new WalletId(store.Id, "BTC");
-                        var data = await _walletHistogramService.GetHistogram(store, walletId, HistogramType.Week);
+                        var data = await walletHistogramService.GetHistogram(store, walletId, HistogramType.Week);
                         if (data != null)
                         {
                             cnfg.OnChainBalance = data.Balance;
@@ -382,11 +365,11 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                         else
                         {
                             using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
-                            var wallet = _walletProvider.GetWallet(_networkProvider.DefaultNetwork);
-                            var derivation = store.GetDerivationSchemeSettings(_handlers, walletId.CryptoCode);
+                            var wallet = walletProvider.GetWallet(networkProvider.DefaultNetwork);
+                            var derivation = store.GetDerivationSchemeSettings(handlers, walletId.CryptoCode);
                             if (derivation is not null)
                             {
-                                var network = _handlers.GetBitcoinHandler(walletId.CryptoCode).Network;
+                                var network = handlers.GetBitcoinHandler(walletId.CryptoCode).Network;
                                 var balance = await wallet.GetBalance(derivation.AccountDerivation, cts.Token);
                                 cnfg.OnChainBalance = balance.Available.GetValue(network);
                             }
@@ -415,12 +398,12 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
 
                     if (cnfg.OnChainBalance > 0 || cnfg.OffChainBalance > 0)
                     {
-                        if (_httpClient2.BaseAddress == null)
+                        if (httpClient2.BaseAddress == null)
                         {
-                            _httpClient2.BaseAddress = new Uri($"{BaseUrl}/api/");
+                            httpClient2.BaseAddress = new Uri($"{BaseUrl}/api/");
                         }
                         string sRep;
-                        using (var rep = await _httpClient2.GetAsync($"rates?storeId={storeId}&currencyPairs=BTC_{cnfg.FiatCurrency}"))
+                        using (var rep = await httpClient2.GetAsync($"rates?storeId={storeId}&currencyPairs=BTC_{cnfg.FiatCurrency}"))
                         {
                             rep.EnsureSuccessStatusCode();
                             sRep = await rep.Content.ReadAsStringAsync();
@@ -457,7 +440,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "LnOnchainSwapsPlugin:GetBalances()");
+                logger.LogError(e, "LnOnchainSwapsPlugin:GetBalances()");
                 //            throw;
             }
             return cnfg;
@@ -470,18 +453,18 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             var excludeFilters = storeBlob.GetExcludedPaymentMethods();
             var derivationByCryptoCode =
                 store
-                    .GetPaymentMethodConfigs<DerivationSchemeSettings>(_handlers)
-                    .ToDictionary(c => ((IHasNetwork)_handlers[c.Key]).Network.CryptoCode, c => c.Value);
+                    .GetPaymentMethodConfigs<DerivationSchemeSettings>(handlers)
+                    .ToDictionary(c => ((IHasNetwork)handlers[c.Key]).Network.CryptoCode, c => c.Value);
 
             var lightningByCryptoCode = store
-                .GetPaymentMethodConfigs(_handlers)
+                .GetPaymentMethodConfigs(handlers)
                 .Where(c => c.Value is LightningPaymentMethodConfig)
-                .ToDictionary(c => ((IHasNetwork)_handlers[c.Key]).Network.CryptoCode, c => (LightningPaymentMethodConfig)c.Value);
+                .ToDictionary(c => ((IHasNetwork)handlers[c.Key]).Network.CryptoCode, c => (LightningPaymentMethodConfig)c.Value);
 
             derivationSchemes = new List<StoreDerivationScheme>();
             lightningNodes = new List<StoreLightningNode>();
 
-            foreach (var handler in _handlers)
+            foreach (var handler in handlers)
             {
                 if (handler is BitcoinLikePaymentHandler { Network: var network })
                 {
@@ -516,17 +499,17 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
         }
         private ILightningClient GetLightningClient(BTCPayServer.Data.StoreData store)
         {
-            var network = _networkProvider.GetNetwork<BTCPayNetwork>("BTC");
+            var network = networkProvider.GetNetwork<BTCPayNetwork>("BTC");
             var id = PaymentTypes.LN.GetPaymentMethodId("BTC");
-            var existing = store.GetPaymentMethodConfig<LightningPaymentMethodConfig>(id, _handlers);
+            var existing = store.GetPaymentMethodConfig<LightningPaymentMethodConfig>(id, handlers);
             if (existing == null)
                 return null;
 
             if (existing.GetExternalLightningUrl() is { } connectionString)
             {
-                return _lightningClientFactory.Create(connectionString, network);
+                return lightningClientFactory.Create(connectionString, network);
             }
-            if (existing.IsInternalNode && _lightningNetworkOptions.Value.InternalLightningByCryptoCode.TryGetValue("BTC", out var internalLightningNode))
+            if (existing.IsInternalNode && lightningNetworkOptions.Value.InternalLightningByCryptoCode.TryGetValue("BTC", out var internalLightningNode))
             {
                 return internalLightningNode;
             }

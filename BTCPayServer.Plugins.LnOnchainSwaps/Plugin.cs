@@ -12,7 +12,10 @@ public class Plugin : BaseBTCPayServerPlugin
 {
     public override IBTCPayServerPlugin.PluginDependency[] Dependencies { get; } =
     {
-        new IBTCPayServerPlugin.PluginDependency { Identifier = nameof(BTCPayServer), Condition = ">=2.0.1" }
+        new() { Identifier = nameof(BTCPayServer), Condition = ">=2.0.1" },
+#if BOLTZ_SUPPORT
+        new() { Identifier = "BTCPayServer.Plugins.Boltz", Condition = ">=2.2.17" }
+#endif
     };
 
     public override void Execute(IServiceCollection services)
@@ -22,7 +25,7 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddSingleton<LnOnchainSwapsDbContextFactory>()
                 .AddHostedService<PluginMigrationRunner>()
                 .AddSingleton<LnOnchainSwapsPluginService>()
-                .AddSingleton<BoltzService>();
+                .AddSingleton<BoltzHttpService>();
 
     }
 

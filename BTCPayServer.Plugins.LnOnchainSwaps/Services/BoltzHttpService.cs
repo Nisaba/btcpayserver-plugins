@@ -1,13 +1,8 @@
 ﻿using BTCPayServer.Plugins.LnOnchainSwaps.Models;
 using Microsoft.Extensions.Logging;
-using NBitcoin;
-using NBitcoin.Crypto;
-using NBitpayClient;
 using Newtonsoft.Json;
-using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
@@ -15,15 +10,15 @@ using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
 {
-    public class BoltzService
+    public class BoltzHttpService
     {
         private const string BaseUrl = "https://api.boltz.exchange/v2/";
         private const string Referral = "nisaba";
 
         private readonly HttpClient _httpClient;
-        private readonly ILogger<BoltzService> _logger;
+        private readonly ILogger<BoltzHttpService> _logger;
 
-        public BoltzService(ILogger<BoltzService> logger, HttpClient httpClient)
+        public BoltzHttpService(ILogger<BoltzHttpService> logger, HttpClient httpClient)
         {
             _logger = logger;
             _httpClient = httpClient;
