@@ -251,7 +251,7 @@
                     iframeUrl.searchParams.append('addr', '@signingInfo.SenderBtcAddress');
                     if ('@signingInfo.Signature' !== '') {
                         iframeUrl.searchParams.append('code', '@signingInfo.Code');
-                        iframeUrl.searchParams.append('hash', encodeURIComponent('@Safe.Raw(signingInfo.Signature)'));
+                        iframeUrl.searchParams.append('hash', '@Safe.Raw(signingInfo.Signature)');
                     }
                 }
             } else {
