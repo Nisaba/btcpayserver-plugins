@@ -16,8 +16,6 @@ namespace BTCPayServer.Plugins.Shopstr.Services
 {
     public class ShopstrService (ILogger<ShopstrService> logger)
     {
-        private readonly ILogger<ShopstrService> _logger = logger;
-
         private CompositeNostrClient _client;
 
         public async Task InitializeClient(string[] relayUrls)
@@ -37,7 +35,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Shopstr Plugin: Error while opening Nostr connection");
+                logger.LogError(ex, $"Shopstr Plugin: Error while opening Nostr connection");
             }
         }
 
@@ -49,7 +47,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Shopstr Plugin: Error while disposing Nostr connection");
+                logger.LogError(ex, $"Shopstr Plugin: Error while disposing Nostr connection");
             }
         }
 
@@ -86,7 +84,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "MoveNextAsync() error");
+                            logger.LogError(ex, "MoveNextAsync() error");
                             break;
                         }
                     }
@@ -128,13 +126,13 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, $"Shopstr Plugin: Error while parsing Nostr product (Event ID: {nostrEvent.Id})");
+                        logger.LogError(ex, $"Shopstr Plugin: Error while parsing Nostr product (Event ID: {nostrEvent.Id})");
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Shopstr Plugin: Error while parsing Nostr products");
+                logger.LogError(ex, $"Shopstr Plugin: Error while parsing Nostr products");
             }
 
             return products
@@ -244,12 +242,12 @@ namespace BTCPayServer.Plugins.Shopstr.Services
 
                 if (verification == null)
                 {
-                    _logger.LogWarning($"Shopstr Plugin: Event {nostrEvent.Id} could not be verified on relay(s)");
+                    logger.LogWarning($"Shopstr Plugin: Event {nostrEvent.Id} could not be verified on relay(s)");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Shopstr Plugin: Error while creating Nostr product");
+                logger.LogError(ex, "Shopstr Plugin: Error while creating Nostr product");
                 throw;
             }
         }

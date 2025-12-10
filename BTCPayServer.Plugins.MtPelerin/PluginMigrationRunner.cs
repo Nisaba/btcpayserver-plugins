@@ -1,5 +1,5 @@
 ﻿using BTCPayServer.Abstractions.Contracts;
-using BTCPayServer.Plugins.MtPelerin.Services;
+using BTCPayServer.Plugins.MtPelerin.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using System.Threading;

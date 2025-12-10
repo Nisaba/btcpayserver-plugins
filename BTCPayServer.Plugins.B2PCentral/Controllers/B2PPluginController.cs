@@ -18,20 +18,14 @@ namespace BTCPayServer.Plugins.B2PCentral;
 [Route("~/plugins/{storeId}/b2pcentral")]
 [AutoValidateAntiforgeryToken]
 
-public class B2PPluginController : Controller
+public class B2PPluginController(B2PCentralPluginService pluginService) : Controller
 {
-    private readonly B2PCentralPluginService _PluginService;
-
-    public B2PPluginController(B2PCentralPluginService PluginService)
-    {
-        _PluginService = PluginService;
-    }
 
     [HttpGet]
     [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy= Policies.CanViewStoreSettings)]
     public async Task<IActionResult> Index(string storeId)
     {
-        return View(await _PluginService.GetStoreSettings(storeId));
+        return View(await pluginService.GetStoreSettings(storeId));
     }
 
     [HttpPost]
@@ -43,10 +37,10 @@ public class B2PPluginController : Controller
             switch (command)
             {
                 case "Save":
-                    await _PluginService.UpdateSettings(model);
+                    await pluginService.UpdateSettings(model);
                     break;
                 case "Test":
-                    var sTest = await _PluginService.TestB2P(model);
+                    var sTest = await pluginService.TestB2P(model);
                     if (sTest == "OK")
                     {
                         TempData[WellKnownTempData.SuccessMessage] = "Access to B2P Central API successful";
@@ -77,7 +71,7 @@ public class B2PPluginController : Controller
                 IsBuy = false,
                 Providers = req.Providers
             };
-            model.Offers = await _PluginService.GetOffersListAsync(ofrReq, req.ApiKey);
+            model.Offers = await pluginService.GetOffersListAsync(ofrReq, req.ApiKey);
         }
         catch (Exception ex)
         {
@@ -105,7 +99,7 @@ public class B2PPluginController : Controller
                 FiatCurrency = req.FiatCurrency,
                 Providers = req.Providers
             };
-            model.Swaps = await _PluginService.GetSwapsListAsync(swapReq, req.ApiKey);
+            model.Swaps = await pluginService.GetSwapsListAsync(swapReq, req.ApiKey);
         }
         catch (Exception ex)
         {

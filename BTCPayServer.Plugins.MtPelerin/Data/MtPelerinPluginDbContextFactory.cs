@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using System;
 
-namespace BTCPayServer.Plugins.MtPelerin.Services;
+namespace BTCPayServer.Plugins.MtPelerin.Data;
 
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<MtPelerinPluginDbContext>
 {

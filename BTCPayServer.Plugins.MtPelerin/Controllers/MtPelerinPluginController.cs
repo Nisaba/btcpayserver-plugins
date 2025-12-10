@@ -17,14 +17,13 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
     [AutoValidateAntiforgeryToken]
     public class MtPelerinPluginController(MtPelerinPluginService pluginService) : Controller
     {
-        private readonly MtPelerinPluginService _pluginService = pluginService;
 
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
         {
             var model = new MtPelerinModel()
             {
-                Settings = await _pluginService.GetStoreSettings(storeId),
+                Settings = await pluginService.GetStoreSettings(storeId),
                 IsPayoutCreated = (TempData[WellKnownTempData.SuccessMessage] ?? "").ToString().Contains("Payout created!")
             };
            
@@ -43,7 +42,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
             {
                 try
                 {
-                    await _pluginService.UpdateSettings(model.Settings);
+                    await pluginService.UpdateSettings(model.Settings);
                     TempData[WellKnownTempData.SuccessMessage] = "Settings successfuly saved";
                 }
                 catch (Exception ex)
@@ -59,14 +58,14 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
         {
             try
             {
-                var settings = await _pluginService.GetStoreSettings(storeId);
+                var settings = await pluginService.GetStoreSettings(storeId);
                 if (settings == null)
                 {
                     TempData[WellKnownTempData.ErrorMessage] = "Store settings not found";
                     return RedirectToAction("Index");
                 }
 
-                await _pluginService.CreatePayout(
+                await pluginService.CreatePayout(
                     settings.StoreId,
                     operation);
 

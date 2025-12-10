@@ -18,18 +18,13 @@ namespace BTCPayServer.Plugins.Shopstr.Services
     public class ShopstrPluginService(ILogger<ShopstrPluginService> logger,
                                     StoreRepository storeRepository,
                                     AppService appService,
-                                    ShopstrDbContextFactory shopstrDbContextFactory)
+                                    ShopstrDbContextFactory dbContextFactory)
     {
-        private readonly ILogger<ShopstrPluginService> _logger = logger;
-        private readonly StoreRepository _storeRepository = storeRepository;
-        private readonly AppService _appService = appService;
-        private readonly ShopstrDbContextFactory _dbContextFactory = shopstrDbContextFactory;
-
         public async Task<ShopstrViewModel> GetStoreViewModel(string storeId)
         {
             try
             {
-                var storeApps = (await _appService.GetApps("PointOfSale"))
+                var storeApps = (await appService.GetApps("PointOfSale"))
                     .Where(a => !a.Archived && a.StoreDataId == storeId)
                     .ToList();
 
@@ -55,14 +50,14 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 return new ShopstrViewModel
                 {
                     storeId = storeId,
-                    Nip5Settings = await _storeRepository.GetSettingAsync<Nip5StoreSettings>(storeId, "NIP05"),
+                    Nip5Settings = await storeRepository.GetSettingAsync<Nip5StoreSettings>(storeId, "NIP05"),
                     StoreApps = filteredApps
                 };
 
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "ShopstrPlugin:GetStoreViewModel()");
+                logger.LogError(e, "ShopstrPlugin:GetStoreViewModel()");
                 throw;
             }
         }
@@ -71,14 +66,14 @@ namespace BTCPayServer.Plugins.Shopstr.Services
         {
             try
             {
-                using (var context = _dbContextFactory.CreateContext())
+                using (var context = dbContextFactory.CreateContext())
                 {
                     return await context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId && a.AppId == appId);
                 }
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "ShopstrPlugin:GetSettings()");
+                logger.LogError(e, "ShopstrPlugin:GetSettings()");
                 throw;
             }
         }
@@ -86,7 +81,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             {
                 try
                 {
-                    using (var context = _dbContextFactory.CreateContext())
+                    using (var context = dbContextFactory.CreateContext())
                     {
                         var dbSettings = await context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                         if (dbSettings == null)
@@ -109,7 +104,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e, "ShopstrPlugin:UpdateSettings()");
+                    logger.LogError(e, "ShopstrPlugin:UpdateSettings()");
                     throw;
                 }
             }
@@ -117,7 +112,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
         public async Task<ShopstrAppData> GetStoreApp (string appId)
         {
             try {
-                var app = await _appService.GetApp(appId, PointOfSaleAppType.AppType);
+                var app = await appService.GetApp(appId, PointOfSaleAppType.AppType);
                 if (app == null)
                     throw new Exception("App not found");
                 var appSettings = app.GetSettings<PointOfSaleSettings>();
@@ -134,7 +129,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "ShopstrPlugin:GetStoreApp()");
+                logger.LogError(e, "ShopstrPlugin:GetStoreApp()");
                 throw;
             }
         }
@@ -143,11 +138,11 @@ namespace BTCPayServer.Plugins.Shopstr.Services
         {
             try
             {
-                return await _storeRepository.GetSettingAsync<Nip5StoreSettings>(storeId, "NIP05");
+                return await storeRepository.GetSettingAsync<Nip5StoreSettings>(storeId, "NIP05");
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "ShopstrPlugin:GetNostrSettings()");
+                logger.LogError(e, "ShopstrPlugin:GetNostrSettings()");
                 throw;
             }
         }

@@ -21,17 +21,16 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
     [AutoValidateAntiforgeryToken]
     public class LnOnchainSwapsPluginController(LnOnchainSwapsPluginService pluginService) : Controller
     {
-        private readonly LnOnchainSwapsPluginService _pluginService = pluginService;
 
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
         {
-            await _pluginService.InitSettings(storeId);
+            await pluginService.InitSettings(storeId);
             var model = new LnOnchainSwapsViewModel()
             {
                 StoreId = storeId,
-                WalletConfig = await _pluginService.GetBalances(storeId, $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}"),
-                Swaps = await _pluginService.GetStoreSwaps(storeId),
+                WalletConfig = await pluginService.GetBalances(storeId, $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}"),
+                Swaps = await pluginService.GetStoreSwaps(storeId),
                 IsPayoutCreated = (TempData[WellKnownTempData.SuccessMessage] ?? "").ToString().Contains("Payout created!")
             };
             if (!model.WalletConfig.OffChainAvailable || !model.WalletConfig.OnChainAvailable)
@@ -58,7 +57,7 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
                             ToInternalOnChainWallet = reqClient.IsInternal,
                             ExternalOnChainAddress = reqClient.ExternalAddressOrInvoice,
                         };
-                        swap = await _pluginService.DoLnToOnchainSwap(storeId, sRoot, req);
+                        swap = await pluginService.DoLnToOnchainSwap(storeId, sRoot, req);
                         break;
                     case BoltzSwap.SwapTypeOnChainToLn:
                         var req2 = new OnChainToLnSwap
@@ -67,7 +66,7 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
                             ToInternalLnWalet = reqClient.IsInternal,
                             ExternalLnInvoice = reqClient.ExternalAddressOrInvoice
                         };
-                        swap = await _pluginService.DoOnchainToLnSwap(storeId, sRoot, req2);
+                        swap = await pluginService.DoOnchainToLnSwap(storeId, sRoot, req2);
                         break;
                 }
                 TempData[WellKnownTempData.SuccessMessage] = $"Payout created! Boltz Swap ID: {swap.SwapId}";
@@ -85,7 +84,7 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
         {
             try
             {
-                var status = await _pluginService.DoGetSwapStatus(swapId);
+                var status = await pluginService.DoGetSwapStatus(swapId);
                 return Ok(status);
             }
             catch (Exception ex)
@@ -97,7 +96,7 @@ namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
         [HttpGet("DownloadRefundJson")]
         public async Task<FileContentResult> DownloadRefundJson([FromRoute] string storeId)
         {
-            var settings = await _pluginService.GetStoreSettings(storeId);
+            var settings = await pluginService.GetStoreSettings(storeId);
             if (settings == null)
             {
                 throw new InvalidOperationException("No private key for this store");

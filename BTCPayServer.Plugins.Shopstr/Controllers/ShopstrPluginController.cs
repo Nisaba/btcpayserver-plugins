@@ -17,12 +17,11 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
 
     public class ShopstrPluginController (ShopstrPluginService pluginService, ShopstrService shopstrService) : Controller
     {
-        private readonly ShopstrPluginService _pluginService = pluginService;
-        private readonly ShopstrService _shopstrService = shopstrService;
+
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
         {
-            var model = await _pluginService.GetStoreViewModel(storeId);
+            var model = await pluginService.GetStoreViewModel(storeId);
             return View(model);
         }
 
@@ -31,7 +30,7 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
         public async Task<IActionResult> SaveSettings([FromRoute] string storeId, [FromForm] string appId, [FromForm] string location)
         {
             try {
-                await _pluginService.UpdateSettings(storeId, appId, location);
+                await pluginService.UpdateSettings(storeId, appId, location);
                 TempData.SetStatusMessageModel(new StatusMessageModel()
                 {
                     Message = "Shopstr settings updated",
@@ -55,17 +54,17 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
         {
             try
             {
-                var app = await _pluginService.GetStoreApp(appId);
+                var app = await pluginService.GetStoreApp(appId);
                 if (!app.ShopItems.Any())
                 {
                     return Ok();
                 }
                 var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
-                var nostrSettings = await _pluginService.GetNostrSettings(storeId);
+                var nostrSettings = await pluginService.GetNostrSettings(storeId);
 
-                await _shopstrService.InitializeClient(nostrSettings.Relays);
+                await shopstrService.InitializeClient(nostrSettings.Relays);
 
-                var productsFromShopstr = await _shopstrService.GetShopstrProducts(nostrSettings.PubKey);
+                var productsFromShopstr = await shopstrService.GetShopstrProducts(nostrSettings.PubKey);
 
                 foreach (var item in app.ShopItems)
                 {
@@ -73,7 +72,7 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
                     var bPublishToShopStr = existingProduct == null ? true : !existingProduct.Compare(item, app.Location);
                     if (bPublishToShopStr)
                     {
-                        await _shopstrService.CreateShopstrProduct(item, app.CurrencyCode, app.Location, nostrSettings, baseUrl);
+                        await shopstrService.CreateShopstrProduct(item, app.CurrencyCode, app.Location, nostrSettings, baseUrl);
                     }
                 }
                 return Ok();
@@ -84,7 +83,7 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
             }
             finally
             {
-                _shopstrService.DisposeClient();
+                shopstrService.DisposeClient();
             }
         }
 
@@ -94,22 +93,22 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
         {
             try
             {
-                var app = await _pluginService.GetStoreApp(appId);
+                var app = await pluginService.GetStoreApp(appId);
                 if (!app.ShopItems.Any())
                 {
                     return Ok(); ;
                 }
 
-                var nostrSettings = await _pluginService.GetNostrSettings(storeId);
+                var nostrSettings = await pluginService.GetNostrSettings(storeId);
 
-                await _shopstrService.InitializeClient(nostrSettings.Relays);
-                var productsFromShopstr = await _shopstrService.GetShopstrProducts(nostrSettings.PubKey);
+                await shopstrService.InitializeClient(nostrSettings.Relays);
+                var productsFromShopstr = await shopstrService.GetShopstrProducts(nostrSettings.PubKey);
                 productsFromShopstr.RemoveAll(e => !e.Status);
 
                 foreach (var item in app.ShopItems)
                 {
                     if (productsFromShopstr.Any(p => p.Id == item.Id))
-                        await _shopstrService.CreateShopstrProduct(item, app.CurrencyCode, app.Location, nostrSettings, "", true);
+                        await shopstrService.CreateShopstrProduct(item, app.CurrencyCode, app.Location, nostrSettings, "", true);
                 }
                 return Ok();
             }
@@ -119,7 +118,7 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
             }
             finally
             {
-                _shopstrService.DisposeClient();
+                shopstrService.DisposeClient();
             }
         }
     }

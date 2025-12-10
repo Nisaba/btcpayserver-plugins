@@ -249,7 +249,7 @@
                     iframeUrl.searchParams.append('addr', '@signingInfo.SenderBtcAddress');
                     if ('@signingInfo.Signature' !== '') {
                         iframeUrl.searchParams.append('code', '@signingInfo.Code');
-                        iframeUrl.searchParams.append('hash', '@signingInfo.Signature');
+                            iframeUrl.searchParams.append('hash', '@Uri.EscapeDataString(signingInfo.Signature)');
                     }
                 }
             } else {
