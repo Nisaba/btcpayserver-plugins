@@ -1,0 +1,92 @@
+﻿@using System.Security.Cryptography
+@using BTCPayServer.Plugins.B2PCentral.Models.Swaps
+@using BTCPayServer.Services
+@model B2PSwapResult
+@inject DisplayFormatter DisplayFormatter
+
+@if (!string.IsNullOrEmpty(Model.ErrorMsg))
+{
+    <p><b>Error: </b>@Model.ErrorMsg</p>
+}
+@if (Model.Swaps.Any())
+{
+    string GetProviderDescription(SwapProvidersEnum provider)
+    {
+        var field = provider.GetType().GetField(provider.ToString());
+        var attribute = (System.ComponentModel.DescriptionAttribute)field.GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false).FirstOrDefault();
+        return attribute?.Description ?? provider.ToString();
+    }
+
+    var currentID = RandomNumberGenerator.GetInt32(10000);
+        @foreach (var swap in Model.Swaps)
+        {
+            var swapDetailsId = $"swapDetails_{currentID}_{swap.Provider}";
+            var providerDescription = GetProviderDescription(swap.Provider);
+        <div class="list-group list-group-flush">
+            <div class="list-group-item bg-tile">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="mb-0">@swap.Provider.ToString()</h5>
+                    <a href="@swap.ReferalUrl" target="_blank">
+                        <img src="/Resources/img/@(providerDescription).webp" alt="@providerDescription" style="height: 2rem; width: auto;" />
+                    </a>
+                </div>
+
+                <!-- Fixed Rate -->
+                <div class="mb-3 pb-3 border-bottom">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <strong class="text-info">Fixed:</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">@swap.FromFixedAmount.ToString("F8") BTC</div>
+                            <div class="text-muted small">@DisplayFormatter.Currency((decimal)swap.FromFiatFixedAmount, Model.FiatCurrency)</div>
+                        </div>
+                        <span class="text-muted" style="font-size: 2rem;">→</span>
+                        <div class="text-end">
+                            <div class="fw-semibold">@swap.ToFixedAmount.ToString("F8") @Model.ToCrypto</div>
+                            <div class="text-muted small">@DisplayFormatter.Currency((decimal)swap.ToFiatFixedAmount, Model.FiatCurrency)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Float Rate -->
+                <div class="mb-3">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <strong class="text-info">Float:</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">@swap.FromFloatAmount.ToString("F8") @Model.ToCrypto</div>
+                            <div class="text-muted small">@DisplayFormatter.Currency((decimal)swap.FromFiatFloatAmount, Model.FiatCurrency)</div>
+                        </div>
+                        <span class="text-muted" style="font-size: 2rem;">→</span>
+                        <div class="text-end">
+                            <div class="fw-semibold">@swap.ToFloatAmount.ToString("F8") BTC</div>
+                            <div class="text-muted small">@DisplayFormatter.Currency((decimal)swap.ToFiatFloatAmount, Model.FiatCurrency)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex gap-2 mt-3">
+                    <a href="@swap.ReferalUrl" target="_blank" class="btn btn-outline-primary flex-fill">
+                        <vc:icon symbol="external" />
+                        GO TO PROVIDER
+                    </a>
+                    <button type="button" class="btn btn-primary flex-fill" data-provider="@swap.Provider" data-fixed-id="@swap.FixedQuoteId">
+                        <vc:icon symbol="swap" />
+                        SWAP!
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(swap.ValidUntil))
+                {
+                    <div class="text-muted text-center small mt-2">
+                        Valid until: @swap.ValidUntil
+                    </div>
+                }
+            </div>
+        </div>
+        <br />
+    }
+}

@@ -256,7 +256,10 @@ public class B2PCentralPluginService
             return JsonConvert.DeserializeObject<List<B2POffer>>(sRep);
 
         }
-        catch { throw; }
+        catch (Exception ex) {
+            _logger.LogError(ex.Message);
+            throw;
+        }
     }
 
     public async Task<List<B2PSwap>> GetSwapsListAsync(SwapRateRequest req, string key)
@@ -280,10 +283,14 @@ public class B2PCentralPluginService
                     sRep = await rdr.ReadToEndAsync();
                 }
             }
-            return JsonConvert.DeserializeObject<List<B2PSwap>>(sRep);
+            return JsonConvert.DeserializeObject<B2PSwapResponse>(sRep).Swaps;
 
         }
-        catch { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+            throw;
+        }
     }
 
 

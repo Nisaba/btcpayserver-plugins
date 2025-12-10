@@ -100,6 +100,8 @@ public class B2PPluginController(B2PCentralPluginService pluginService) : Contro
                 Providers = req.Providers
             };
             model.Swaps = await pluginService.GetSwapsListAsync(swapReq, req.ApiKey);
+            model.ToCrypto = swapReq.ToCrypto;
+            model.FiatCurrency = swapReq.FiatCurrency;
         }
         catch (Exception ex)
         {

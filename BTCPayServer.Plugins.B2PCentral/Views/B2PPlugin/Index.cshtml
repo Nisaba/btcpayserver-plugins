@@ -45,6 +45,7 @@
 @{
     ViewData.SetActivePage(PluginNavPages.Index, "B2P Central plugin");
 }
+@Html.AntiForgeryToken()
 
 <script type="text/javascript">
     var tblOfrs = [];
@@ -65,22 +66,24 @@
             },
             data: JSON.stringify(reqData),
             success: function(result) {
-                tblOfrs = [];
                 $(container).html(result);
-                $("[id^='sortLink']").each(function () {
-                    var $this = $(this);
-                    if (!$._data(this, "events") || !$._data(this, "events").click) {
-                        $this.on("click", function (event) {
-                            event.preventDefault();
-                            var param1 = $(this).data('param1');
-                            if (tblOfrs.length == 0) {
-                                var param2Str = $(this).attr('data-param2');
-                                tblOfrs = JSON.parse(param2Str);
-                            }
-                            SortHtmlTable(param1);
-                        });
-                    }
-                });
+                if (container != "#container-B2pSwap") {
+                    tblOfrs = [];
+                    $("[id^='sortLink']").each(function () {
+                        var $this = $(this);
+                        if (!$._data(this, "events") || !$._data(this, "events").click) {
+                            $this.on("click", function (event) {
+                                event.preventDefault();
+                                var param1 = $(this).data('param1');
+                                if (tblOfrs.length == 0) {
+                                    var param2Str = $(this).attr('data-param2');
+                                    tblOfrs = JSON.parse(param2Str);
+                                }
+                                SortHtmlTable(param1);
+                            });
+                        }
+                    });
+                }
                 $(bt).show();
             },
             error: function (xhr, status, error) {
@@ -187,7 +190,6 @@
        First, you need to get a B2P Central API key <a href="https://getapi.b2p-central.com" target="b2pApi">here</a>.
     </p>
     <form method="post" autocomplete="off">
-        @Html.AntiForgeryToken()
         <input asp-for="ProvidersString" type="hidden"/>
         <table class="table table-sm mt-0 mx-0">
             <tr>
@@ -279,27 +281,27 @@
                 <b>Select providers:</b><br/>
                 <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
                     <div style="display: flex; align-items: center; min-width: 150px;">
-                        <input id="chkHodl" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.HodlHodl)" />
+                        <input id="chkHodl" type="checkbox" class="form-check-input me-2" checked />
                         <img src="/Resources/img/HodlHodl.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
                         <label for="chkHodl" class="form-check-label" style="cursor: pointer;">HodlHodl</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
-                        <input id="chkNoo" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.NoOnes)" />
+                        <input id="chkNoo" type="checkbox" class="form-check-input me-2" checked />
                         <img src="/Resources/img/NoOnes.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
                         <label for="chkNoo" class="form-check-label" style="cursor: pointer;">NoOnes</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
-                        <input id="chkLocalSw" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.LocalCoinSwap)" />
+                        <input id="chkLocalSw" type="checkbox" class="form-check-input me-2" checked />
                         <img src="/Resources/img/LocalCoinSwap.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
                         <label for="chkLocalSw" class="form-check-label" style="cursor: pointer;">LocalCoinSwap</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
-                        <input id="chkBisqV1" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.Peach)" />
+                        <input id="chkBisqV1" type="checkbox" class="form-check-input me-2" checked/>
                         <img src="/Resources/img/Bisq.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
                         <label for="chkBisqV1" class="form-check-label" style="cursor: pointer;">Bisq v1</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
-                        <input id="chkPeach" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.BisqV1)" />
+                        <input id="chkPeach" type="checkbox" class="form-check-input me-2" checked />
                         <img src="/Resources/img/Peach.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
                         <label for="chkPeach" class="form-check-label" style="cursor: pointer;">Peach</label>
                     </div>
@@ -370,17 +372,17 @@
 
                 <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
                     <div style="display: flex; align-items: center; min-width: 150px;">
-                        <input id="chkLNp2p" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.LNp2pBot)" />
+                        <input id="chkLNp2p" type="checkbox" class="form-check-input me-2" checked />
                         <img src="/Resources/img/LNp2pBot.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
                         <label for="chkLNp2p" class="form-check-label" style="cursor: pointer;">LNp2pBot</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
-                        <input id="chkRbs" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.RoboSats)" />
+                        <input id="chkRbs" type="checkbox" class="form-check-input me-2" checked />
                         <img src="/Resources/img/RoboSats.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
                         <label for="chkRbs" class="form-check-label" style="cursor: pointer;">RoboSats</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
-                        <input id="chkMst" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" checked="@Model.Providers.Contains(ProvidersEnum.Mostro)" />
+                        <input id="chkMst" type="checkbox" class="form-check-input me-2" checked />
                         <img src="/Resources/img/Mostro.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
                         <label for="chkMst" class="form-check-label" style="cursor: pointer;">Mostro</label>
                     </div>
@@ -473,7 +475,7 @@
                         var isKYC = SwapProviders.KYCProviders.Contains(provider);
 
                         <div id="provider@(provider)" class="swap-provider-item @(isKYC ? "kyc-provider" : "")" style="display: flex; align-items: center; min-width: 150px;" data-provider="@provider" data-is-kyc="@isKYC.ToString().ToLower()">
-                            <input id="@checkboxId" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" value="@((int)provider)" />
+                            <input id="@checkboxId" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" value="@((int)provider)" checked />
                             <img src="@imagePath" alt="@description" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
                             <label for="@checkboxId" class="form-check-label" style="cursor: pointer;">@description</label>
                         </div>
@@ -546,7 +548,7 @@
                         
                         const isToSend = $("input[name='rdFromTo']:checked").val() === "ToSend";
                         const data = {
-                            ToCrypto: cryptoTo,
+                            ToCrypto: $('#lstSwapToCrypto').val(),
                             FromAmount: isToSend ? swapAmount : 0,
                             ToAmount: isToSend ? 0 : swapAmount,
                             FiatCurrency: '@walletConfig.FiatCurrency',
