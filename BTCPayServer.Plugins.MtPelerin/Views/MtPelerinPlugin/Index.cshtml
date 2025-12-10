@@ -1,4 +1,5 @@
 @using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Abstractions.Services
 @using BTCPayServer.Plugins.MtPelerin.Views
 @using BTCPayServer.Client
 @using BTCPayServer.Plugins.MtPelerin.Model
@@ -6,6 +7,7 @@
 
 @inject BTCPayServer.Plugins.MtPelerin.Services.MtPelerinPluginService MtPelerinPluginService
 @inject DisplayFormatter DisplayFormatter
+@inject Safe Safe
 
 @model BTCPayServer.Plugins.MtPelerin.Model.MtPelerinModel
 @{
@@ -249,7 +251,7 @@
                     iframeUrl.searchParams.append('addr', '@signingInfo.SenderBtcAddress');
                     if ('@signingInfo.Signature' !== '') {
                         iframeUrl.searchParams.append('code', '@signingInfo.Code');
-                        iframeUrl.searchParams.append('hash', encodeURIComponent('@signingInfo.Signature'));
+                        iframeUrl.searchParams.append('hash', encodeURIComponent('@Safe.Raw(signingInfo.Signature)'));
                     }
                 }
             } else {
