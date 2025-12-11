@@ -86,11 +86,11 @@
                             <td width="300" class="border-0 ps-0 align-middle">
                                 <select asp-for="Settings.Lang" class="form-select">
                                     <option value="en">English</option>
-                                    <option value="fr">Fran�ais</option>
+                                    <option value="fr">Français</option>
                                     <option value="de">Deutsch</option>
                                     <option value="it">Italiano</option>
-                                    <option value="es">Espa�ol</option>
-                                    <option value="pt">Portugu�s</option>
+                                    <option value="es">Espanol</option>
+                                    <option value="pt">Portugues</option>
                                 </select>
                                 <span asp-validation-for="Settings.Lang" class="text-danger"></span>
                             </td>
@@ -246,8 +246,8 @@
             let vAmount, vCurrency
             if (isOnChain) {
                 vCurrency = 'BTC';
-                vAmount = amountToSend.toString();
-                    if (@((signingInfo.SenderBtcAddress != "").ToString().ToLower())) {
+                vAmount = amountToSend.toFixed(8);
+                if (@((signingInfo.SenderBtcAddress != "").ToString().ToLower())) {
                     iframeUrl.searchParams.append('addr', '@signingInfo.SenderBtcAddress');
                     if ('@signingInfo.Signature' !== '') {
                         iframeUrl.searchParams.append('code', '@signingInfo.Code');
