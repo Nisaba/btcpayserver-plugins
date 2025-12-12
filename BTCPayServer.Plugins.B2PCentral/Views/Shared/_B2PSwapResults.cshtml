@@ -1,8 +1,12 @@
 ﻿@using System.Security.Cryptography
+@using BTCPayServer.Abstractions.Services
 @using BTCPayServer.Plugins.B2PCentral.Models.Swaps
 @using BTCPayServer.Services
+@using System.Text.Json 
+
 @model B2PSwapResult
 @inject DisplayFormatter DisplayFormatter
+@inject Safe Safe
 
 @if (!string.IsNullOrEmpty(Model.ErrorMsg))
 {
@@ -17,11 +21,94 @@
         return attribute?.Description ?? provider.ToString();
     }
 
-    var currentID = RandomNumberGenerator.GetInt32(10000);
-        @foreach (var swap in Model.Swaps)
+    <!-- Modal Popup -->
+    <div class="modal fade" id="swapModal" tabindex="-1" aria-labelledby="swapModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="d-flex align-items-center gap-3 w-100">
+                        <img id="modalProviderLogo" src="" alt="" style="height: 2rem; width: auto;" />
+                        <h5 class="modal-title mb-0" id="swapModalLabel"></h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <vc:icon symbol="close" />
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <label class="form-label mb-0">Rate:</label>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <input type="radio" class="btn-check" name="rateType" id="rateFixed" value="fixed" checked>
+                                <label class="btn btn-outline-secondary" for="rateFixed">Fixed</label>
+                                
+                                <input type="radio" class="btn-check" name="rateType" id="rateFloating" value="floating">
+                                <label class="btn btn-outline-secondary" for="rateFloating">Floating</label>
+                            </div>
+                            <button type="button" class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="tooltip" title="Fixed rate locks the exchange rate, floating rate may vary">
+                                <vc:icon symbol="info" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="swapSummary" class="mb-3 p-3 bg-light rounded">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">You send:</span>
+                            <div class="text-end">
+                                <div class="fw-semibold" id="modalFromAmount"></div>
+                                <div class="text-muted small" id="modalFromFiat"></div>
+                            </div>
+                        </div>
+                        <div class="text-center my-2">
+                            <span class="text-muted" style="font-size: 1.5rem;">↓</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">You will receive:</span>
+                            <div class="text-end">
+                                <div class="fw-semibold" id="modalToAmount"></div>
+                                <div class="text-muted small" id="modalToFiat"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="receivingAddress" class="form-label" data-required>Receiving address:</label>
+                        <input type="text" class="form-control font-monospace" id="receivingAddress" placeholder="XMR (Monero)" required>
+                        <span class="text-danger" id="receivingAddressError"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="refundAddress" class="form-label">Refund address:</label>
+                        <input type="text" class="form-control font-monospace" id="refundAddress" placeholder="BTC (Bitcoin)">
+                        <span class="text-danger" id="refundAddressError"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="emailAddress" class="form-label" data-required>Email:</label>
+                        <input type="email" class="form-control" id="emailAddress" placeholder="enter your email" value="@Model.UserEmail">
+                        <span class="text-danger" id="emailAddressError"></span>
+                    </div>
+
+                    <div id="modalValidUntil" class="text-muted text-center small mt-3" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="button" class="btn btn-primary" id="confirmSwapBtn">CREATE SWAP</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="application/json" id="b2p-swap-data">
         {
-            var swapDetailsId = $"swapDetails_{currentID}_{swap.Provider}";
-            var providerDescription = GetProviderDescription(swap.Provider);
+            "swaps": @Safe.Raw(JsonSerializer.Serialize(Model.Swaps)),
+            "rateReq": @Safe.Raw(JsonSerializer.Serialize(Model.RateRequest))
+        }
+    </script>
+
+    @foreach (var swap in Model.Swaps)
+    {
+        var providerDescription = GetProviderDescription(swap.Provider);
         <div class="list-group list-group-flush">
             <div class="list-group-item bg-tile">
                 <div class="d-flex align-items-center justify-content-between mb-3">
@@ -56,12 +143,12 @@
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="fw-semibold">@swap.FromFloatAmount.ToString("F8") @Model.ToCrypto</div>
+                            <div class="fw-semibold">@swap.FromFloatAmount.ToString("F8") BTC</div>
                             <div class="text-muted small">@DisplayFormatter.Currency((decimal)swap.FromFiatFloatAmount, Model.FiatCurrency)</div>
                         </div>
                         <span class="text-muted" style="font-size: 2rem;">→</span>
                         <div class="text-end">
-                            <div class="fw-semibold">@swap.ToFloatAmount.ToString("F8") BTC</div>
+                            <div class="fw-semibold">@swap.ToFloatAmount.ToString("F8") @Model.ToCrypto</div>
                             <div class="text-muted small">@DisplayFormatter.Currency((decimal)swap.ToFiatFloatAmount, Model.FiatCurrency)</div>
                         </div>
                     </div>
@@ -70,11 +157,13 @@
                 <!-- Actions -->
                 <div class="d-flex gap-2 mt-3">
                     <a href="@swap.ReferalUrl" target="_blank" class="btn btn-outline-primary flex-fill">
-                        <vc:icon symbol="external" />
+                        <vc:icon symbol="actions-show" />
                         GO TO PROVIDER
                     </a>
-                    <button type="button" class="btn btn-primary flex-fill" data-provider="@swap.Provider" data-fixed-id="@swap.FixedQuoteId">
-                        <vc:icon symbol="swap" />
+                    <button type="button" class="btn btn-primary flex-fill swap-btn"
+                            data-provider-id="@((int)swap.Provider)"
+                            data-provider-description="@providerDescription">
+                        <vc:icon symbol="actions-refresh" />
                         SWAP!
                     </button>
                 </div>

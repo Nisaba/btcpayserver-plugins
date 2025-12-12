@@ -1,16 +1,14 @@
 using BTCPayServer.Abstractions.Constants;
 using BTCPayServer.Client;
+using BTCPayServer.Data;
 using BTCPayServer.Plugins.B2PCentral.Models;
 using BTCPayServer.Plugins.B2PCentral.Models.P2P;
 using BTCPayServer.Plugins.B2PCentral.Models.Swaps;
 using BTCPayServer.Plugins.B2PCentral.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Org.BouncyCastle.Ocsp;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.B2PCentral;
@@ -18,7 +16,7 @@ namespace BTCPayServer.Plugins.B2PCentral;
 [Route("~/plugins/{storeId}/b2pcentral")]
 [AutoValidateAntiforgeryToken]
 
-public class B2PPluginController(B2PCentralPluginService pluginService) : Controller
+public class B2PPluginController(B2PCentralPluginService pluginService, UserManager<ApplicationUser> userManager) : Controller
 {
 
     [HttpGet]
@@ -88,6 +86,7 @@ public class B2PPluginController(B2PCentralPluginService pluginService) : Contro
         var model = new B2PSwapResult();
         try
         {
+            var user = await userManager.GetUserAsync(User);
             var swapReq = new SwapRateRequest
             {
                 FromCrypto = "BTC",
@@ -102,6 +101,8 @@ public class B2PPluginController(B2PCentralPluginService pluginService) : Contro
             model.Swaps = await pluginService.GetSwapsListAsync(swapReq, req.ApiKey);
             model.ToCrypto = swapReq.ToCrypto;
             model.FiatCurrency = swapReq.FiatCurrency;
+            model.RateRequest = swapReq;
+            model.UserEmail = user?.Email ?? string.Empty;
         }
         catch (Exception ex)
         {

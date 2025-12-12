@@ -282,27 +282,27 @@
                 <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkHodl" type="checkbox" class="form-check-input me-2" checked />
-                        <img src="/Resources/img/HodlHodl.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <img src="/Resources/img/HodlHodl.webp" style="width: 28px; height: 28px; margin-right: 8px;"/>
                         <label for="chkHodl" class="form-check-label" style="cursor: pointer;">HodlHodl</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkNoo" type="checkbox" class="form-check-input me-2" checked />
-                        <img src="/Resources/img/NoOnes.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <img src="/Resources/img/NoOnes.webp" style="width: 28px; height: 28px; margin-right: 8px;"/>
                         <label for="chkNoo" class="form-check-label" style="cursor: pointer;">NoOnes</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkLocalSw" type="checkbox" class="form-check-input me-2" checked />
-                        <img src="/Resources/img/LocalCoinSwap.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <img src="/Resources/img/LocalCoinSwap.webp" style="width: 28px; height: 28px; margin-right: 8px;"/>
                         <label for="chkLocalSw" class="form-check-label" style="cursor: pointer;">LocalCoinSwap</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkBisqV1" type="checkbox" class="form-check-input me-2" checked/>
-                        <img src="/Resources/img/Bisq.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <img src="/Resources/img/Bisq.webp" style="width: 28px; height: 28px; margin-right: 8px;"/>
                         <label for="chkBisqV1" class="form-check-label" style="cursor: pointer;">Bisq v1</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkPeach" type="checkbox" class="form-check-input me-2" checked />
-                        <img src="/Resources/img/Peach.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <img src="/Resources/img/Peach.webp" style="width: 28px; height: 28px; margin-right: 8px;"/>
                         <label for="chkPeach" class="form-check-label" style="cursor: pointer;">Peach</label>
                     </div>
                 </div>
@@ -373,17 +373,17 @@
                 <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkLNp2p" type="checkbox" class="form-check-input me-2" checked />
-                        <img src="/Resources/img/LNp2pBot.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <img src="/Resources/img/LNp2pBot.webp" style="width: 28px; height: 28px; margin-right: 8px;"/>
                         <label for="chkLNp2p" class="form-check-label" style="cursor: pointer;">LNp2pBot</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkRbs" type="checkbox" class="form-check-input me-2" checked />
-                        <img src="/Resources/img/RoboSats.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <img src="/Resources/img/RoboSats.webp" style="width: 28px; height: 28px; margin-right: 8px;"/>
                         <label for="chkRbs" class="form-check-label" style="cursor: pointer;">RoboSats</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkMst" type="checkbox" class="form-check-input me-2" checked />
-                        <img src="/Resources/img/Mostro.webp" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                        <img src="/Resources/img/Mostro.webp" style="width: 28px; height: 28px; margin-right: 8px;"/>
                         <label for="chkMst" class="form-check-label" style="cursor: pointer;">Mostro</label>
                     </div>
                 </div>
@@ -476,7 +476,7 @@
 
                         <div id="provider@(provider)" class="swap-provider-item @(isKYC ? "kyc-provider" : "")" style="display: flex; align-items: center; min-width: 150px;" data-provider="@provider" data-is-kyc="@isKYC.ToString().ToLower()">
                             <input id="@checkboxId" type="checkbox" class="form-check-input me-2 swap-provider-checkbox" value="@((int)provider)" checked />
-                            <img src="@imagePath" alt="@description" style="width: 28px; height: 28px; margin-right: 8px;" onerror="this.style.display='none'" />
+                            <img src="@imagePath" alt="@description" style="width: 28px; height: 28px; margin-right: 8px;"/>
                             <label for="@checkboxId" class="form-check-label" style="cursor: pointer;">@description</label>
                         </div>
                     }
@@ -602,3 +602,19 @@
     }
 
 </div>
+
+@section PageFootContent {
+    <script src="/Resources/js/b2p-swap.js" asp-append-version="true" asp-add-nonce="true"></script>
+    
+    <script asp-add-nonce="true">
+        $(document).ajaxComplete(function(event, xhr, settings) {
+            if (settings.url && settings.url.includes('GetPartialB2PSwapResult')) {
+                const swapData = $('#b2p-swap-data');
+                if (swapData.length > 0) {
+                    const data = JSON.parse(swapData.text());
+                    window.B2PSwap.init(data.swaps, data.rateReq);
+                }
+            }
+        });
+    </script>
+}
