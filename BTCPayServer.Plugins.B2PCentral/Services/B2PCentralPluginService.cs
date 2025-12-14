@@ -1,11 +1,14 @@
 using BTCPayServer.Client.Models;
 using BTCPayServer.Configuration;
 using BTCPayServer.Data;
+using BTCPayServer.HostedServices;
 using BTCPayServer.Lightning;
 using BTCPayServer.Models.StoreViewModels;
 using BTCPayServer.Payments;
 using BTCPayServer.Payments.Bitcoin;
 using BTCPayServer.Payments.Lightning;
+using BTCPayServer.Payouts;
+using BTCPayServer.Plugins.B2PCentral.Data;
 using BTCPayServer.Plugins.B2PCentral.Models;
 using BTCPayServer.Plugins.B2PCentral.Models.P2P;
 using BTCPayServer.Plugins.B2PCentral.Models.Swaps;
@@ -42,9 +45,12 @@ public class B2PCentralPluginService
     private readonly LightningClientFactoryService _lightningClientFactory;
     private readonly IOptions<LightningNetworkOptions> _lightningNetworkOptions;
     private readonly WalletHistogramService _walletHistogramService;
-    private readonly PaymentMethodHandlerDictionary _handlers;
+    private readonly PayoutMethodHandlerDictionary _payoutHandlers;
+    private readonly PullPaymentHostedService _pullPaymentHostedService;
+    private readonly ApplicationDbContextFactory _btcPayDbContextFactory;
 
     public B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbContextFactory,
+                                   ApplicationDbContextFactory btcPayDbContextFactory,
                                    StoreRepository storeRepository,
                                    ILogger<B2PCentralPluginService> logger,
                                    HttpClient httpClient,
@@ -54,8 +60,9 @@ public class B2PCentralPluginService
                                    LightningClientFactoryService lightningClientFactory,
                                    IOptions<LightningNetworkOptions> lightningNetworkOptions,
                                    BTCPayNetworkProvider networkProvider,
-                                   WalletHistogramService walletHistogramService,
-                                   PaymentMethodHandlerDictionary handlers)
+                                   PayoutMethodHandlerDictionary payoutHandlers,
+                                   PullPaymentHostedService pullPaymentHostedService,
+                                   WalletHistogramService walletHistogramService)
     {
         _pluginDbContextFactory = pluginDbContextFactory;
         _storeRepository = storeRepository;
@@ -70,7 +77,9 @@ public class B2PCentralPluginService
         _httpClient.BaseAddress = new Uri("https://api.b2p-central.com/api/");
         _httpClient2 = httpClient2;
         _walletHistogramService = walletHistogramService;
-        _handlers = handlers;
+        _payoutHandlers = payoutHandlers;
+        _pullPaymentHostedService = pullPaymentHostedService;
+        _btcPayDbContextFactory = btcPayDbContextFactory;
     }
 
     public async Task<string> TestB2P(B2PSettings settings)
@@ -109,6 +118,21 @@ public class B2PCentralPluginService
         catch (Exception e)
         {
             _logger.LogError(e, "B2PCentral:GetStoreSettings()");
+            throw;
+        }
+    }
+
+    public async Task<List<B2PStoreSwap>> GetStoreSwaps(string storeId)
+    {
+        try
+        {
+            using var context = _pluginDbContextFactory.CreateContext();
+            var txs = await context.B2PStoreSwaps.Where(a => a.StoreId == storeId).ToListAsync();
+            return txs.Reverse<B2PStoreSwap>().ToList();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "B2PCentral:GetStoreSwaps()");
             throw;
         }
     }
@@ -168,10 +192,10 @@ public class B2PCentralPluginService
                     {
                         using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
                         var wallet = _walletProvider.GetWallet(_networkProvider.DefaultNetwork);
-                        var derivation = store.GetDerivationSchemeSettings(_handlers, walletId.CryptoCode);
+                        var derivation = store.GetDerivationSchemeSettings(_paymentMethodHandlerDictionary, walletId.CryptoCode);
                         if (derivation is not null)
                         {
-                            var network = _handlers.GetBitcoinHandler(walletId.CryptoCode).Network;
+                            var network = _paymentMethodHandlerDictionary.GetBitcoinHandler(walletId.CryptoCode).Network;
                             var balance = await wallet.GetBalance(derivation.AccountDerivation, cts.Token);
                             cnfg.OnChainBalance = balance.Available.GetValue(network);
                         }
@@ -257,7 +281,7 @@ public class B2PCentralPluginService
 
         }
         catch (Exception ex) {
-            _logger.LogError(ex.Message);
+            _logger.LogError(ex.Message, "B2PCentral:GetOffersListAsync()");
             throw;
         }
     }
@@ -288,11 +312,124 @@ public class B2PCentralPluginService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError(ex.Message, "B2PCentral:GetSwapsListAsync()");
             throw;
         }
     }
 
+    public async Task<SwapCreationResponse> CreateSwapAsync(string storeId, SwapCreationRequest req, string key)
+    {
+        try
+        {
+            var reqJson = JsonConvert.SerializeObject(req, Formatting.None);
+            var webRequest = new HttpRequestMessage(HttpMethod.Put, "swaps")
+            {
+                Content = new StringContent(reqJson, Encoding.UTF8, "application/json"),
+            };
+            webRequest.Headers.Add("B2P-API-KEY", key);
+            string sRep;
+            using (var rep = await _httpClient.SendAsync(webRequest))
+            {
+                rep.EnsureSuccessStatusCode();
+                using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
+                {
+                    sRep = await rdr.ReadToEndAsync();
+                }
+            }
+            return JsonConvert.DeserializeObject<SwapCreationResponse>(sRep);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, "B2PCentral:CreateSwapAsync()");
+            throw;
+        }
+    }
+
+    public async Task<Tuple<string, string>> CreatePayout(string storeId, string provider, SwapCreationResponse swap, SwapCreationRequestJS req, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var payoutMethodId = PayoutMethodId.Parse("BTC-CHAIN");
+
+            var ppRequest = new CreatePullPaymentRequest
+            {
+                Name = $"B2P Central {provider} Swap {swap.SwapId}",
+                Description = "",
+                Amount = req.FromAmount,
+                Currency = "BTC",
+                ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
+                PayoutMethods = new[] { payoutMethodId.ToString() }
+            };
+
+            var store = await _storeRepository.FindStore(storeId);
+            var ppId = await _pullPaymentHostedService.CreatePullPayment(store, ppRequest);
+
+            await using var btcPayCtx = _btcPayDbContextFactory.CreateContext();
+            var pp = await btcPayCtx.PullPayments.FindAsync(ppId);
+            var blob = pp.GetBlob();
+
+            var payoutHandler = _payoutHandlers.TryGet(payoutMethodId);
+            if (payoutHandler == null)
+                throw new Exception($"No payout handler found for {payoutMethodId}");
+
+            string error = null;
+            var sDest = swap.FromAddress;
+            IClaimDestination mtPelerinDestination;
+
+            (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, blob, cancellationToken);
+
+            if (mtPelerinDestination == null)
+                throw new Exception($"Destination parsing failed: {error ?? "Unknown error"}");
+
+            // (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, blob, cancellationToken);
+
+            var result = await _pullPaymentHostedService.Claim(new ClaimRequest
+            {
+                Destination = mtPelerinDestination,
+                PullPaymentId = ppId,
+                ClaimedAmount = req.FromAmount,
+                PayoutMethodId = payoutMethodId,
+                StoreId = storeId,
+                PreApprove = true,
+            });
+
+            switch (result.Result)
+            {
+                case ClaimRequest.ClaimResult.Duplicate:
+                    throw new Exception("Duplicate claim for pull payment");
+                case ClaimRequest.ClaimResult.Expired:
+                    throw new Exception("Pull payment expired");
+                case ClaimRequest.ClaimResult.Archived:
+                    throw new Exception("Pull payment archived");
+                case ClaimRequest.ClaimResult.AmountTooLow:
+                    throw new Exception("Claim amount is too low");
+                case ClaimRequest.ClaimResult.NotStarted:
+                    throw new Exception("Pull payment has not started yet");
+            }
+            return new Tuple<string, string>(ppId, result.PayoutData.Id);
+
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "B2PCentral:CreatePayout()");
+            throw;
+        }
+    }
+
+    public async Task AddSwapInDb(B2PStoreSwap swap)
+    {
+        try
+        {
+            using var context = _pluginDbContextFactory.CreateContext();
+            context.B2PStoreSwaps.Add(swap);
+            await context.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "B2PCentral:AddSwapInDb()");
+            throw;
+        }
+    }
 
     private void getPaymentMethods(BTCPayServer.Data.StoreData store, StoreBlob storeBlob,
         out List<StoreDerivationScheme> derivationSchemes, out List<StoreLightningNode> lightningNodes)
@@ -300,18 +437,18 @@ public class B2PCentralPluginService
         var excludeFilters = storeBlob.GetExcludedPaymentMethods();
         var derivationByCryptoCode =
             store
-                .GetPaymentMethodConfigs<DerivationSchemeSettings>(_handlers)
-                .ToDictionary(c => ((IHasNetwork)_handlers[c.Key]).Network.CryptoCode, c => c.Value);
+                .GetPaymentMethodConfigs<DerivationSchemeSettings>(_paymentMethodHandlerDictionary)
+                .ToDictionary(c => ((IHasNetwork)_paymentMethodHandlerDictionary[c.Key]).Network.CryptoCode, c => c.Value);
 
         var lightningByCryptoCode = store
-            .GetPaymentMethodConfigs(_handlers)
+            .GetPaymentMethodConfigs(_paymentMethodHandlerDictionary)
             .Where(c => c.Value is LightningPaymentMethodConfig)
-            .ToDictionary(c => ((IHasNetwork)_handlers[c.Key]).Network.CryptoCode, c => (LightningPaymentMethodConfig)c.Value);
+            .ToDictionary(c => ((IHasNetwork)_paymentMethodHandlerDictionary[c.Key]).Network.CryptoCode, c => (LightningPaymentMethodConfig)c.Value);
 
         derivationSchemes = new List<StoreDerivationScheme>();
         lightningNodes = new List<StoreLightningNode>();
 
-        foreach (var handler in _handlers)
+        foreach (var handler in _paymentMethodHandlerDictionary)
         {
             if (handler is BitcoinLikePaymentHandler { Network: var network })
             {
@@ -349,7 +486,7 @@ public class B2PCentralPluginService
     {
         var network = _networkProvider.GetNetwork<BTCPayNetwork>("BTC");
         var id = PaymentTypes.LN.GetPaymentMethodId("BTC");
-        var existing = store.GetPaymentMethodConfig<LightningPaymentMethodConfig>(id, _handlers);
+        var existing = store.GetPaymentMethodConfig<LightningPaymentMethodConfig>(id, _paymentMethodHandlerDictionary);
         if (existing == null)
             return null;
 

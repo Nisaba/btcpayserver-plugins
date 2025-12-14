@@ -9,7 +9,7 @@
 @inject BTCPayServer.Plugins.B2PCentral.Services.B2PCentralPluginService B2PCentralPluginService
 @inject DisplayFormatter DisplayFormatter
 
-@model B2PSettings
+@model B2PViewModel 
 @functions {
     string GetCategoryIcon(CryptoCategory category) => category switch
     {
@@ -34,13 +34,6 @@
         _ when cryptoCode.StartsWith("EUR") || cryptoCode.StartsWith("DEURO") => "🟡",
         _ => "◆"
     };
-
-    string GetProviderDescription(SwapProvidersEnum provider)
-    {
-        var field = provider.GetType().GetField(provider.ToString());
-        var attribute = (System.ComponentModel.DescriptionAttribute)field.GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false).FirstOrDefault();
-        return attribute?.Description ?? provider.ToString();
-    }
 }
 @{
     ViewData.SetActivePage(PluginNavPages.Index, "B2P Central plugin");
@@ -142,6 +135,7 @@
                 $("#tabOnChain").show();
                 $("#tabLightning").hide();
                 $("#tabSwaps").hide();
+                $("#tabListSwaps").hide();
                 tblOfrsLightning = tblOfrs;
                 tblOfrs = tblOfrsOnChain;
                 break;
@@ -150,6 +144,7 @@
                 $("#tabOnChain").hide();
                 $("#tabLightning").show();
                 $("#tabSwaps").hide();
+                $("#tabListSwaps").hide();
                 tblOfrsOnChain = tblOfrs;
                 tblOfrs = tblOfrsLightning;
                 break;
@@ -158,6 +153,14 @@
                 $("#tabOnChain").hide();
                 $("#tabLightning").hide();
                 $("#tabSwaps").show();
+                $("#tabListSwaps").hide();
+                break;
+            case 3:
+                $("#SectionNav-4").addClass("active").siblings().removeClass("active");
+                $("#tabOnChain").hide();
+                $("#tabLightning").hide();
+                $("#tabSwaps").hide();
+                $("#tabListSwaps").show();
                 break;
         }
     }
@@ -190,21 +193,21 @@
        First, you need to get a B2P Central API key <a href="https://getapi.b2p-central.com" target="b2pApi">here</a>.
     </p>
     <form method="post" autocomplete="off">
-        <input asp-for="ProvidersString" type="hidden"/>
+        <input asp-for="Settings.ProvidersString" type="hidden"/>
         <table class="table table-sm mt-0 mx-0">
             <tr>
                 <td width="100">
-                    <label asp-for="ApiKey" class="form-label"></label>
+                    <label asp-for="Settings.ApiKey" class="form-label"></label>
                 </td>
                 <td width="400" class="border-0 ps-0 align-middle">
-                    <input asp-for="ApiKey" data-fill="port" class="form-control" />
-                    <span asp-validation-for="ApiKey" class="text-danger"></span>
+                    <input asp-for="Settings.ApiKey" data-fill="port" class="form-control" />
+                    <span asp-validation-for="Settings.ApiKey" class="text-danger"></span>
                 </td>
                 <td width="20" />
                 <td>
                     <button id="SaveButton" type="submit" class="btn btn-primary" value="Save" name="Command">Save</button>
                 </td>
-                @if (!string.IsNullOrEmpty(Model.ApiKey))
+                @if (!string.IsNullOrEmpty(Model.Settings.ApiKey))
                 {
                     <td>
                         <button class="btn btn-secondary mt-2" value="Test" name="Command">Test</button>
@@ -217,20 +220,21 @@
 
 <div permission="@Policies.CanViewStoreSettings">
     <br />
-    @if (string.IsNullOrEmpty(Model.ApiKey))
+    @if (string.IsNullOrEmpty(Model.Settings.ApiKey))
     {
         <p>
             <i>B2P settings not set for this store...</i>
         </p>
     } else
     {
-        var walletConfig = await B2PCentralPluginService.GetBalances(Model.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
+        var walletConfig = await B2PCentralPluginService.GetBalances(Model.Settings.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
 
         <nav id="SectionNav">
             <div class="nav">
                 <a id="SectionNav-1" class="nav-link active" href="#SectionNav" onclick="SwitchTab(1)"><vc:icon symbol="wallet-wallet" /> Sell (On Chain)</a>
                 <a id="SectionNav-2" class="nav-link" href="#SectionNav" onclick="SwitchTab(2)"><vc:icon symbol="lightning" /> Sell (Lightning)</a>
                 <a id="SectionNav-3" class="nav-link" href="#SectionNav" onclick="SwitchTab(3)"><vc:icon symbol="actions-refresh" /> Swaps (On Chain)</a>
+                <a id="SectionNav-4" class="nav-link" href="#SectionNav" onclick="SwitchTab(3)"><vc:icon symbol="actions-refresh" /> Swaps list</a>
             </div>
         </nav>
 
@@ -271,7 +275,7 @@
                         if (tbl.length == 0) return;
 
                         const data = {
-                            Rate: @walletConfig.Rate, ApiKey: '@Model.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
+                            Rate: @walletConfig.Rate, ApiKey: '@Model.Settings.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
                             Amount: document.getElementById('lblOnChainSale').textContent, Providers: tbl
                         };
                         GetPartial(data, "#container-B2pOnChain", "#btOnChainSearch", "GetPartialB2PResult");
@@ -363,7 +367,7 @@
                         if (tbl.length == 0) return;
 
                         const data = {
-                            Rate: @walletConfig.Rate, ApiKey: '@Model.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
+                            Rate: @walletConfig.Rate, ApiKey: '@Model.Settings.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
                             Amount: document.getElementById('lblLightningToSale').textContent, Providers: tbl
                         };
                         GetPartial(data, "#container-B2pLightning", "#btLightningSearch", "GetPartialB2PResult");
@@ -469,7 +473,7 @@
                 <div id="swapProvidersContainer" style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
                     @foreach (var provider in SwapProviders.ActiveProviders)
                     {
-                        var description = GetProviderDescription(provider);
+                        var description = provider.GetDisplayName();
                         var imagePath = $"/Resources/img/{description}.webp";
                         var checkboxId = $"chkSwap{provider}";
                         var isKYC = SwapProviders.KYCProviders.Contains(provider);
@@ -553,7 +557,7 @@
                             ToAmount: isToSend ? 0 : swapAmount,
                             FiatCurrency: '@walletConfig.FiatCurrency',
                             Providers: selectedProviders,
-                            ApiKey: '@Model.ApiKey',
+                            ApiKey: '@Model.Settings.ApiKey',
                         };
 
                         GetPartial(data, "#container-B2pSwap", "#btSwapSearch", "GetPartialB2PSwapResult");
@@ -598,6 +602,71 @@
                     }
                 </script>
             }
+
+            <form method="post" id="frmSwap" action="b2pcentral/CreateSwap">
+                <input id="Provider" name="Provider" type="hidden" />
+                <input id="QuoteID" name="QuoteID" type="hidden" />
+                <input id="FromAmount" name="FromAmount" type="hidden" />
+                <input id="ToAmount" name="ToAmount" type="hidden" />
+                <input id="ToAddress" name="ToAddress" type="hidden" />
+                <input id="FromRefundAddress" name="FromRefundAddress" type="hidden" />
+                <input id="IsFixed" name="IsFixed" type="hidden" />
+                <input id="NotificationEmail" name="NotificationEmail" type="hidden" />
+                <input id="ApiKey" name="ApiKey" type="hidden" value="@Model.Settings.ApiKey" />
+            </form>
+        </div>
+
+        <div id="tabListSwaps" style="display:none">
+            @if(Model.Swaps.Any())
+            {
+                <h4>Swaps list</h4>
+                <br />
+                <div class="table-responsive">
+                    <table class="table table-hover mass-action">
+                        <thead class="mass-action-head">
+                        <tr>
+                            <th>Swap ID</th>
+                            <th>Provider</th>
+                            <th>Created At</th>
+                            <th class="text-nowrap">Altcoin</th>
+                            <th class="text-nowrap">Amount (BTC)</th>
+                            <th class="text-nowrap">Amount (Alt)</th>
+                            <th class="text-nowrap">Pull Payment</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var swap in Model.Swaps)
+                            {
+                                <tr>
+                                    <td class="text-break align-middle invoiceId-col">
+                                        <a href="@swap.FollowUrl" target="_blank" class="invoice-details-link">@swap.SwapId</a>
+                                    </td>
+                                    <td>@swap.Provider.GetDisplayName()</td>
+                                    <td class="align-center">
+                                        <div class="badge badge-expired">
+                                            @swap.ToCrypto @swap.ToNetwork
+                                        </div>
+                                    </td>
+                                    <td class="align-right">@swap.FromAmount.ToString("0.00000000")</td>
+                                    <td class="align-right">@swap.ToAmount.ToString("0.00000000")</td>
+                                    <td class="text-break align-middle invoiceId-col">
+                                        <a asp-controller="UIPullPayment" asp-action="ViewPullPayment" asp-route-pullPaymentId="@swap.BTCPayPullPaymentId" class="text-break">@swap.BTCPayPullPaymentId</a>
+                                    </td>
+                                    <td>
+                                        <a href="https://b2p-central.com/#swap|@swap.Provider|@swap.SwapId" target="_blank">View JSON</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p>No swaps found for this store.</p>
+            }
+    )
         </div>
     }
 

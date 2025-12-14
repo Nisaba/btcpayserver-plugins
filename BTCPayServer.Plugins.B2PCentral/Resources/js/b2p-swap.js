@@ -108,20 +108,16 @@
             }
             if (!isValid) return;
 
-            const swapData = {
-                provider: this.currentSwap.Provider,
-                rateType: this.currentRateType,
-                receivingAddress: receivingAddress,
-                refundAddress: refundAddress,
-                email: email,
-                nostrPubkey: ''
-            };
-
-            console.log('Swap data to send:', swapData);
-
-            // TODO: Appel API pour créer le swap
-
-            bootstrap.Modal.getInstance($('#swapModal')[0]).hide();
+            $('#Provider').val(this.currentSwap.Provider);
+            $('#QuoteID').val(this.currentSwap.QuoteID);
+            $('FromAmount').val(this.currentRateType === 'fixed' ? this.currentSwap.FromFixedAmount : this.currentSwap.FromFloatAmount);
+            $('ToAmount').val(this.currentRateType === 'fixed' ? this.currentSwap.ToFixedAmount : this.currentSwap.ToFloatAmount);
+            $('ToAddress').val(receivingAddress);
+            $('FromRefundAddress').val(refundAddress);
+            $('IsFixed').val(this.currentRateType === 'fixed');
+            $('NotificationEmail').val(email);
+            $('#frmSwap').submit();
+            //bootstrap.Modal.getInstance($('#swapModal')[0]).hide();
         },
 
         isValidEmail: function (email) {

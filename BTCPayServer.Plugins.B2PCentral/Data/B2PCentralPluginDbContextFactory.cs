@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using System;
 
-namespace BTCPayServer.Plugins.B2PCentral.Services;
+namespace BTCPayServer.Plugins.B2PCentral.Data;
 
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<B2PCentralPluginDbContext>
 {

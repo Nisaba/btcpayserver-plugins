@@ -23,22 +23,27 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
     [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy= Policies.CanViewStoreSettings)]
     public async Task<IActionResult> Index(string storeId)
     {
-        return View(await pluginService.GetStoreSettings(storeId));
+        var model = new B2PViewModel
+        {
+            Settings = await pluginService.GetStoreSettings(storeId),
+            Swaps = await pluginService.GetStoreSwaps(storeId)
+        };
+        return View(model);
     }
 
     [HttpPost]
     [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanModifyStoreSettings)]
-    public async Task<IActionResult> Index(B2PSettings model, string command)
+    public async Task<IActionResult> Index([FromRoute] string storeId, B2PSettings settings, string command)
     {
         if (ModelState.IsValid)
         {
             switch (command)
             {
                 case "Save":
-                    await pluginService.UpdateSettings(model);
+                    await pluginService.UpdateSettings(settings);
                     break;
                 case "Test":
-                    var sTest = await pluginService.TestB2P(model);
+                    var sTest = await pluginService.TestB2P(settings);
                     if (sTest == "OK")
                     {
                         TempData[WellKnownTempData.SuccessMessage] = "Access to B2P Central API successful";
@@ -50,6 +55,11 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                     break;
             }
         }
+        var model = new B2PViewModel
+        {
+            Settings = settings,
+            Swaps = await pluginService.GetStoreSwaps(storeId)
+        };
         return View("Index", model);
     }
 
@@ -109,5 +119,64 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
             model.ErrorMsg = ex.Message;
         }
         return PartialView("_B2PSwapResults", model);
+    }
+
+    [HttpPost]
+    [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanViewStoreSettings)]
+    [Route("CreateSwap")]
+    public async Task<IActionResult> CreateSwap([FromRoute] string storeId, [FromBody] SwapCreationRequestJS req)
+    {
+        try
+        {
+            var swap = new SwapCreationRequest
+            {
+                Provider = req.Provider,
+                QuoteID = req.QuoteID,
+                IsFixed = req.IsFixed,
+                FromCrypto = "BTC",
+                FromNetwork = "Bitcoin",
+                ToCrypto = req.ToCrypto.Split("-")[0],
+                ToNetwork = SwapCryptos.GetNetwork(req.ToCrypto),
+                FromAmount = req.FromAmount,
+                ToAmount = req.ToAmount,
+                NotificationEmail = req.NotificationEmail,
+                ToAddress = req.ToAddress,
+                FromRefundAddress = req.FromRefundAddress,
+                NotificationNpub = string.Empty
+            };
+            var createdSwap =  await pluginService.CreateSwapAsync(storeId, swap, req.ApiKey);
+            if (createdSwap != null && createdSwap.Success)
+            {
+                var sProvider = req.Provider.GetDisplayName();
+                var t = await pluginService.CreatePayout(storeId, sProvider, createdSwap, req);
+                var dbSwap = new B2PStoreSwap
+                {
+                    StoreId = storeId,
+                    DateT = DateTime.UtcNow,
+                    Provider = req.Provider,
+                    SwapId = createdSwap.SwapId,
+                    FollowUrl = createdSwap.FollowUrl,
+                    FromAmount = req.FromAmount,
+                    ToAmount = req.ToAmount,
+                    ToCrypto = swap.ToCrypto,
+                    ToNetwork = swap.ToNetwork,
+                    BTCPayPullPaymentId = t.Item1,
+                    BTCPayPayoutId = t.Item2
+                };
+                await pluginService.AddSwapInDb(dbSwap);
+                TempData[WellKnownTempData.SuccessMessage] = $"Payout created! {sProvider} Offer ID: {createdSwap.SwapId}";
+            }
+            else
+            {
+                TempData[WellKnownTempData.ErrorMessage] = $"Error during swap creation";
+            }
+
+            return Json(createdSwap);
+        }
+        catch (Exception ex)
+        {
+            TempData[WellKnownTempData.ErrorMessage] = ex.Message;
+        }
+        return RedirectToAction("Index", routeValues: new { storeId = storeId });
     }
 }

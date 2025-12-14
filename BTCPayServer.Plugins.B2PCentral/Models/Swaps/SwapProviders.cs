@@ -1,5 +1,6 @@
 ﻿using Fido2NetLib;
 using System.ComponentModel;
+using System.Reflection;
 
 namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
 {
@@ -97,5 +98,13 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.STEALTH_EX,
             SwapProvidersEnum.EASY_BIT,
         ];
+
+        public static string GetDisplayName(this SwapProvidersEnum provider)
+        {
+            var field = provider.GetType().GetField(provider.ToString());
+            var attribute = field?.GetCustomAttribute<DescriptionAttribute>();
+            return attribute?.Description ?? provider.ToString();
+        }
     }
+}
 }
