@@ -14,13 +14,6 @@
 }
 @if (Model.Swaps.Any())
 {
-    string GetProviderDescription(SwapProvidersEnum provider)
-    {
-        var field = provider.GetType().GetField(provider.ToString());
-        var attribute = (System.ComponentModel.DescriptionAttribute)field.GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false).FirstOrDefault();
-        return attribute?.Description ?? provider.ToString();
-    }
-
     <!-- Modal Popup -->
     <div class="modal fade" id="swapModal" tabindex="-1" aria-labelledby="swapModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -108,11 +101,11 @@
 
     @foreach (var swap in Model.Swaps)
     {
-        var providerDescription = GetProviderDescription(swap.Provider);
+        var providerDescription = swap.Provider.GetDisplayName();
         <div class="list-group list-group-flush">
             <div class="list-group-item bg-tile">
                 <div class="d-flex align-items-center justify-content-between mb-3">
-                    <h5 class="mb-0">@swap.Provider.ToString()</h5>
+                    <h5 class="mb-0">@providerDescription</h5>
                     <a href="@swap.ReferalUrl" target="_blank">
                         <img src="/Resources/img/@(providerDescription).webp" alt="@providerDescription" style="height: 2rem; width: auto;" />
                     </a>

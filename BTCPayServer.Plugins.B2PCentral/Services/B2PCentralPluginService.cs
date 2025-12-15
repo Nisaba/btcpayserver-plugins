@@ -127,7 +127,7 @@ public class B2PCentralPluginService
         try
         {
             using var context = _pluginDbContextFactory.CreateContext();
-            var txs = await context.B2PStoreSwaps.Where(a => a.StoreId == storeId).ToListAsync();
+            var txs = await context.Swaps.Where(a => a.StoreId == storeId).ToListAsync();
             return txs.Reverse<B2PStoreSwap>().ToList();
         }
         catch (Exception e)
@@ -421,7 +421,7 @@ public class B2PCentralPluginService
         try
         {
             using var context = _pluginDbContextFactory.CreateContext();
-            context.B2PStoreSwaps.Add(swap);
+            context.Swaps.Add(swap);
             await context.SaveChangesAsync();
         }
         catch (Exception e)

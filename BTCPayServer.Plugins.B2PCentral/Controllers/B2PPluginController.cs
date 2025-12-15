@@ -103,7 +103,7 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                 FromNetwork = "Bitcoin",
                 ToCrypto = req.ToCrypto.Split("-")[0],
                 ToNetwork = SwapCryptos.GetNetwork(req.ToCrypto),
-                FromAmount = req.FromAmount,
+                FromAmount = Math.Round(req.FromAmount, 8, MidpointRounding.AwayFromZero),
                 ToAmount = req.ToAmount,
                 FiatCurrency = req.FiatCurrency,
                 Providers = req.Providers
@@ -124,24 +124,24 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
     [HttpPost]
     [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanViewStoreSettings)]
     [Route("CreateSwap")]
-    public async Task<IActionResult> CreateSwap([FromRoute] string storeId, [FromBody] SwapCreationRequestJS req)
+    public async Task<IActionResult> CreateSwap([FromRoute] string storeId, [FromForm] SwapCreationRequestJS req)
     {
         try
         {
             var swap = new SwapCreationRequest
             {
                 Provider = req.Provider,
-                QuoteID = req.QuoteID,
+                QuoteID = req.QuoteID ?? string.Empty,
                 IsFixed = req.IsFixed,
                 FromCrypto = "BTC",
                 FromNetwork = "Bitcoin",
                 ToCrypto = req.ToCrypto.Split("-")[0],
                 ToNetwork = SwapCryptos.GetNetwork(req.ToCrypto),
-                FromAmount = req.FromAmount,
+                FromAmount = Math.Round(req.FromAmount, 8, MidpointRounding.AwayFromZero),
                 ToAmount = req.ToAmount,
                 NotificationEmail = req.NotificationEmail,
                 ToAddress = req.ToAddress,
-                FromRefundAddress = req.FromRefundAddress,
+                FromRefundAddress = req.FromRefundAddress ?? string.Empty,
                 NotificationNpub = string.Empty
             };
             var createdSwap =  await pluginService.CreateSwapAsync(storeId, swap, req.ApiKey);

@@ -14,7 +14,7 @@ public class B2PCentralPluginDbContext : DbContext
     }
 
     public DbSet<B2PSettings> B2PSettings { get; set; }
-    public DbSet<B2PStoreSwap> B2PStoreSwaps { get; set; }
+    public DbSet<B2PStoreSwap> Swaps { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

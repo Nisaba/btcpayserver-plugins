@@ -107,4 +107,3 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
         }
     }
 }
-}

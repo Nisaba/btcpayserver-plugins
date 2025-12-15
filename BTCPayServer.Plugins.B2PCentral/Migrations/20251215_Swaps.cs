@@ -6,8 +6,8 @@ using System;
 namespace BTCPayServer.Plugins.B2PCentral.Migrations
 {
     [DbContext(typeof(B2PCentralPluginDbContext))]
-    [Migration("20251214_Swaps")]
-    public partial class MigrationSwaps : Migration
+    [Migration("20251215_Swaps")]
+    public partial class Swaps : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

@@ -40,133 +40,6 @@
 }
 @Html.AntiForgeryToken()
 
-<script type="text/javascript">
-    var tblOfrs = [];
-    var tblOfrsOnChain = [];
-    var tblOfrsLightning = [];
-    const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-
-    function GetPartial(reqData, container, bt, controller) {
-        $(container).html('<div style="display: flex; justify-content: center;"><img src="/Resources/img/Loading_icon.gif"/></div>');
-        $(bt).hide();
-        $.ajax({
-            url: 'b2pcentral/' + controller,
-            type: 'POST',
-            contentType: "application/json; charset=utf-8",
-            headers: {
-                'RequestVerificationToken': antiForgeryToken
-            },
-            data: JSON.stringify(reqData),
-            success: function(result) {
-                $(container).html(result);
-                if (container != "#container-B2pSwap") {
-                    tblOfrs = [];
-                    $("[id^='sortLink']").each(function () {
-                        var $this = $(this);
-                        if (!$._data(this, "events") || !$._data(this, "events").click) {
-                            $this.on("click", function (event) {
-                                event.preventDefault();
-                                var param1 = $(this).data('param1');
-                                if (tblOfrs.length == 0) {
-                                    var param2Str = $(this).attr('data-param2');
-                                    tblOfrs = JSON.parse(param2Str);
-                                }
-                                SortHtmlTable(param1);
-                            });
-                        }
-                    });
-                }
-                $(bt).show();
-            },
-            error: function (xhr, status, error) {
-                $(container).html("Error: " + error + "<br/>" + xhr.responseText);
-                $(bt).show();
-            }
-        });
-    }
-
-    function SortHtmlTable(currentID) {
-        var table, rows, switching, i, xTbl1, xTbl2, shouldSwitch, dir, switchcount = 0;
-        table = document.getElementById("offers" + currentID);
-        switching = true;
-        dir = "asc";
-
-        while (switching) {
-            switching = false;
-            rows = table.rows;
-            for (i = 1; i < (rows.length - 2); i += 2) {
-                shouldSwitch = false;
-                xTbl1 = (i - 1) / 2;
-                xTbl2 = xTbl1 + 1;
-                if (dir == "asc") {
-                    if (tblOfrs[xTbl1] > tblOfrs[xTbl2]) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                } else if (dir == "desc") {
-                    if (tblOfrs[xTbl1] < tblOfrs[xTbl2]) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                }
-            }
-            if (shouldSwitch) {
-                rows[i].parentNode.insertBefore(rows[i + 2], rows[i]);
-                rows[i].parentNode.insertBefore(rows[i + 3], rows[i + 1]);
-                var v = tblOfrs[xTbl1];
-                tblOfrs[xTbl1] = tblOfrs[xTbl2];
-                tblOfrs[xTbl2] = v;
-                switching = true;
-                switchcount++;
-            } else {
-                if (switchcount == 0 && dir == "asc") {
-                    dir = "desc";
-                    switching = true;
-                }
-            }
-        }
-    }
-
-    function SwitchTab(switchValue) {
-        switch(switchValue) {
-            case 1:
-                $("#SectionNav-1").addClass("active").siblings().removeClass("active");
-                $("#tabOnChain").show();
-                $("#tabLightning").hide();
-                $("#tabSwaps").hide();
-                $("#tabListSwaps").hide();
-                tblOfrsLightning = tblOfrs;
-                tblOfrs = tblOfrsOnChain;
-                break;
-            case 2:
-                $("#SectionNav-2").addClass("active").siblings().removeClass("active");
-                $("#tabOnChain").hide();
-                $("#tabLightning").show();
-                $("#tabSwaps").hide();
-                $("#tabListSwaps").hide();
-                tblOfrsOnChain = tblOfrs;
-                tblOfrs = tblOfrsLightning;
-                break;
-            case 3:
-                $("#SectionNav-3").addClass("active").siblings().removeClass("active");
-                $("#tabOnChain").hide();
-                $("#tabLightning").hide();
-                $("#tabSwaps").show();
-                $("#tabListSwaps").hide();
-                break;
-            case 3:
-                $("#SectionNav-4").addClass("active").siblings().removeClass("active");
-                $("#tabOnChain").hide();
-                $("#tabLightning").hide();
-                $("#tabSwaps").hide();
-                $("#tabListSwaps").show();
-                break;
-        }
-    }
-
-</script>
-
 <table><tr>
         <td>
             <a href="https://www.b2p-central.com" target="b2p">
@@ -194,6 +67,7 @@
     </p>
     <form method="post" autocomplete="off">
         <input asp-for="Settings.ProvidersString" type="hidden"/>
+        <input asp-for="Settings.StoreId" type="hidden" />
         <table class="table table-sm mt-0 mx-0">
             <tr>
                 <td width="100">
@@ -231,10 +105,10 @@
 
         <nav id="SectionNav">
             <div class="nav">
-                <a id="SectionNav-1" class="nav-link active" href="#SectionNav" onclick="SwitchTab(1)"><vc:icon symbol="wallet-wallet" /> Sell (On Chain)</a>
-                <a id="SectionNav-2" class="nav-link" href="#SectionNav" onclick="SwitchTab(2)"><vc:icon symbol="lightning" /> Sell (Lightning)</a>
-                <a id="SectionNav-3" class="nav-link" href="#SectionNav" onclick="SwitchTab(3)"><vc:icon symbol="actions-refresh" /> Swaps (On Chain)</a>
-                <a id="SectionNav-4" class="nav-link" href="#SectionNav" onclick="SwitchTab(3)"><vc:icon symbol="actions-refresh" /> Swaps list</a>
+                <a id="SectionNav-1" class="nav-link active" href="#SectionNav" onclick="B2PCore.switchTab(1)"><vc:icon symbol="wallet-wallet" /> Sell (On Chain)</a>
+                <a id="SectionNav-2" class="nav-link" href="#SectionNav" onclick="B2PCore.switchTab(2)"><vc:icon symbol="lightning" /> Sell (Lightning)</a>
+                <a id="SectionNav-3" class="nav-link" href="#SectionNav" onclick="B2PCore.switchTab(3)"><vc:icon symbol="actions-refresh" /> Swaps (On Chain)</a>
+                <a id="SectionNav-4" class="nav-link" href="#SectionNav" onclick="B2PCore.switchTab(4)"><vc:icon symbol="actions-refresh" /> Swaps list</a>
             </div>
         </nav>
 
@@ -278,7 +152,7 @@
                             Rate: @walletConfig.Rate, ApiKey: '@Model.Settings.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
                             Amount: document.getElementById('lblOnChainSale').textContent, Providers: tbl
                         };
-                        GetPartial(data, "#container-B2pOnChain", "#btOnChainSearch", "GetPartialB2PResult");
+                        B2PCore.getPartial(data, "#container-B2pOnChain", "#btOnChainSearch", "GetPartialB2PResult");
                     }
                 </script>
 
@@ -370,7 +244,7 @@
                             Rate: @walletConfig.Rate, ApiKey: '@Model.Settings.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
                             Amount: document.getElementById('lblLightningToSale').textContent, Providers: tbl
                         };
-                        GetPartial(data, "#container-B2pLightning", "#btLightningSearch", "GetPartialB2PResult");
+                        B2PCore.getPartial(data, "#container-B2pLightning", "#btLightningSearch", "GetPartialB2PResult");
                     }
                 </script>
 
@@ -433,11 +307,11 @@
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <table>
                             <tr><td>
-                                <input value="ToSend" id="rdSend" name="rdFromTo" type="radio" checked="checked" class="form-check-input mt-0 me-2" onchange="setSwapCurrency()" />
+                                <input value="ToSend" id="rdSend" name="rdFromTo" type="radio" checked="checked" class="form-check-input mt-0 me-2" onchange="B2PSwap.setSwapCurrency()" />
                                 <label for="rdSend" class="form-check-label" style="cursor: pointer;">To Send</label>
                              </td></tr>
                              <tr><td>
-                                <input value="ToReceive" id="rdReceive" name="rdFromTo" type="radio" class="form-check-input mt-0 me-2" onchange="setSwapCurrency()" />
+                                <input value="ToReceive" id="rdReceive" name="rdFromTo" type="radio" class="form-check-input mt-0 me-2" onchange="B2PSwap.setSwapCurrency()" />
                                 <label for="rdReceive" class="form-check-label" style="cursor: pointer;">To Receive</label>
                              </td></tr>
                         </table>
@@ -450,7 +324,7 @@
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <label for="lstSwapToCrypto" class="form-input-label">Crypto &nbsp;</label>
-                        <select id="lstSwapToCrypto" class="form-select w-auto" onchange="setSwapCurrency()">
+                        <select id="lstSwapToCrypto" class="form-select w-auto" onchange="B2PSwap.setSwapCurrency()">
                             @foreach (var group in SwapCryptos.AvailableCryptos.GroupBy(c => c.Value.Category).OrderBy(g => g.Key))
                             {
                                 <optgroup label="@SwapCryptos.CategoryLabels[group.Key]">
@@ -467,7 +341,7 @@
                 <b>Select swap providers:</b>
                 <br />
                 <div style="margin-bottom: 10px;">
-                    <input type="checkbox" class="btcpay-toggle me-3" id="chkNoKYC" onchange="toggleKYCProviders()" />
+                    <input type="checkbox" class="btcpay-toggle me-3" id="chkNoKYC" onchange="B2PSwap.toggleKYCProviders()" />
                     <label class="form-check-label" for="chkNoKYC">No KYC Providers only</label>
                 </div>
                 <div id="swapProvidersContainer" style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
@@ -488,123 +362,17 @@
                 <br/>
 
                 <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px;">
-                    <button id="btSwapSearch" class="btn btn-primary" onclick="onSearchSwap()">Search</button>
+                    <button id="btSwapSearch" class="btn btn-primary" onclick="B2PSwap.onSearchSwap('@Model.Settings.ApiKey', '@walletConfig.FiatCurrency')">Search</button>
                     <i><small>Please check that there is no previous pending payout in BTCPay before placing a swap</small></i>
                 </div>
                 <br />
                 <div id="container-B2pSwap"></div>
-
-                <script type="text/javascript">
-                    var tblKYCProviders = [
-                        @foreach (var provider in SwapProviders.KYCProviders)
-                        {
-                                @:'@((int)provider)',
-                        }
-                    ];
-
-                    function toggleKYCProviders() {
-                        const noKYC = document.querySelector('#chkNoKYC').checked;
-                        const providerItems = document.querySelectorAll('.swap-provider-item');
-
-                        providerItems.forEach(item => {
-                            const isKYC = item.getAttribute('data-is-kyc') === 'true';
-                            if (noKYC && isKYC) {
-                                item.style.display = 'none';
-                                const checkbox = item.querySelector('.swap-provider-checkbox');
-                                if (checkbox) {
-                                    checkbox.checked = false;
-                                }
-                            } else {
-                                item.style.display = 'flex';
-                            }
-                        });
-                    }
-
-                    window.setSwapCurrency = function () {
-                        $('#lblCurrency').text(getSwapCurrency());
-                    }
-
-                    function getSwapCurrency() {
-                        const isToSend = $("input[name='rdFromTo']:checked").val() === "ToSend";
-                        return isToSend ? "BTC" : $('#lstSwapToCrypto').val();
-                    }
-
-                    function onSearchSwap() {
-                        var selectedProviders = [];
-
-                        document.querySelectorAll('.swap-provider-checkbox').forEach(checkbox => {
-                            const parentItem = checkbox.closest('.swap-provider-item');
-                            if (checkbox.checked && parentItem.style.display !== 'none') {
-                                selectedProviders.push(parseInt(checkbox.value));
-                            }
-                        });
-
-                        if (selectedProviders.length === 0) {
-                            alert('Please select at least one swap provider');
-                            return;
-                        }
-
-                        const swapAmount = parseFloat($('#swapAmount').val());
-                        if (!swapAmount || swapAmount <= 0) {
-                            alert('Please enter a correct amount');
-                            return;
-                        }
-                        
-                        const isToSend = $("input[name='rdFromTo']:checked").val() === "ToSend";
-                        const data = {
-                            ToCrypto: $('#lstSwapToCrypto').val(),
-                            FromAmount: isToSend ? swapAmount : 0,
-                            ToAmount: isToSend ? 0 : swapAmount,
-                            FiatCurrency: '@walletConfig.FiatCurrency',
-                            Providers: selectedProviders,
-                            ApiKey: '@Model.Settings.ApiKey',
-                        };
-
-                        GetPartial(data, "#container-B2pSwap", "#btSwapSearch", "GetPartialB2PSwapResult");
-                    }
-
-                    function onDoSwap() {
-                        const sToAddress = $('#txtToAddress').val().trim();
-                        if (sToAddress === '') {
-                            alert('Please enter your altcoin destination address for the swap');
-                            return;
-                        }
-                        let sConfirm;
-                        const sCurr = getSwapCurrency();
-                        const targetCrypto = $('#lstSwapToCrypto').val();
-
-                        if (sCurr === 'BTC') {
-                            sConfirm = `Are you sure you want to swap ${swapAmount} BTC to ${targetCrypto}?\n\nSelected providers: ${selectedProviders.length}`;
-                        } else {
-                            sConfirm = `Are you sure you want to swap BTC to ${swapAmount} ${targetCrypto}?\n\nSelected providers: ${selectedProviders.length}`;
-                        }
-
-                        if (confirm(sConfirm)) {
-                            $('#btSearchSwap').hide();
-
-                            /*const data = {
-                                Rate: at walletConfig.Rate,
-                                ApiKey: 'at Model.ApiKey',
-                                CurrencyCode: 'at walletConfig.FiatCurrency',
-                                Amount: swapAmount,
-                                ToCrypto: targetCrypto,
-                                ToAddress: sToAddress,
-                                Providers: selectedProviders,
-                                IsToSend: sCurr === 'BTC'
-                            };*/
-
-                            // TODO: Appeler l'API avec les données
-                            console.log('Swap data:', data);
-
-                            $('#btSearchSwap').show();
-                        }
-
-                    }
-                </script>
             }
 
             <form method="post" id="frmSwap" action="b2pcentral/CreateSwap">
+                @Html.AntiForgeryToken()
                 <input id="Provider" name="Provider" type="hidden" />
+                <input id="ToCrypto" name="ToCrypto" type="hidden" />
                 <input id="QuoteID" name="QuoteID" type="hidden" />
                 <input id="FromAmount" name="FromAmount" type="hidden" />
                 <input id="ToAmount" name="ToAmount" type="hidden" />
@@ -666,7 +434,6 @@
             {
                 <p>No swaps found for this store.</p>
             }
-    )
         </div>
     }
 
