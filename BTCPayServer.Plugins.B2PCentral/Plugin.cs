@@ -4,6 +4,7 @@ using BTCPayServer.Abstractions.Services;
 using BTCPayServer.Plugins.B2PCentral.Data;
 using BTCPayServer.Plugins.B2PCentral.Services;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace BTCPayServer.Plugins.B2PCentral;
 
@@ -16,10 +17,14 @@ public class Plugin : BaseBTCPayServerPlugin
 
     public override void Execute(IServiceCollection services)
     {
+        services.AddHttpClient<B2PCentralPluginService>(client =>
+        {
+            client.BaseAddress = new Uri(B2PCentralPluginService.BaseApiUrl);
+        });
+
         services.AddUIExtension("header-nav", "B2PCentralPluginHeaderNav")
                 .AddHostedService<ApplicationPartsLogger>()
                 .AddHostedService<PluginMigrationRunner>()
-                .AddSingleton<B2PCentralPluginService>()
                 .AddSingleton<B2PCentralPluginDbContextFactory>();
     }
 }
