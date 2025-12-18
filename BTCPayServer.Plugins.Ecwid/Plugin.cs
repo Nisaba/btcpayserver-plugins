@@ -1,5 +1,6 @@
 using BTCPayServer.Abstractions.Contracts;
 using BTCPayServer.Abstractions.Models;
+using BTCPayServer.Client;
 using BTCPayServer.Plugins.Ecwid.Data;
 using BTCPayServer.Plugins.Ecwid.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,7 +11,7 @@ public class Plugin : BaseBTCPayServerPlugin
 {
     public override IBTCPayServerPlugin.PluginDependency[] Dependencies { get; } =
     {
-        new IBTCPayServerPlugin.PluginDependency { Identifier = nameof(BTCPayServer), Condition = ">=2.0.1" }
+        new IBTCPayServerPlugin.PluginDependency { Identifier = nameof(BTCPayServer), Condition = ">=2.0.3" }
     };
 
     public override void Execute(IServiceCollection services)
@@ -21,6 +22,6 @@ public class Plugin : BaseBTCPayServerPlugin
             .AddSingleton<EcwidPluginService>()
             .AddSingleton<EcwidPluginDbContextFactory>()
             .AddSingleton<EcwidHostedService>()
-            .AddHostedService<EcwidHostedService>()
+            .AddHostedService<EcwidHostedService>();
     }
 }

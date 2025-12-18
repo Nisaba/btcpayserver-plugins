@@ -28,7 +28,6 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
     <EmbeddedResource Include="Resources\**" />
   </ItemGroup>
 
@@ -52,5 +51,9 @@
     <None Include="Properties\launchSettings.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
   </ItemGroup>
 </Project>

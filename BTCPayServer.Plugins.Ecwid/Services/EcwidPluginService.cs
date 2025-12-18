@@ -2,24 +2,22 @@
 using BTCPayServer.Client.Models;
 using BTCPayServer.Plugins.Ecwid.Data;
 using BTCPayServer.Plugins.Ecwid.Model;
+using BTCPayServer.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using static NBitcoin.Scripting.OutputDescriptor;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BTCPayServer.Plugins.Ecwid.Services
 {
-    public class EcwidPluginService(EcwidPluginDbContextFactory pluginDbContextFactory, ILogger<EcwidPluginService> logger, BTCPayServerClient client)
+    public class EcwidPluginService(EcwidPluginDbContextFactory pluginDbContextFactory, ILogger<EcwidPluginService> logger)
     {
         public async Task<EcwidSettings> GetStoreSettings(string storeId)
         {
@@ -68,7 +66,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
         }
 
-        public async Task<string> CreateBTCPayInvoice(EcwidPaymentRequest request)
+        public async Task<string> CreateBTCPayInvoice(EcwidPaymentRequest request, Uri btcpayUri)
         {
             try
             {
@@ -96,6 +94,8 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                     }),
                     Receipt = new InvoiceDataBase.ReceiptOptions() { Enabled = true }
                 };
+
+                var client = new BTCPayServerClient(btcpayUri);
                 var invoice = await client.CreateInvoice(request.BTCPayStoreID, invoiceReq);
                 return invoice.CheckoutLink;
 

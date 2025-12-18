@@ -1,5 +1,7 @@
-﻿using BTCPayServer.Plugins.Ecwid.Model;
+﻿using BTCPayServer.Abstractions.Contracts;
+using BTCPayServer.Plugins.Ecwid.Model;
 using BTCPayServer.Plugins.Ecwid.Services;
+using BTCPayServer.Services;
 using BTCPayServer.Services.Stores;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -11,7 +13,7 @@ namespace BTCPayServer.Plugins.Ecwid
     [Route("~/plugins/{storeId}/EcwidPayment")]
     public class EcwidPaymentController(EcwidPluginService ecwidService,
                                           StoreRepository storeRepository,
-                                          ILogger<EcwidPaymentController> logger) : Controller
+                                          ILogger<EcwidPaymentController> logger, SettingsRepository settingsRepository) : Controller
     {
 
         [HttpPost]
@@ -35,7 +37,13 @@ namespace BTCPayServer.Plugins.Ecwid
                     EncryptedData = Uri.UnescapeDataString(data)
                 };
 
-                var CheckoutLink = await ecwidService.CreateBTCPayInvoice(req);
+                var serverSettings = await settingsRepository.GetSettingAsync<ServerSettings>();
+                var baseUrl = serverSettings.BaseUrl;
+                if (string.IsNullOrWhiteSpace(baseUrl) || !Uri.TryCreate(baseUrl, UriKind.Absolute, out var btcpayUri))
+                {
+                    throw new Exception("BTCPay Server BaseUrl is not configured ou invalide.");
+                }
+                var CheckoutLink = await ecwidService.CreateBTCPayInvoice(req, btcpayUri);
 
                 return Redirect(CheckoutLink);
             } catch (Exception ex)
