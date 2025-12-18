@@ -1,4 +1,5 @@
 ﻿using BTCPayServer.Abstractions.Contracts;
+using BTCPayServer.Plugins.Ecwid.Data;
 using BTCPayServer.Plugins.Ecwid.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;

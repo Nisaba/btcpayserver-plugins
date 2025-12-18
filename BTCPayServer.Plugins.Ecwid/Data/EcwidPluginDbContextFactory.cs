@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using System;
 
-namespace BTCPayServer.Plugins.Ecwid.Services;
+namespace BTCPayServer.Plugins.Ecwid.Data;
 
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<EcwidPluginDbContext>
 {

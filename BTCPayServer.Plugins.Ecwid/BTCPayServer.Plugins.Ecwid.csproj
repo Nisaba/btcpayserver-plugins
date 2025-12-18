@@ -7,7 +7,7 @@
   <PropertyGroup>
     <Product>Ecwid plugin</Product>
     <Description>This plugin allows you to interface your BTCPay store with your Ecwid store</Description>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
   </PropertyGroup>
 
   <!-- Plugin development properties -->
@@ -59,8 +59,9 @@
   <ItemGroup>
     <None Remove="Resources\img\Ecwid.svg" />
   </ItemGroup>
+	
 
   <ItemGroup>
-    <ProjectReference Include="..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
+    <ProjectReference Include="..\..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
   </ItemGroup>
 </Project>

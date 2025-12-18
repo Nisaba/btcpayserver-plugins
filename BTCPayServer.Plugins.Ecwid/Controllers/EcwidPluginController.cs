@@ -14,19 +14,15 @@ namespace BTCPayServer.Plugins.Ecwid;
 [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy= Policies.CanModifyStoreSettings)]
 [AutoValidateAntiforgeryToken]
 
-public class EcwidPluginController(EcwidPluginService ecwidService,
-                                   BtcPayService btcPayService) : Controller
+public class EcwidPluginController(EcwidPluginService ecwidService) : Controller
 {
-    private readonly EcwidPluginService _ecwidService = ecwidService;
-    private readonly BtcPayService _btcPayService = btcPayService;
-
 
     [HttpGet]
     public async Task<IActionResult> Index([FromRoute] string storeId)
     {
         var model = new EcwidModel
         {
-            Settings = await _ecwidService.GetStoreSettings(storeId),
+            Settings = await ecwidService.GetStoreSettings(storeId),
             EcwidPluginUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}Payment"
         };
         return View(model);
@@ -42,7 +38,7 @@ public class EcwidPluginController(EcwidPluginService ecwidService,
                 switch (command)
                 {
                     case "Save":
-                        await _ecwidService.UpdateSettings(model.Settings);
+                        await ecwidService.UpdateSettings(model.Settings);
                         TempData[WellKnownTempData.SuccessMessage] = "Settings successfuly saved";
                         break;
                 }

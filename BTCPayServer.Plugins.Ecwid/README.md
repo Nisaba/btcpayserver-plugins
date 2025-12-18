@@ -57,5 +57,7 @@ You should now see the payment option in your Ecwid store checkout page. You can
 ![Payment Options](./docs/img/ecwid-payment-options.png)
 
 <br/>
-What's new in v 1.0.2 :
-- Small fixes
+## Changelog
+- v 1.0.3 : Fix crash on BTCPay 2.3.0, small improvments
+- v 1.0.2 : Small fixes
+

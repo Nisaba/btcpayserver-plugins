@@ -1,5 +1,6 @@
 using BTCPayServer.Abstractions.Contracts;
 using BTCPayServer.Abstractions.Models;
+using BTCPayServer.Plugins.Ecwid.Data;
 using BTCPayServer.Plugins.Ecwid.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,18 +15,12 @@ public class Plugin : BaseBTCPayServerPlugin
 
     public override void Execute(IServiceCollection services)
     {
-        services.AddUIExtension("header-nav", "EcwidPluginHeaderNav");
-        services.AddHostedService<ApplicationPartsLogger>();
-        services.AddHostedService<PluginMigrationRunner>();
-        services.AddSingleton<EcwidPluginService>();
-        services.AddSingleton<BtcPayService>();
-        services.AddSingleton<EcwidPluginDbContextFactory>();
-        services.AddDbContext<EcwidPluginDbContext>((provider, o) =>
-        {
-            var factory = provider.GetRequiredService<EcwidPluginDbContextFactory>();
-            factory.ConfigureBuilder(o);
-        });
-        services.AddSingleton<EcwidHostedService>();
-        services.AddHostedService<EcwidHostedService>();
+        services.AddUIExtension("header-nav", "EcwidPluginHeaderNav")
+            .AddHostedService<ApplicationPartsLogger>()
+            .AddHostedService<PluginMigrationRunner>()
+            .AddSingleton<EcwidPluginService>()
+            .AddSingleton<EcwidPluginDbContextFactory>()
+            .AddSingleton<EcwidHostedService>()
+            .AddHostedService<EcwidHostedService>()
     }
 }

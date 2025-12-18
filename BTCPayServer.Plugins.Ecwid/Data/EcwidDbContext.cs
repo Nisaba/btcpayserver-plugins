@@ -1,4 +1,4 @@
-using BTCPayServer.Plugins.Ecwid.Data;
+using BTCPayServer.Plugins.Ecwid.Model;
 using Microsoft.EntityFrameworkCore;
 
 namespace BTCPayServer.Plugins.Ecwid;

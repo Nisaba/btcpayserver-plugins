@@ -19,23 +19,13 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BTCPayServer.Plugins.Ecwid.Services
 {
-    public class EcwidPluginService
+    public class EcwidPluginService(EcwidPluginDbContextFactory pluginDbContextFactory, ILogger<EcwidPluginService> logger, BTCPayServerClient client)
     {
-        private readonly ILogger<EcwidPluginService> _logger;
-        private readonly EcwidPluginDbContext _context;
-        private readonly BTCPayServerClient _client;
-
-        public EcwidPluginService(EcwidPluginDbContextFactory pluginDbContextFactory, ILogger<EcwidPluginService> logger, BTCPayServerClient client)
-        {
-            _logger = logger;
-            _context = pluginDbContextFactory.CreateContext();
-            _client = client;
-        }
-
         public async Task<EcwidSettings> GetStoreSettings(string storeId)
         {
             try
             {
+                await using var _context = pluginDbContextFactory.CreateContext();
                 var settings = await _context.EcwidSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
@@ -46,7 +36,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "EcwidPlugin:GetStoreSettings()");
+                logger.LogError(e, "EcwidPlugin:GetStoreSettings()");
                 throw;
             }
         }
@@ -55,6 +45,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
         {
             try
             {
+                await using var _context = pluginDbContextFactory.CreateContext();
                 var dbSettings = await _context.EcwidSettings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
                 if (dbSettings == null)
                 {
@@ -72,7 +63,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "EcwidPlugin:UpdateSettings()");
+                logger.LogError(e, "EcwidPlugin:UpdateSettings()");
                 throw;
             }
         }
@@ -105,13 +96,13 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                     }),
                     Receipt = new InvoiceDataBase.ReceiptOptions() { Enabled = true }
                 };
-                var invoice = await _client.CreateInvoice(request.BTCPayStoreID, invoiceReq);
+                var invoice = await client.CreateInvoice(request.BTCPayStoreID, invoiceReq);
                 return invoice.CheckoutLink;
 
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "EcwidPlugin:CreateBTCPayInvoice()");
+                logger.LogError(e, "EcwidPlugin:CreateBTCPayInvoice()");
                 throw;
             }
         }
@@ -136,7 +127,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
 
             } catch (Exception e)
             {
-                _logger.LogError(e, "EcwidPlugin:UpdateOrder()");
+                logger.LogError(e, "EcwidPlugin:UpdateOrder()");
                 throw;
             }
         }
@@ -151,7 +142,7 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "EcwidPlugin:GetEcwidPayload()");
+                logger.LogError(ex, "EcwidPlugin:GetEcwidPayload()");
                 throw;
             }
         }

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BTCPayServer.Plugins.Ecwid.Data;
+namespace BTCPayServer.Plugins.Ecwid.Model;
 
 public class EcwidSettings
 {

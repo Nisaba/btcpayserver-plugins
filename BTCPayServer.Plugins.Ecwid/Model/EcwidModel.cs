@@ -1,6 +1,4 @@
-﻿using BTCPayServer.Plugins.Ecwid.Data;
-
-namespace BTCPayServer.Plugins.Ecwid.Model
+﻿namespace BTCPayServer.Plugins.Ecwid.Model
 {
     public class EcwidModel
     {

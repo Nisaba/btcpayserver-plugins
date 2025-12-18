@@ -63,10 +63,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
+    <Folder Include="Resources\js\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Resources\js\" />
+    <ProjectReference Include="..\..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
   </ItemGroup>
 </Project>
