@@ -10,8 +10,6 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
     [Route("~/plugins/{storeId}/ExolixSwap")]
     public class ExolixSwapController(ExolixService exolixService, ExolixPluginService pluginService) : Controller
     {
-        private readonly ExolixService _exolixService = exolixService;
-        private readonly ExolixPluginService _PluginService = pluginService;
 
         [HttpPost]
         public async Task<SwapCreationResponse> Index([FromRoute] string storeId, [FromForm] SwapRequest req)
@@ -42,9 +40,9 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                     ToAmount = req.BtcAmount,
                     ToAddress = req.BtcAddress,
                 };
-                rep = await _exolixService.CreateSwapAsync(exoliwSwapReq);
+                rep = await exolixService.CreateSwapAsync(exoliwSwapReq);
 
-                await _PluginService.AddStoreTransaction(new ExolixTx
+                await pluginService.AddStoreTransaction(new ExolixTx
                 {
                     StoreId = storeId,
                     AltcoinFrom = req.CryptoFrom,

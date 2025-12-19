@@ -67,6 +67,7 @@ Here you will find the list of swaps you have executed from your BTC balance.
 - **1.1.2** - Small fixes 
 - **1.2.1** - Improvments in merchant swaps and in backoffice transactions list
 - **1.3.1** - Add EUR stablecoins (Select them in the Exolix configuration page so that they are active at checkout), fix in copy buttons in checkout, small improvements
+- **1.3.2** - Fix crash on BTCPay v.2.3.0
 
   
 

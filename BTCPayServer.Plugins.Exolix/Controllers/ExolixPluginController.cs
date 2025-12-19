@@ -18,17 +18,15 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
     [AutoValidateAntiforgeryToken]
     public class ExolixPluginController(ExolixPluginService pluginService, ExolixService exolixService) : Controller
     {
-        private readonly ExolixPluginService _pluginService = pluginService;
-        private readonly ExolixService _exolixService = exolixService;
 
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
         {
             var model = new ExolixModel
             {
-                Settings = await _pluginService.GetStoreSettings(storeId),
-                Transactions = await _pluginService.GetStoreTransactions(storeId),
-                MerchantTransactions = await _pluginService.GetStoreMerchantTransactions(storeId)
+                Settings = await pluginService.GetStoreSettings(storeId),
+                Transactions = await pluginService.GetStoreTransactions(storeId),
+                MerchantTransactions = await pluginService.GetStoreMerchantTransactions(storeId)
             };
             return View(model);
         }
@@ -41,7 +39,7 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                 try
                 {
                     settings.AcceptedCryptos ??= new List<string>();
-                    await _pluginService.UpdateSettings(settings);
+                    await pluginService.UpdateSettings(settings);
                     TempData[WellKnownTempData.SuccessMessage] = "Settings successfuly saved";
                 }
                 catch (Exception ex)
@@ -82,15 +80,15 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                     ToAmount = req.ToAmount,
                     ToAddress = req.ToAddress,
                 };
-                rep = await _exolixService.CreateSwapAsync(exolixSwapReq);
+                rep = await exolixService.CreateSwapAsync(exolixSwapReq);
 //              rep = new SwapCreationResponse { SwapId = "test-swap-id", FromAmount = req.BtcAmount, StatusMessage = "Swap created successfully" };
 #if DEBUG
                 rep.FromAddress = "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
 #endif
 
-                var sPPId = await _pluginService.CreatePayout(storeId, rep.SwapId, rep.FromAddress, (decimal)rep.FromAmount);
+                var sPPId = await pluginService.CreatePayout(storeId, rep.SwapId, rep.FromAddress, (decimal)rep.FromAmount);
 
-                await _pluginService.AddStoreMerchantTransaction(new ExolixMerchantTx
+                await pluginService.AddStoreMerchantTransaction(new ExolixMerchantTx
                 {
                     StoreId = storeId,
                     AltcoinTo = req.ToCrypto,
