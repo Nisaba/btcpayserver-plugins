@@ -10,9 +10,9 @@
 
 @if (!string.IsNullOrEmpty(Model.ErrorMsg))
 {
-    <p><b>Error: </b>@Model.ErrorMsg</p>
+    <br /><p><b>Error: </b>@Model.ErrorMsg</p>
 }
-@if (Model.Swaps.Any())
+@if (Model.Swaps != null &&  Model.Swaps.Any())
 {
     <!-- Modal Popup -->
     <div class="modal fade" id="swapModal" tabindex="-1" aria-labelledby="swapModalLabel" aria-hidden="true">

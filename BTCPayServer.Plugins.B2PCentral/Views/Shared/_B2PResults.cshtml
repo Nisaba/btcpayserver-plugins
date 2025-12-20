@@ -6,9 +6,9 @@
 
 @if (!string.IsNullOrEmpty(Model.ErrorMsg))
 {
-    <p><b>Error: </b>@Model.ErrorMsg</p>
+    <br /><p><b>Error: </b>@Model.ErrorMsg</p>
 }
-@if (Model.Offers.Any())
+@if (Model.Offers != null && Model.Offers.Any())
 {
     var currentID = RandomNumberGenerator.GetInt32(10000);
     <div class="table-responsive">

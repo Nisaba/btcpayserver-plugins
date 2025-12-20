@@ -37,7 +37,6 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                                    StoreRepository storeRepository,
                                    ILogger<B2PCentralPluginService> logger,
                                    HttpClient httpClient,
-                                   HttpClient httpClient2,
                                    BTCPayWalletProvider walletProvider,
                                    PaymentMethodHandlerDictionary paymentMethodHandlerDictionary,
                                    LightningClientFactoryService lightningClientFactory,
@@ -47,8 +46,9 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                                    PullPaymentHostedService pullPaymentHostedService,
                                    WalletHistogramService walletHistogramService)
 {
-    // public const string BaseApiUrl = "https://localhost:7137/api/";
-    public const string BaseApiUrl = "https://api.b2p-central.com/api/";
+    public const string BaseApiUrl = "https://localhost:7137/api/";
+    // public const string BaseApiUrl = "https://api.b2p-central.com/api/";
+    private HttpClient _httpClient2 = new HttpClient();
 
     public async Task<string> TestB2P(B2PSettings settings)
     {
@@ -190,12 +190,12 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                 }
 
                 if (cnfg.OnChainBalance > 0 || cnfg.OffChainBalance > 0) {
-                    if (httpClient2.BaseAddress ==  null)
+                    if (_httpClient2.BaseAddress ==  null)
                     {
-                        httpClient2.BaseAddress = new Uri($"{BaseUrl}/api/");
+                        _httpClient2.BaseAddress = new Uri($"{BaseUrl}/api/");
                     }
                     string sRep;
-                    using (var rep = await httpClient2.GetAsync($"rates?storeId={storeId}&currencyPairs=BTC_{cnfg.FiatCurrency}"))
+                    using (var rep = await _httpClient2.GetAsync($"rates?storeId={storeId}&currencyPairs=BTC_{cnfg.FiatCurrency}"))
                     {
                         rep.EnsureSuccessStatusCode();
                         sRep = await rep.Content.ReadAsStringAsync();
@@ -341,15 +341,16 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                 throw new Exception($"No payout handler found for {payoutMethodId}");
 
             string error = null;
-            var sDest = swap.FromAddress;
             IClaimDestination mtPelerinDestination;
 
-            (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, blob, cancellationToken);
-
+#if DEBUG
+            (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination("bcrt1qjmraxy9a7dw7ducjmcmp4mm8zd9850882rq2q2", blob, cancellationToken);
+#else
+            (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(swap.FromAddress, blob, cancellationToken);
+#endif
             if (mtPelerinDestination == null)
                 throw new Exception($"Destination parsing failed: {error ?? "Unknown error"}");
 
-            // (mtPelerinDestination, error) = await payoutHandler.ParseAndValidateClaimDestination(sDest, blob, cancellationToken);
 
             var result = await pullPaymentHostedService.Claim(new ClaimRequest
             {

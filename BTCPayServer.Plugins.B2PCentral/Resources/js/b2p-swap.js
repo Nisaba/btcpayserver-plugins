@@ -132,7 +132,6 @@
         }
     };
 
-    // Module pour les swaps
     window.B2PSwap = {
         swaps: [],
         rateReq: null,
@@ -240,8 +239,12 @@
             }
             if (!isValid) return;
 
+            console.log('Confirming swap with the following details:');
+            console.log(this.currentSwap);
+            console.log('done...');
+            $('#confirmSwapBtn').prop('disabled', true).text('Processing...'); 
             $('#Provider').val(this.currentSwap.Provider);
-            $('#QuoteID').val(this.currentSwap.QuoteID);
+            $('#QuoteID').val(this.currentRateType === 'fixed' ? this.currentSwap.FixedQuoteId : this.currentSwap.FloatQuoteId);
             $('#ToCrypto').val(this.rateReq.ToCrypto);
             $('#FromAmount').val(this.currentRateType === 'fixed' ? this.currentSwap.FromFixedAmount : this.currentSwap.FromFloatAmount);
             $('#ToAmount').val(this.currentRateType === 'fixed' ? this.currentSwap.ToFixedAmount : this.currentSwap.ToFloatAmount);
