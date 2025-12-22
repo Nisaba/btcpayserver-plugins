@@ -89,7 +89,8 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
     }
 
     [HttpPost]
-    [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanViewStoreSettings)]
+    [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
+    [Authorize(Policy = Policies.CanManagePayouts, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
     [Route("GetPartialB2PSwapResult")]
     public async Task<IActionResult> GetPartialB2PSwapResult([FromBody] SwapRateRequestJS req)
     {
@@ -122,7 +123,8 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
     }
 
     [HttpPost]
-    [Authorize(AuthenticationSchemes = AuthenticationSchemes.Cookie, Policy = Policies.CanViewStoreSettings)]
+    [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
+    [Authorize(Policy = Policies.CanManagePayouts, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
     [Route("CreateSwap")]
     public async Task<IActionResult> CreateSwap([FromRoute] string storeId, [FromForm] SwapCreationRequestJS req)
     {
@@ -164,14 +166,12 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                     BTCPayPayoutId = t.Item2
                 };
                 await pluginService.AddSwapInDb(dbSwap);
-                TempData[WellKnownTempData.SuccessMessage] = $"Payout created! {sProvider} Offer ID: {createdSwap.SwapId}";
+                TempData[WellKnownTempData.SuccessMessage] = $"Payout created! {sProvider} Swap ID: {createdSwap.SwapId}";
             }
             else
             {
                 TempData[WellKnownTempData.ErrorMessage] = $"Error during swap creation";
             }
-
-            return Json(createdSwap);
         }
         catch (Exception ex)
         {

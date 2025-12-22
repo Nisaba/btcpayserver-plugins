@@ -92,7 +92,7 @@
     </form>
 </div>
 
-<div permission="@Policies.CanViewStoreSettings">
+<div>
     <br />
     @if (string.IsNullOrEmpty(Model.Settings.ApiKey))
     {
@@ -112,7 +112,7 @@
             </div>
         </nav>
 
-        <div id="tabOnChain">
+        <div permission="@Policies.CanViewStoreSettings" id="tabOnChain">
             <h4>Sell (On Chain)</h4>
             @if (walletConfig.OnChainEnabled)
             {
@@ -203,7 +203,7 @@
             }
         </div>
 
-        <div id="tabLightning" style="display:none">
+        <div permission="@Policies.CanViewStoreSettings" id="tabLightning" style="display:none">
             <h4>Sell (Lightning)</h4>
             @if (walletConfig.OffChainEnabled)
             {
@@ -286,7 +286,7 @@
             }
         </div>
 
-        <div id="tabSwaps" style="display:none">
+        <div permission="@Policies.CanCreateNonApprovedPullPayments" id="tabSwaps" style="display:none" permission="@Policies.CanCreateNonApprovedPullPayments">
             <h4>Swaps (On Chain)</h4>
             @if (walletConfig.OnChainEnabled)
             {
@@ -384,7 +384,7 @@
             </form>
         </div>
 
-        <div id="tabListSwaps" style="display:none">
+        <div permission="@Policies.CanCreateNonApprovedPullPayments" id="tabListSwaps" style="display:none">
             @if(Model.Swaps.Any())
             {
                 <h4>Swaps list</h4>

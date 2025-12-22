@@ -239,9 +239,6 @@
             }
             if (!isValid) return;
 
-            console.log('Confirming swap with the following details:');
-            console.log(this.currentSwap);
-            console.log('done...');
             $('#confirmSwapBtn').prop('disabled', true).text('Processing...'); 
             $('#Provider').val(this.currentSwap.Provider);
             $('#QuoteID').val(this.currentRateType === 'fixed' ? this.currentSwap.FixedQuoteId : this.currentSwap.FloatQuoteId);
