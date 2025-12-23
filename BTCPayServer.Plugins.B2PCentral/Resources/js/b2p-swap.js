@@ -1,7 +1,6 @@
 (function (window) {
     'use strict';
 
-    // Module pour les fonctions communes
     window.B2PCore = {
         tblOfrs: [],
         tblOfrsOnChain: [],
@@ -269,12 +268,27 @@
         },
 
         setSwapCurrency: function () {
-            $('#lblCurrency').text(this.getSwapCurrency());
+            var sCurr = this.getSwapCurrency();
+            $('#lblCurrency').text(sCurr);
+            if (sCurr === "BTC")
+                $('#divFiatSwap').show();
+            else
+                $('#divFiatSwap').hide();                
         },
 
         getSwapCurrency: function () {
             const isToSend = $("input[name='rdFromTo']:checked").val() === "ToSend";
             return isToSend ? "BTC" : $('#lstSwapToCrypto').val();
+        },
+
+        setFiatValue: function (fiatBalance, btcBalance) {
+            if ($('#lblCurrency').text() === "BTC") {
+                const swapBtcAmount = parseFloat($('#swapAmount').val());
+                console.log(swapBtcAmount)
+                const mtFiat = fiatBalance * (swapBtcAmount / btcBalance);
+                console.log(mtFiat)
+                $('#lblSwapFiat').text(parseInt(mtFiat,10));
+             }
         },
 
         toggleKYCProviders: function () {
@@ -330,7 +344,6 @@
         }
     };
 
-    // Initialisation au chargement
     $(document).ready(function () {
         window.B2PCore.init();
     });

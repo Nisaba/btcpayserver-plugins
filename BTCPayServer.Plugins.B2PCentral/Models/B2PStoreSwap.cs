@@ -14,6 +14,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Models
         public string SwapId { get; set; }
         public DateTime DateT { get; set; }
         public SwapProvidersEnum Provider { get; set; }
+        public string ProviderUrl { get; set; }
         public string FollowUrl { get; set; }
         public decimal FromAmount { get; set; }
         public decimal ToAmount { get; set; }

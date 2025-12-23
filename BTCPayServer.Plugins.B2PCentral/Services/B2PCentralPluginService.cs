@@ -46,8 +46,8 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                                    PullPaymentHostedService pullPaymentHostedService,
                                    WalletHistogramService walletHistogramService)
 {
-    public const string BaseApiUrl = "https://localhost:7137/api/";
-    // public const string BaseApiUrl = "https://api.b2p-central.com/api/";
+    // public const string BaseApiUrl = "https://localhost:7137/api/";
+    public const string BaseApiUrl = "https://api.b2p-central.com/api/";
     private HttpClient _httpClient2 = new HttpClient();
 
     public async Task<string> TestB2P(B2PSettings settings)

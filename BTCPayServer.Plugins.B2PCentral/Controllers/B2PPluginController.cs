@@ -26,7 +26,8 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
         var model = new B2PViewModel
         {
             Settings = await pluginService.GetStoreSettings(storeId),
-            Swaps = await pluginService.GetStoreSwaps(storeId)
+            Swaps = await pluginService.GetStoreSwaps(storeId),
+            IsPayoutCreated = (TempData[WellKnownTempData.SuccessMessage] ?? "").ToString().Contains("Payout created!")
         };
         return View(model);
     }
@@ -158,6 +159,7 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                     Provider = req.Provider,
                     SwapId = createdSwap.SwapId,
                     FollowUrl = createdSwap.FollowUrl,
+                    ProviderUrl = createdSwap.ProviderUrl,
                     FromAmount = req.FromAmount,
                     ToAmount = req.ToAmount,
                     ToCrypto = swap.ToCrypto,

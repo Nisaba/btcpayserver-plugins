@@ -58,7 +58,15 @@
 <br />
 
 <partial name="_StatusMessage" />
-
+@if (Model.IsPayoutCreated)
+{
+    <br />
+    <div>
+        <strong>Success!</strong> Your payout has been created.<br />
+        If you have set an automatic payout processor, the payment will be sent automatically to the Swap provider.<br />
+        Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.<br />
+    </div>
+}
 <div permission="@Policies.CanModifyStoreSettings">
     <br />
     <h4>Configuration</h4>
@@ -318,9 +326,12 @@
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <label for="swapAmount" class="form-input-label">Amount &nbsp;</label>
-                        <input id="swapAmount" type="number" min="0" value="@(walletConfig.OnChainBalance * (decimal)0.95)" step="0.0001" />
+                        <input id="swapAmount" type="number" min="0" value="@((walletConfig.OnChainBalance * (decimal)0.95).ToString("F8"))" step="0.0001" onchange="B2PSwap.setFiatValue(@walletConfig.OnChainFiatBalance, @walletConfig.OnChainBalance)" />
                         &nbsp;
                         <label id="lblCurrency" class="badge badge-settled">BTC</label>
+                    </div>
+                    <div id="divFiatSwap" style="display: flex; align-items: center; min-width: 150px;">
+                        <label id="lblSwapFiat">@((int)(walletConfig.OnChainFiatBalance * (decimal)0.95))</label>&nbsp; @walletConfig.FiatCurrency
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <label for="lstSwapToCrypto" class="form-input-label">Crypto &nbsp;</label>
@@ -344,6 +355,7 @@
                     <input type="checkbox" class="btcpay-toggle me-3" id="chkNoKYC" onchange="B2PSwap.toggleKYCProviders()" />
                     <label class="form-check-label" for="chkNoKYC">No KYC Providers only</label>
                 </div>
+                <br />
                 <div id="swapProvidersContainer" style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
                     @foreach (var provider in SwapProviders.ActiveProviders)
                     {
@@ -393,10 +405,10 @@
                     <table class="table table-hover mass-action">
                         <thead class="mass-action-head">
                         <tr>
-                            <th>Swap ID</th>
-                            <th>Provider</th>
-                            <th>Created At</th>
+                            <th class="text-nowrap">Swap ID</th>
+                            <th class="text-nowrap">Provider</th>
                             <th class="text-nowrap">Altcoin</th>
+                            <th class="text-nowrap">Created At</th>
                             <th class="text-nowrap">Amount (BTC)</th>
                             <th class="text-nowrap">Amount (Alt)</th>
                             <th class="text-nowrap">Pull Payment</th>
@@ -408,22 +420,26 @@
                             {
                                 <tr>
                                     <td class="text-break align-middle invoiceId-col">
-                                        <a href="@swap.FollowUrl" target="_blank" class="invoice-details-link">@swap.SwapId</a>
+                                        <a href="@swap.ProviderUrl" target="_blank" class="invoice-details-link">@swap.SwapId</a>
                                     </td>
-                                    <td>@swap.Provider.GetDisplayName()</td>
-                                    <td>@swap.DateT</td>
+                                    <td class="align-center">
+                                         <div class="badge badge-expired">
+                                           @swap.Provider.GetDisplayName()
+                                        </div>
+                                    </td>
                                     <td class="align-center">
                                         <div class="badge badge-expired">
                                             @swap.ToCrypto @swap.ToNetwork
                                         </div>
                                     </td>
+                                    <td>@swap.DateT</td>
                                     <td class="align-right">@swap.FromAmount.ToString("0.00000000")</td>
                                     <td class="align-right">@swap.ToAmount.ToString("0.00000000")</td>
                                     <td class="text-break align-middle invoiceId-col">
                                         <a asp-controller="UIPullPayment" asp-action="ViewPullPayment" asp-route-pullPaymentId="@swap.BTCPayPullPaymentId" class="text-break">@swap.BTCPayPullPaymentId</a>
                                     </td>
                                     <td>
-                                        <a href="https://b2p-central.com/#swap|@swap.Provider|@swap.SwapId" target="_blank">View JSON</a>
+                                        <a href="@swap.FollowUrl" target="_blank">View JSON</a>
                                     </td>
                                 </tr>
                             }
