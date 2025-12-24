@@ -385,6 +385,20 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
         }
     }
 
+    public async Task<bool> TestPayout()
+    {
+        try
+        {
+            await using var btcPayCtx = btcPayDbContextFactory.CreateContext();
+            return !await btcPayCtx.Payouts.AnyAsync(a => a.State <= PayoutState.InProgress);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "B2PCentral:TestPayout()");
+            throw;
+        }
+    }
+
     public async Task AddSwapInDb(B2PStoreSwap swap)
     {
         try

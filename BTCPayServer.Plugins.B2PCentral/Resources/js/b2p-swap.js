@@ -136,6 +136,8 @@
         rateReq: null,
         currentSwap: null,
         currentRateType: 'fixed',
+        fiatBalance: 0,
+        btcBalance: 0,
 
         init: function (swapsData, rateReqData) {
             this.swaps = swapsData;
@@ -143,22 +145,29 @@
             this.attachHandlers();
         },
 
+        initSwap: function (fiatBalance, btcBalance) {
+            this.fiatBalance = fiatBalance;
+            this.btcBalance = btcBalance;
+            $('#swapAmount').off('input').on('input', () => {
+                this.setFiatValue();
+            });
+        },
+
         attachHandlers: function () {
-            const self = this;
-
-            $(document).off('click', '.swap-btn').on('click', '.swap-btn', function () {
-                const providerId = parseInt($(this).data('provider-id'));
-                const providerDescription = $(this).data('provider-description');
-                self.onSwap(providerId, providerDescription);
+            $(document).off('click', '.swap-btn').on('click', '.swap-btn', (e) => {
+                const $btn = $(e.currentTarget); 
+                const providerId = parseInt($btn.data('provider-id'));
+                const providerDescription = $btn.data('provider-description');
+                this.onSwap(providerId, providerDescription);
             });
 
-            $('input[name="rateType"]').off('change').on('change', function () {
-                self.currentRateType = this.value;
-                self.updateSwapAmounts();
+            $('input[name="rateType"]').off('change').on('change', (e) => {
+                this.currentRateType = e.target.value;
+                this.updateSwapAmounts();
             });
 
-            $('#confirmSwapBtn').off('click').on('click', function () {
-                self.confirmSwap();
+            $('#confirmSwapBtn').off('click').on('click', () => {
+                this.confirmSwap();
             });
 
             $('[data-bs-toggle="tooltip"]').each(function () {
@@ -281,12 +290,20 @@
             return isToSend ? "BTC" : $('#lstSwapToCrypto').val();
         },
 
-        setFiatValue: function (fiatBalance, btcBalance) {
+        setFiatValue: function () {
+            console.log("setFiatValue");
             if ($('#lblCurrency').text() === "BTC") {
                 const swapBtcAmount = parseFloat($('#swapAmount').val());
-                console.log(swapBtcAmount)
-                const mtFiat = fiatBalance * (swapBtcAmount / btcBalance);
-                console.log(mtFiat)
+                const maxAllowedBtc = this.btcBalance * 0.99;
+                let btcAmount = 0;
+                if (swapBtcAmount > maxAllowedBtc) {
+                    $('#swapAmount').val(maxAllowedBtc);
+                    alert("The maximum possible BTC amount has been exceeded. You must specify a lower amount, reserving some sats for transaction fees.")
+                    btcAmount = maxAllowedBtc;
+                } else {
+                    btcAmount = swapBtcAmount;
+                }
+                const mtFiat = this.fiatBalance * (btcAmount / this.btcBalance);
                 $('#lblSwapFiat').text(parseInt(mtFiat,10));
              }
         },

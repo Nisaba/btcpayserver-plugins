@@ -131,48 +131,55 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
     {
         try
         {
-            var swap = new SwapCreationRequest
+            if (await pluginService.TestPayout())
             {
-                Provider = req.Provider,
-                QuoteID = req.QuoteID ?? string.Empty,
-                IsFixed = req.IsFixed,
-                FromCrypto = "BTC",
-                FromNetwork = "Bitcoin",
-                ToCrypto = req.ToCrypto.Split("-")[0],
-                ToNetwork = SwapCryptos.GetNetwork(req.ToCrypto),
-                FromAmount = Math.Round(req.FromAmount, 8, MidpointRounding.AwayFromZero),
-                ToAmount = req.ToAmount,
-                NotificationEmail = req.NotificationEmail,
-                ToAddress = req.ToAddress,
-                FromRefundAddress = req.FromRefundAddress ?? string.Empty,
-                NotificationNpub = string.Empty
-            };
-            var createdSwap =  await pluginService.CreateSwapAsync(storeId, swap, req.ApiKey);
-            if (createdSwap != null && createdSwap.Success)
-            {
-                var sProvider = req.Provider.GetDisplayName();
-                var t = await pluginService.CreatePayout(storeId, sProvider, createdSwap, req);
-                var dbSwap = new B2PStoreSwap
+                var swap = new SwapCreationRequest
                 {
-                    StoreId = storeId,
-                    DateT = DateTime.UtcNow,
                     Provider = req.Provider,
-                    SwapId = createdSwap.SwapId,
-                    FollowUrl = createdSwap.FollowUrl,
-                    ProviderUrl = createdSwap.ProviderUrl,
-                    FromAmount = req.FromAmount,
+                    QuoteID = req.QuoteID ?? string.Empty,
+                    IsFixed = req.IsFixed,
+                    FromCrypto = "BTC",
+                    FromNetwork = "Bitcoin",
+                    ToCrypto = req.ToCrypto.Split("-")[0],
+                    ToNetwork = SwapCryptos.GetNetwork(req.ToCrypto),
+                    FromAmount = Math.Round(req.FromAmount, 8, MidpointRounding.AwayFromZero),
                     ToAmount = req.ToAmount,
-                    ToCrypto = swap.ToCrypto,
-                    ToNetwork = swap.ToNetwork,
-                    BTCPayPullPaymentId = t.Item1,
-                    BTCPayPayoutId = t.Item2
+                    NotificationEmail = req.NotificationEmail,
+                    ToAddress = req.ToAddress,
+                    FromRefundAddress = req.FromRefundAddress ?? string.Empty,
+                    NotificationNpub = string.Empty
                 };
-                await pluginService.AddSwapInDb(dbSwap);
-                TempData[WellKnownTempData.SuccessMessage] = $"Payout created! {sProvider} Swap ID: {createdSwap.SwapId}";
+                var createdSwap = await pluginService.CreateSwapAsync(storeId, swap, req.ApiKey);
+                if (createdSwap != null && createdSwap.Success)
+                {
+                    var sProvider = req.Provider.GetDisplayName();
+                    var t = await pluginService.CreatePayout(storeId, sProvider, createdSwap, req);
+                    var dbSwap = new B2PStoreSwap
+                    {
+                        StoreId = storeId,
+                        DateT = DateTime.UtcNow,
+                        Provider = req.Provider,
+                        SwapId = createdSwap.SwapId,
+                        FollowUrl = createdSwap.FollowUrl,
+                        ProviderUrl = createdSwap.ProviderUrl,
+                        FromAmount = req.FromAmount,
+                        ToAmount = req.ToAmount,
+                        ToCrypto = swap.ToCrypto,
+                        ToNetwork = swap.ToNetwork,
+                        BTCPayPullPaymentId = t.Item1,
+                        BTCPayPayoutId = t.Item2
+                    };
+                    await pluginService.AddSwapInDb(dbSwap);
+                    TempData[WellKnownTempData.SuccessMessage] = $"Payout created! {sProvider} Swap ID: {createdSwap.SwapId}";
+                }
+                else
+                {
+                    TempData[WellKnownTempData.ErrorMessage] = $"Error during swap creation";
+                }
             }
             else
             {
-                TempData[WellKnownTempData.ErrorMessage] = $"Error during swap creation";
+                TempData[WellKnownTempData.ErrorMessage] = "There is at least a pending payout. Please process them before creating a new swap...";
             }
         }
         catch (Exception ex)
