@@ -99,11 +99,13 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
         try
         {
             var user = await userManager.GetUserAsync(User);
+            SwapCryptos.AvailableCryptos.TryGetValue(req.ToCrypto, out var cryptoNetwork);
             var swapReq = new SwapRateRequest
             {
                 FromCrypto = "BTC",
                 FromNetwork = "Bitcoin",
                 ToCrypto = req.ToCrypto.Split("-")[0],
+                ToCryptoNetwork = cryptoNetwork.Name,
                 ToNetwork = SwapCryptos.GetNetwork(req.ToCrypto),
                 FromAmount = Math.Round(req.FromAmount, 8, MidpointRounding.AwayFromZero),
                 ToAmount = req.ToAmount,

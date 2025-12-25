@@ -184,9 +184,7 @@
             $('#swapModalLabel').text(`Create a Swap with ${providerDescription}`);
             $('#modalProviderLogo').attr('src', `/Resources/img/${providerDescription}.webp`);
             $('#modalProviderLogo').attr('alt', providerDescription);
-
-            const toCrypto = this.rateReq.ToCrypto;
-            $('#receivingAddress').attr('placeholder', `${toCrypto} (${this.getFullCryptoName(toCrypto)})`);
+            $('#receivingAddress').attr('placeholder', `${this.rateReq.ToCrypto} (${this.rateReq.ToCryptoNetwork})`);
 
             this.updateSwapAmounts();
 
@@ -263,17 +261,6 @@
         isValidEmail: function (email) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             return emailRegex.test(email);
-        },
-
-        getFullCryptoName: function (crypto) {
-            const names = {
-                'XMR': 'Monero',
-                'BTC': 'Bitcoin',
-                'LTC': 'Litecoin',
-                'ETH': 'Ethereum',
-                'BCH': 'Bitcoin Cash'
-            };
-            return names[crypto] || crypto;
         },
 
         setSwapCurrency: function () {

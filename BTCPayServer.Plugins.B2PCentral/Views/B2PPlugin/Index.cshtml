@@ -1,10 +1,12 @@
 ﻿@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Abstractions.Services
 @using BTCPayServer.Services
 @using BTCPayServer.Client
 @using BTCPayServer.Plugins.B2PCentral.Views
 @using BTCPayServer.Plugins.B2PCentral.Models
 @using BTCPayServer.Plugins.B2PCentral.Models.P2P
 @using BTCPayServer.Plugins.B2PCentral.Models.Swaps
+@using System.Text.Json
 
 @inject BTCPayServer.Plugins.B2PCentral.Services.B2PCentralPluginService B2PCentralPluginService
 @inject DisplayFormatter DisplayFormatter
@@ -476,10 +478,8 @@
             $(document).ajaxComplete(function(event, xhr, settings) {
                 if (settings.url && settings.url.includes('GetPartialB2PSwapResult')) {
                     const swapData = $('#b2p-swap-data');
-                    if (swapData.length > 0) {
-                        const data = JSON.parse(swapData.text());
-                        window.B2PSwap.init(data.swaps, data.rateReq);
-                    }
+                    const data = JSON.parse(swapData.text());
+                    window.B2PSwap.init(data.swaps, data.rateReq);
                 }
             });
         })();

@@ -19,5 +19,7 @@
         public string FromCrypto { get; set; }
         public string FromNetwork { get; set; }
         public string ToNetwork { get; set; }
+        public string ToCryptoNetwork { get; set; }
+
     }
 }
