@@ -10,7 +10,7 @@
 		Get P2P bitcoin buy offers from B2P Central aggregator.
 		Find best offers from providers like HodlHodl, Bisq, Peach, NoOnes, LocalCoinSwaps, LNp2pBot, Robosats, Mostro, according to your onchain and lightning wallets balances
 	</Description>
-    <Version>1.3.2</Version>
+    <Version>2.0.1</Version>
   </PropertyGroup>
 
   <!-- Plugin development properties -->
