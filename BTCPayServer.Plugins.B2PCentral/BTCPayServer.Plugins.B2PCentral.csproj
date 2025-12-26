@@ -7,8 +7,8 @@
   <PropertyGroup>
     <Product>B2P Central plugin</Product>
     <Description>
-		Get P2P bitcoin buy offers from B2P Central aggregator.
-		Find best offers from providers like HodlHodl, Bisq, Peach, NoOnes, LocalCoinSwaps, LNp2pBot, Robosats, Mostro, according to your onchain and lightning wallets balances
+		Get P2P bitcoin buy offers from B2P Central aggregator, from providers like HodlHodl, Bisq, Peach, NoOnes, LocalCoinSwaps, LNp2pBot, Robosats, Mostro, according to your onchain and lightning wallets balances.
+		And swap seamlessly your bitcoins at the best rate with the best players in the market.
 	</Description>
     <Version>2.0.1</Version>
   </PropertyGroup>
