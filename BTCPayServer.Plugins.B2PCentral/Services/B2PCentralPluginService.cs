@@ -391,7 +391,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
         try
         {
             await using var btcPayCtx = btcPayDbContextFactory.CreateContext();
-            return !await btcPayCtx.Payouts.AnyAsync(a => a => a.PayoutMethodId == "BTC-CHAIN"
+            return !await btcPayCtx.Payouts.AnyAsync(a => a.PayoutMethodId == "BTC-CHAIN"
                                                     && a.State != PayoutState.Cancelled
                                                     && a.State != PayoutState.Completed);
         }
