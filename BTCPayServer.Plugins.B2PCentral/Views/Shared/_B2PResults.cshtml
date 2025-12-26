@@ -40,7 +40,11 @@
                         <td class="text-break align-middle invoiceId-col">
                             <a href="@item.Url" target="_blank" class="invoice-details-link">@item.ID</a>
                         </td>
-                        <td>@item.NumProvider.ToString()</td>
+                        <td class="align-center">
+                            <div class="badge badge-expired">
+                                @item.NumProvider.ToString()
+                            </div>
+                        </td>
                         <td align="center">@item.CountryCode</td>
                         <td class="align-middle amount-col">
                             <span data-sensitive>@DisplayFormatter.Currency((decimal)item.Price, item.CurrencyCode)</span>

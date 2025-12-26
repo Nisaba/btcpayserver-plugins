@@ -17,6 +17,7 @@ using BTCPayServer.Services.Invoices;
 using BTCPayServer.Services.Stores;
 using BTCPayServer.Services.Wallets;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
@@ -390,7 +391,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
         try
         {
             await using var btcPayCtx = btcPayDbContextFactory.CreateContext();
-            return !await btcPayCtx.Payouts.AnyAsync(a => a.State <= PayoutState.InProgress);
+            return !await btcPayCtx.Payouts.AnyAsync(a => a.State <= PayoutState.InProgress && a.PayoutMethodId == "BTC-CHAIN");
         }
         catch (Exception e)
         {
