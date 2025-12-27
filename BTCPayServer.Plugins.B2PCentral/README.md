@@ -3,25 +3,28 @@
 If you want to sell bitcoins you earn with your store activity, this plugin allows you to get P2P bitcoin buy offers from <a href="https://www.b2p-central.com" target="b2p">B2P Central</a>, according to your onchain and lightning wallets balances and the store's default currency.
 You can also perform onchain swaps to a variety of altcoins and stablecoins supported by B2P Central.<br />
 
-## P2P Bitcoin Sell Offers
-Offers are provided by HodlHodl, NoOnes, LocalCoinSwap and Peach for onchain bitcoins. And by LNp2pBot, Mostro and RoboSats for Lightning bitcoins.
+## Configuration
 
 First, you need to get a B2P Central API key <a href="https://getapi.b2p-central.com" target="b2pApi">here</a>.
 The configuration section is available for users having CanModifyStoreSettings rights. Click on Save button, then you have a Test button to check it's OK.
 
-![image](https://github.com/user-attachments/assets/d7a41bde-0e5e-49a8-b449-28069f6055f5)
+<img width="960" height="209" alt="image" src="https://github.com/user-attachments/assets/1cda655e-a089-42f7-8de8-db4235d9e073" />
 
+## P2P Bitcoin Sell Offers
+
+Offers are provided by HodlHodl, NoOnes, LocalCoinSwap and Peach for onchain bitcoins. And by LNp2pBot, Mostro and RoboSats for Lightning bitcoins.
 Then you have 2 tabs for onchain and Lightning, if the walets are configured in the current store.
 These tabs are available for users having CanViewStoreSettings rights.
 
 Each wallet shows the current balance in BTC and in store fiat currency.
 
 So you have to select providers you want and choose the percent of the balance you want to sell. Then click on Search.
-After a few seconds, result is displayed. You can sort the offers by amount.
+After a few seconds, result is displayed. You can sort the offers by price.
 
 Click on the offer you want (column id) to open it in a new browser tab and make the deal if you want.
 
-![image](https://github.com/user-attachments/assets/e44b05fb-b06e-4d3d-b895-5b02b7aea501)
+<img width="1206" height="717" alt="image" src="https://github.com/user-attachments/assets/a6b0bc0e-0023-480f-9400-10a6a7cfe7da" />
+
 
 ## Swaps (On chain)
 
@@ -44,12 +47,19 @@ You can then find the best swaps rates from various providers and execute the sw
 4. **Select swap providers**: Check the providers you want to query for rates
    - Use the **"No KYC Providers only"** toggle to filter out providers requiring identity verification
 
+<img width="1175" height="594" alt="image" src="https://github.com/user-attachments/assets/98f50646-a760-4c6d-b243-05565b8e8197" />
+
+
 5. **Click Search**: The plugin will fetch available swap rates from selected providers
 
-6. **Review and confirm**: Select the best offer and confirm the swap
+<img width="1269" height="766" alt="image" src="https://github.com/user-attachments/assets/d1ff9a60-76e3-4c2c-bcc1-1bceb8307eea" />
+
+
+6. **Review and confirm**: Select the best offer and confirm the swap. For each swap offer, you have the amount to send, the amount you will receive in alt (for fixed and float offers) and the values in your fiat currency.
    - A payout will be automatically created in BTCPay Server
    - If you have an automatic payout processor configured, the payment will be sent automatically
    - Otherwise, go to the Payouts section to validate the payout manually
+<img width="535" height="695" alt="image" src="https://github.com/user-attachments/assets/5f2f488f-3961-47cf-a1df-174dcf4ce39d" />
 
 ### Important notes:
 - Please check that there is no previous pending payout in BTCPay before placing a swap
