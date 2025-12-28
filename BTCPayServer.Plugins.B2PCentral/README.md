@@ -123,6 +123,8 @@ What's new in v 2.0.1 :
 - Display and minor improvements
 - Add onchain Swaps capabilities
 
+What's new in v 2.0.2 :
+- Fix issue in startup on new  plugin installation
 
 
 

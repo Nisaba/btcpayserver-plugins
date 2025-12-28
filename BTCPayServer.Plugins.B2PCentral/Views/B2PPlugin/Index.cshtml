@@ -461,28 +461,31 @@
 
 @section PageFootContent {
     <script src="/Resources/js/b2p-swap.js" asp-append-version="true" asp-add-nonce="true" id="b2p-swap-script"></script>
-    <script asp-add-nonce="true">
-        (function() {
-            const scriptElement = document.getElementById('b2p-swap-script');
+    @if (walletConfig != null)
+    {
+        <script asp-add-nonce="true">
+            (function() {
+                const scriptElement = document.getElementById('b2p-swap-script');
 
-            function runInit() {
-                window.B2PSwap.initSwap(@walletConfig.OnChainFiatBalance.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                                        @walletConfig.OnChainBalance.ToString(System.Globalization.CultureInfo.InvariantCulture));
-            }
-
-            if (window.B2PSwap) {
-                runInit();
-            } else {
-                scriptElement.addEventListener('load', runInit);
-            }
-
-            $(document).ajaxComplete(function(event, xhr, settings) {
-                if (settings.url && settings.url.includes('GetPartialB2PSwapResult')) {
-                    const swapData = $('#b2p-swap-data');
-                    const data = JSON.parse(swapData.text());
-                    window.B2PSwap.init(data.swaps, data.rateReq);
+                function runInit() {
+                    window.B2PSwap.initSwap(@walletConfig.OnChainFiatBalance.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                                            @walletConfig.OnChainBalance.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 }
-            });
-        })();
-    </script>
+
+                if (window.B2PSwap) {
+                    runInit();
+                } else {
+                    scriptElement.addEventListener('load', runInit);
+                }
+
+                $(document).ajaxComplete(function(event, xhr, settings) {
+                    if (settings.url && settings.url.includes('GetPartialB2PSwapResult')) {
+                        const swapData = $('#b2p-swap-data');
+                        const data = JSON.parse(swapData.text());
+                        window.B2PSwap.init(data.swaps, data.rateReq);
+                    }
+                });
+            })();
+        </script>
+    }
 }
