@@ -94,7 +94,7 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                     AltcoinTo = req.ToCrypto,
                     DateT = DateTime.UtcNow,
                     BTCAmount = rep.FromAmount,
-                    AltAmount = req.ToAmount,
+                    AltAmount = rep.ToAmount,
                     TxID = rep.SwapId,
                     BTCPayPullPaymentId = sPPId,
                 });

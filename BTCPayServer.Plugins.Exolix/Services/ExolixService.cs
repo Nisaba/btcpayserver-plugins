@@ -68,8 +68,9 @@ namespace BTCPayServer.Plugins.Exolix.Services
                     SwapId = JsonRep.id,
                     FromAddress = JsonRep.depositAddress,
                     FromAmount = Convert.ToSingle(JsonRep.amount),
+                    ToAmount = Convert.ToSingle(JsonRep.amountTo)
                 };
-                _logger.LogInformation($"Exolix Swap Created : {swap.SwapId} {req.FromCrypto}");
+                _logger.LogInformation($"Exolix Swap Created : {swap.SwapId} {req.FromCrypto} {req.ToCrypto}");
                 return swap;
             }
             catch (Exception ex)
