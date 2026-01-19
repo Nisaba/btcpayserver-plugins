@@ -1,17 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
-namespace BTCPayServer.Plugins.Shopstr.Models
+namespace BTCPayServer.Plugins.TelegramBot.Models
 {
     [PrimaryKey(nameof(StoreId), nameof(AppId))]
-    public class ShopstrSettings
+    public class TelegramBotSettings
     {
         [Key]
         public string StoreId { get; set; }
+
         [Key]
         public string AppId { get; set; }
 
-        public string Location { get; set; }
+        public string BotToken { get; set; }
+
+        public bool IsEnabled { get; set; }
 
     }
 }
