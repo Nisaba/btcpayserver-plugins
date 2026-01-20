@@ -1,8 +1,6 @@
 ﻿using BTCPayServer.Client.Models;
 using BTCPayServer.Data;
 using System.Collections.Generic;
-using static System.Net.Mime.MediaTypeNames;
-using System.IO;
 
 namespace BTCPayServer.Plugins.Shopstr.Models.Shopstr
 {

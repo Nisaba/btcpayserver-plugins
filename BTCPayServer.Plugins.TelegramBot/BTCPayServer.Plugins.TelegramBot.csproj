@@ -59,10 +59,7 @@
 
 
 	<ItemGroup>
-	  <Folder Include="Migrations\" />
 	  <Folder Include="Resources\img\" />
-	  <Folder Include="Views\TelegramBotPlugin\" />
-	  <Folder Include="Views\Shared\" />
 	</ItemGroup>
 
 

@@ -1,0 +1,102 @@
+﻿@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.TelegramBot.Models
+@using BTCPayServer.Plugins.TelegramBot.Views
+
+@model TelegramBotViewModel
+@{
+    ViewData.SetActivePage(PluginNavPages.Index, "Telegram Shopping Bot plugin");
+    bool bApp;
+}
+
+<table>
+    <tr>
+        <td>
+            <img src="/Resources/img/TelegramShop.webp" />
+        </td>
+        <td width="20" />
+        <td>
+            <p>
+                Telegram Shopping Bot plugin<br />
+                Please read our documentation <a href="https://github.com/Nisaba/btcpayserver-plugins/blob/master/BTCPayServer.Plugins.TelegramBot/README.md" target="_blank">here</a>.
+            </p>
+        </td>
+    </tr>
+</table>
+<br />
+
+<!-- <partial name="_StatusMessage" /> -->
+
+@if (Model.StoreApps.Count == 0)
+{
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+        <span class="me-2"><vc:icon symbol="warning"/></span>
+        You do not have any Shop apps in your BTCPay store yet.
+        <a href="/stores/@Model.storeId/apps/create/PointOfSale" class="alert-link ms-2">Create an app</a>
+    </div>
+    bApp = false;
+}
+else
+{
+    <div class="alert d-flex align-items-center" role="alert">
+        <span class="me-2"><vc:icon symbol="warning" /></span>
+        @Model.StoreApps.Count Shop app(s) ready to be synchronized in this store.
+    </div>
+    bApp = true;
+}
+@if (bApp)
+{
+    <br/>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>App Name</th>
+                <th>Items</th>
+                <th>Bot Token</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var app in Model.StoreApps)
+            {
+                <tr>
+                    <td><div class="badge badge-settled">@app.Name</div></td>
+                    <td><div class="badge badge-expired">@app.ShopItems.Count</div></td>
+                    <td width="150"><input id="txtBotToken@{@app.Id}" type="text" value="@app.BotToken" placeholder="123456789:ABCDefGhIJKlmnOpQrStUVwxYz1234567890" /></td>
+                    <td align="center">
+                        <input type="checkbox" class="btcpay-toggle me-3" id="chkBotEnabled@{@app.Id}" checked="@app.IsEnabled" />
+                    </td>
+                    <td><button class="btn btn-secondary" onclick="BtSaveApp('@app.Id')">Save</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @Html.AntiForgeryToken()
+
+    <script type="text/javascript" >
+    var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+    
+    function BtSaveApp(appId) {
+        var botToken = $('#txtBotToken' + appId).val();
+        var isEnabled = $('#chkBotEnabled' + appId).is(':checked');
+        $('#BtSave' + appId).hide();
+        $.ajax({
+            url: 'TelegramBot/SaveSettings',
+            type: 'POST',
+            data: { appId: appId, botToken: botToken, isEnabled: isEnabled },
+            headers: {
+                'RequestVerificationToken': antiForgeryToken
+            },
+            success: function(result) {
+                alert("App settings saved");
+                $('#BtSave' + appId).show();
+            },
+            error: function (xhr, status, error) {
+                alert("Error: " + error + " - " + xhr.responseText);
+                $('#BtSave' + appId).show();
+            }
+        });
+    }
+    </script>
+}
