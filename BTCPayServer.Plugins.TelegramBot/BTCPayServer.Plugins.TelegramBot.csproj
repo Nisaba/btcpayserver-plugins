@@ -59,8 +59,9 @@
 
 
 	<ItemGroup>
-	  <Folder Include="Resources\img\" />
+		<EmbeddedResource Include="Resources\**" />
 	</ItemGroup>
+
 
 
 	<ItemGroup>

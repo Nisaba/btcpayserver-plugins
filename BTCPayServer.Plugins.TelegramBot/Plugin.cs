@@ -3,6 +3,7 @@ using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Plugins.TelegramBot.Data;
 using BTCPayServer.Plugins.TelegramBot.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace BTCPayServer.Plugins.TelegramBot;
 
@@ -19,7 +20,8 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddHostedService<ApplicationPartsLogger>()
                 .AddHostedService<PluginMigrationRunner>()
                 .AddSingleton<TelegramBotDbContextFactory>()
-                .AddSingleton<TelegramBotPluginService>();
+                .AddSingleton<TelegramBotPluginService>()
+                .AddHostedService<AutoStartService>();
 
     }
 
