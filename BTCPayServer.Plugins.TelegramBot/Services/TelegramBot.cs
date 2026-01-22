@@ -1,6 +1,7 @@
 ﻿using BTCPayServer.Client.Models;
 using BTCPayServer.Plugins.TelegramBot.Models;
 using BTCPayServer.Services.Apps;
+using Fido2NetLib;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
@@ -348,17 +349,21 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
 
             var keyboard = new InlineKeyboardMarkup(buttons);
 
-            if (!string.IsNullOrEmpty(item.Image) && (item.Image.StartsWith("http://") || item.Image.StartsWith("https://")))
+            var imageUrl = item.Image;
+
+            if (!string.IsNullOrEmpty(imageUrl))
             {
-                try
+                if (imageUrl.StartsWith("~/", StringComparison.Ordinal))
                 {
-                    await bot.SendPhoto(chatId, InputFile.FromUri(item.Image), caption: caption, parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
-                    return;
+                    imageUrl = imageUrl.Substring(1);
                 }
-                catch
+
+                if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Si l'image échoue, envoyer un message texte
+                    imageUrl = pluginService.GetServerUrl().TrimEnd('/') + imageUrl;
                 }
+                await bot.SendPhoto(chatId, InputFile.FromUri(imageUrl), caption: caption, parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
+                return;
             }
 
             await bot.SendMessage(chatId, caption, parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
@@ -580,23 +585,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 3. Review your cart with /cart
                 4. Pay with /checkout
 
-                🔒 Secure payment via Bitcoin/Lightning
-                📖 *Help - Available Commands:*
-
-                /start - Welcome message
-                /menu - Display products
-                /cart - View your cart
-                /checkout - Proceed to payment
-                /clear - Empty your cart
-                /help - Show this help
-
-                💡 *How to Order:*
-                1. Browse products with /menu
-                2. Add items to your cart
-                3. Review your cart with /cart
-                4. Pay with /checkout
-
-                🔒 Secure payment via Bitcoin/Lightning or altcoins
+                🔒 Secure payment via Bitcoin/Lightning and altcoins
                 """;
 
             await bot.SendMessage(chatId, helpText, parseMode: ParseMode.Markdown, cancellationToken: token);

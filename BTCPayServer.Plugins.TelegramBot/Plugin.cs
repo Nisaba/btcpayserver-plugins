@@ -17,7 +17,6 @@ public class Plugin : BaseBTCPayServerPlugin
     public override void Execute(IServiceCollection services)
     {
         services.AddUIExtension("header-nav", "TelegramBotPluginNav")
-                .AddHostedService<ApplicationPartsLogger>()
                 .AddHostedService<PluginMigrationRunner>()
                 .AddSingleton<TelegramBotDbContextFactory>()
                 .AddSingleton<TelegramBotPluginService>()

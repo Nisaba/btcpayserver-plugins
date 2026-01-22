@@ -66,7 +66,7 @@ else
                     <td align="center">
                         <input type="checkbox" class="btcpay-toggle me-3" id="chkBotEnabled@{@app.Id}" checked="@app.IsEnabled" />
                     </td>
-                    <td><button class="btn btn-secondary" onclick="BtSaveApp('@app.Id')">Save</button></td>
+                    <td><button id="btSave@{@app.Id}" class="btn btn-secondary" onclick="BtSaveApp('@app.Id')">Save</button></td>
                 </tr>
             }
         </tbody>
@@ -80,6 +80,10 @@ else
     function BtSaveApp(appId) {
         var botToken = $('#txtBotToken' + appId).val();
         var isEnabled = $('#chkBotEnabled' + appId).is(':checked');
+        if (isEnabled && (botToken === null || botToken.trim() === '')) {
+            alert("Please enter a valid Bot Token.");
+            return;
+        }
         $('#BtSave' + appId).hide();
         $.ajax({
             url: 'TelegramBot/SaveSettings',

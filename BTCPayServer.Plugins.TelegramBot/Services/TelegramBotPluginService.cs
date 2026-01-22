@@ -22,6 +22,8 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
         private readonly ILogger<TelegramBotPluginService> logger = loggerFactory.CreateLogger<TelegramBotPluginService>();
         private List<TelegramBot> telegramBots = new();
 
+        private string? serverBaseUrl = null;
+
         private TelegramBotAppData BuildAppData(AppData app, PointOfSaleSettings appSettings, string botToken, bool isEnabled)
         {
             return new TelegramBotAppData
@@ -37,6 +39,61 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 DefaultTaxRate = appSettings.DefaultTaxRate,
             };
         }
+
+        public async Task InitBaseUrl(string baseUrl)
+        {
+            try
+            {
+                var bUpdate = false;
+                using (var context = dbContextFactory.CreateContext())
+                {
+                    var config = await context.Config.FirstOrDefaultAsync();
+                    if (config == null)
+                    {
+                        context.Config.Add(baseUrl);
+                        bUpdate = true;
+                    }
+                    else if (config != baseUrl)
+                    {
+                        context.Config.Update(baseUrl);
+                        bUpdate = true;
+                    }
+                    if (bUpdate)
+                        await context.SaveChangesAsync();
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "TelegramBotPlugin:InitBaseUrl()");
+                throw;
+            }
+        }
+
+        public string GetServerUrl()
+        {
+            if (serverBaseUrl != null)
+                return serverBaseUrl;
+
+            try
+            {
+                using (var context = dbContextFactory.CreateContext())
+                {
+                    var config = context.Config.FirstOrDefault();
+                    if (config != null)
+                    {
+                        serverBaseUrl = config;
+                        return config;
+                    }
+                    return string.Empty;
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "TelegramBotPlugin:GetServerUrl()");
+                throw;
+            }
+        }
+
 
         public async Task<TelegramBotViewModel> GetStoreViewModel(string storeId)
         {
@@ -279,11 +336,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             }
         }
 
-        private string GetServerUrl()
-        {
-            // TODO: Récupérer l'URL du serveur depuis la configuration
-            return "https://your-btcpay-server.com";
-        }
 
         // Mise à jour de l'inventaire après paiement
         public async Task UpdateInventoryAsync(string appId, Dictionary<string, int> itemQuantities)

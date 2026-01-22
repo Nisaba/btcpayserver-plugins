@@ -17,7 +17,6 @@ public class Plugin : BaseBTCPayServerPlugin
     public override void Execute(IServiceCollection services)
     {
         services.AddUIExtension("header-nav", "ShopstrPluginNav")
-                .AddHostedService<ApplicationPartsLogger>()
                 .AddHostedService<PluginMigrationRunner>()
                 .AddSingleton<ShopstrDbContextFactory>()
                 .AddSingleton<ShopstrService>()

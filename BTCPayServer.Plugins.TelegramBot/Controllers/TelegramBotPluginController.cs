@@ -18,6 +18,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Controllers
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
         {
+            await pluginService.InitBaseUrl($"{Request.Scheme}://{Request.Host}{Request.PathBase}");
             var model = await pluginService.GetStoreViewModel(storeId);
             return View(model);
         }
