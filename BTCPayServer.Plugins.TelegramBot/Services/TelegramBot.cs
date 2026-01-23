@@ -528,6 +528,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 var invoiceUrl = await pluginService.CreateInvoiceAsync(
                     appData.StoreDataId,
                     appData.Id,
+                    appData.Name,
                     total,
                     appData.CurrencyCode,
                     cartItems,

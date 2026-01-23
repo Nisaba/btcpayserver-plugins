@@ -104,30 +104,42 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     .ToList();
 
                 var filteredApps = new List<TelegramBotAppData>();
-                foreach (var app in storeApps)
+                var invoices = new List<TelegramBotInvoices>();
+
+                using (var context = dbContextFactory.CreateContext())
                 {
-                    var appSettings = app.GetSettings<PointOfSaleSettings>();
-                    if (appSettings.DefaultView != PointOfSale.PosViewType.Light)
+                    var lstStoreSettings = await context.Settings
+                        .Where(a => a.StoreId == storeId)
+                        .ToListAsync();
+
+                    foreach (var app in storeApps)
                     {
-                        var storeAppSettings = await GetSettings(storeId, app.Id);
-                        if (storeAppSettings == null)
+                        var appSettings = app.GetSettings<PointOfSaleSettings>();
+                        if (appSettings.DefaultView != PointOfSale.PosViewType.Light)
                         {
-                            storeAppSettings = new TelegramBotSettings
+                            var storeAppSettings = lstStoreSettings.FirstOrDefault(a => a.AppId == app.Id);
+                            if (storeAppSettings == null)
                             {
-                                StoreId = storeId,
-                                AppId = app.Id,
-                                BotToken = string.Empty,
-                                IsEnabled = false
-                            };
+                                storeAppSettings = new TelegramBotSettings
+                                {
+                                    StoreId = storeId,
+                                    AppId = app.Id,
+                                    BotToken = string.Empty,
+                                    IsEnabled = false
+                                };
+                            }
+                            filteredApps.Add(BuildAppData(app, appSettings, storeAppSettings.BotToken, storeAppSettings.IsEnabled));
                         }
-                        filteredApps.Add(BuildAppData(app, appSettings, storeAppSettings.BotToken, storeAppSettings.IsEnabled));
                     }
+
+                    invoices = await context.TelegramInvoices.Where(a => a.StoreId == storeId).ToListAsync();
                 }
 
                 return new TelegramBotViewModel()
                 {
                     storeId = storeId,
-                    StoreApps = filteredApps
+                    StoreApps = filteredApps,
+                    Invoices = invoices
                 };
             }
             catch (Exception e)
@@ -137,21 +149,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             }
         }
 
-        public async Task<TelegramBotSettings> GetSettings(string storeId, string appId)
-        {
-            try
-            {
-                using (var context = dbContextFactory.CreateContext())
-                {
-                    return await context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId && a.AppId == appId);
-                }
-            }
-            catch (Exception e)
-            {
-                logger.LogError(e, "TelegramBotPlugin:GetSettings()");
-                throw;
-            }
-        }
 
         public async Task UpdateSettings(string storeId, string appId, string botToken, bool isEnabled)
         {
@@ -255,6 +252,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
         public async Task<string?> CreateInvoiceAsync(
             string storeId,
             string appId,
+            string appName,
             decimal amount,
             string currency,
             List<PosCartItem> cartItems,
@@ -314,11 +312,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     AppService.GetAppInternalTag(appId),
                     "telegram-bot"
                 };
-
-                // Utiliser le contexte existant pour créer la facture
-                // Note: Cette implémentation nécessite d'injecter les services appropriés
-                // Dans une implémentation réelle, vous devrez adapter selon votre infrastructure
-
                 var serverUrl = GetServerUrl();
                 var invoiceUrl = $"{serverUrl}/apps/{appId}/pos"; // URL de fallback
 
@@ -326,6 +319,21 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 // Pour l'instant, retourner l'URL de l'app comme placeholder
                 logger.LogInformation("Création de facture pour {Amount} {Currency} - Panier: {CartItems}",
                     amount, currency, JsonConvert.SerializeObject(cartItems));
+
+                using (var context = dbContextFactory.CreateContext())
+                {
+                    var telegramInvoice = new TelegramBotInvoices
+                    {
+                        BTCPayInvoiceId = Guid.NewGuid().ToString(), // Remplacer par l'ID réel de la facture
+                        StoreId = storeId,
+                        AppName = appName,
+                        Amount = amount,
+                        Currency = currency,
+                        DateT = DateTime.UtcNow
+                    };
+                    context.TelegramInvoices.Add(telegramInvoice);
+                    await context.SaveChangesAsync();
+                }
 
                 return invoiceUrl;
             }

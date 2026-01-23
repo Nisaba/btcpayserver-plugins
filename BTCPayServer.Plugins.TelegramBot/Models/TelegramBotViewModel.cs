@@ -7,5 +7,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Models
     {
         public string storeId { get; set; }
         public List<TelegramBotAppData> StoreApps { get; set; }
+        public List<TelegramBotInvoices> Invoices { get; set; }
     }
 }
