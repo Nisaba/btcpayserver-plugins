@@ -20,7 +20,9 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddHostedService<PluginMigrationRunner>()
                 .AddSingleton<TelegramBotDbContextFactory>()
                 .AddSingleton<TelegramBotPluginService>()
-                .AddHostedService<AutoStartService>();
+                .AddHostedService<AutoStartService>()
+                .AddHostedService<TelegramBotHostedService>();
+        ;
 
     }
 

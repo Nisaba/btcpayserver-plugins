@@ -538,7 +538,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     session.CustomerCity,
                     session.CustomerPostalCode,
                     session.CustomerCountry,
-                    $"telegram_{chatId}");
+                    chatId);
 
                 if (string.IsNullOrEmpty(invoiceUrl))
                 {
@@ -567,6 +567,19 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 await bot.SendMessage(chatId, "❌ Error creating invoice. Please try again.", cancellationToken: token);
             }
         }
+
+        public async Task SendPaymentSuccess(long chatId)
+        {
+            if (_bot == null) return;
+            await _bot.SendMessage(chatId, "✅ Payment successful! Thank you for your purchase.");
+        }
+
+        public async Task SendPaymentFailure(long chatId)
+        {
+            if (_bot == null) return;
+            await _bot.SendMessage(chatId, "❌ Payment failed or was cancelled. Please try again.");
+        }
+
 
         private async Task SendHelpMessage(ITelegramBotClient bot, long chatId, CancellationToken token)
         {

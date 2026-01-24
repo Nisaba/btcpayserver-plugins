@@ -1,4 +1,6 @@
-﻿using BTCPayServer.Data;
+﻿using BTCPayServer.Client;
+using BTCPayServer.Client.Models;
+using BTCPayServer.Data;
 using BTCPayServer.Plugins.TelegramBot.Data;
 using BTCPayServer.Plugins.TelegramBot.Models;
 using BTCPayServer.Services.Apps;
@@ -9,6 +11,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,7 +23,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                                           TelegramBotDbContextFactory dbContextFactory)
     {
         private readonly ILogger<TelegramBotPluginService> logger = loggerFactory.CreateLogger<TelegramBotPluginService>();
-        private List<TelegramBot> telegramBots = new();
+        public List<TelegramBot> telegramBots = new();
 
         private string? serverBaseUrl = null;
 
@@ -262,7 +265,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             string? buyerCity,
             string? buyerPostalCode,
             string? buyerCountry,
-            string orderId)
+            long chatId)
         {
             try
             {
@@ -277,7 +280,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
 
                 var posSettings = app.GetSettings<PointOfSaleSettings>();
 
-                // Construire les données POS pour le panier
                 var posData = new JObject
                 {
                     ["cart"] = JArray.FromObject(cartItems.Select(item => new
@@ -292,39 +294,40 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     ["source"] = "telegram"
                 };
 
-                // Créer les métadonnées de la facture
-                var metadata = new InvoiceMetadata
+                var invoiceReq = new CreateInvoiceRequest()
                 {
-                    OrderId = orderId,
-                    BuyerEmail = buyerEmail,
-                    BuyerName = buyerName,
-                    BuyerAddress1 = buyerAddress,
-                    BuyerCity = buyerCity,
-                    BuyerZip = buyerPostalCode,
-                    BuyerCountry = buyerCountry,
-                    PosData = posData,
-                    ItemDesc = string.Join(", ", cartItems.Select(c => $"{c.Count}x {c.Title}"))
+                    Currency = currency,
+                    Amount = amount,
+                    Checkout = new InvoiceDataBase.CheckoutOptions()
+                    {
+                        DefaultLanguage = posSettings.HtmlLang
+                    },
+                    Metadata = JObject.FromObject(new
+                    {
+                        
+                        ItemDesc = $"From Telegram Bot ({posSettings.Title}) - {appId}" ,
+                        AppId = appId,
+                        ChatId = chatId,
+                        BuyerEmail = buyerEmail,
+                        BuyerName = buyerName,
+                        BuyerAddress1 = buyerAddress,
+                        BuyerCity = buyerCity,
+                        BuyerZip = buyerPostalCode,
+                        BuyerCountry = buyerCountry,
+                        PosData = posData,
+                    }),
+                    Receipt = new InvoiceDataBase.ReceiptOptions() { Enabled = true }
                 };
 
-                // Ajouter les tags internes pour lier à l'app
-                var internalTags = new List<string>
-                {
-                    AppService.GetAppInternalTag(appId),
-                    "telegram-bot"
-                };
-                var serverUrl = GetServerUrl();
-                var invoiceUrl = $"{serverUrl}/apps/{appId}/pos"; // URL de fallback
-
-                // TODO: Implémenter la création réelle de facture via UIInvoiceController ou API
-                // Pour l'instant, retourner l'URL de l'app comme placeholder
-                logger.LogInformation("Création de facture pour {Amount} {Currency} - Panier: {CartItems}",
-                    amount, currency, JsonConvert.SerializeObject(cartItems));
+                var btcpayUri = new Uri(GetServerUrl());
+                var client = new BTCPayServerClient(btcpayUri);
+                var invoice = await client.CreateInvoice(storeId, invoiceReq);
 
                 using (var context = dbContextFactory.CreateContext())
                 {
                     var telegramInvoice = new TelegramBotInvoices
                     {
-                        BTCPayInvoiceId = Guid.NewGuid().ToString(), // Remplacer par l'ID réel de la facture
+                        BTCPayInvoiceId = invoice.Id,
                         StoreId = storeId,
                         AppName = appName,
                         Amount = amount,
@@ -335,17 +338,16 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     await context.SaveChangesAsync();
                 }
 
-                return invoiceUrl;
+                return invoice.CheckoutLink;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Erreur lors de la création de la facture");
+                logger.LogError(ex, "TelegramBotPlugin:CreateInvoiceAsync()");
                 return null;
             }
         }
 
 
-        // Mise à jour de l'inventaire après paiement
         public async Task UpdateInventoryAsync(string appId, Dictionary<string, int> itemQuantities)
         {
             try
@@ -354,11 +356,10 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     new AppService.InventoryChange(kv.Key, -kv.Value)).ToArray();
 
                 await appService.UpdateInventory(appId, changes);
-                logger.LogInformation("Inventaire mis à jour pour l'app {AppId}", appId);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Erreur lors de la mise à jour de l'inventaire");
+                logger.LogError(ex, "TelegramBotPlugin:UpdateInventoryAsync()");
             }
         }
     }
