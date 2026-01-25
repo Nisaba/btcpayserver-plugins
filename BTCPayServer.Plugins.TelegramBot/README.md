@@ -39,3 +39,7 @@ If you are running BTCPay Server locally (e.g., on `localhost`):
 
 ## Invoices listing
 In the plugin page, you can see the list of invoices created through the Telegram Bot.
+
+## Donations
+If you find this plugin useful, consider supporting its development, making a donation here:
+[https://donate.nisaba-solutions.com/](https://donate.nisaba-solutions.com/)
