@@ -29,6 +29,8 @@ You can personalize your bot's appearance to match your store using BotFather:
 5.  You can then activate or deactivate the bot as needed.
 5.  Save the configuration.
 
+<img width="1025" height="338" alt="image" src="https://github.com/user-attachments/assets/14ea54c2-2a13-4470-ae96-5945168b1779" />
+
 Your bot should now be active. Users can start the bot to view products from your linked Point of Sale.
 When BTCPay restarts, all the active bots will automatically reconnect.
 
@@ -39,6 +41,9 @@ If you are running BTCPay Server locally (e.g., on `localhost`):
 
 ## Invoices listing
 In the plugin page, you can see the list of invoices created through the Telegram Bot.
+
+<img width="1008" height="397" alt="image" src="https://github.com/user-attachments/assets/0fbbb848-8ca3-430e-996c-2ba92b314bfe" />
+
 
 ## Donations
 If you find this plugin useful, consider supporting its development, making a donation here:
