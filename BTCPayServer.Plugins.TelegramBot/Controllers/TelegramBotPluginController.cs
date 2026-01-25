@@ -2,8 +2,10 @@
 using BTCPayServer.Abstractions.Extensions;
 using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Client;
+using BTCPayServer.Data;
 using BTCPayServer.Plugins.TelegramBot.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
@@ -13,12 +15,13 @@ namespace BTCPayServer.Plugins.TelegramBot.Controllers
     [Authorize(Policy = Policies.CanModifyStoreSettings, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
     [AutoValidateAntiforgeryToken]
 
-    public class TelegramBotPluginController(TelegramBotPluginService pluginService) : Controller
+    public class TelegramBotPluginController(TelegramBotPluginService pluginService, UserManager<ApplicationUser> userManager) : Controller
     {
         [HttpGet]
         public async Task<IActionResult> Index([FromRoute] string storeId)
         {
-            await pluginService.InitBaseUrl($"{Request.Scheme}://{Request.Host}{Request.PathBase}");
+            var userId = userManager.GetUserId(User);
+            await pluginService.InitConfig($"{Request.Scheme}://{Request.Host}{Request.PathBase}", userId);
             var model = await pluginService.GetStoreViewModel(storeId);
             return View(model);
         }

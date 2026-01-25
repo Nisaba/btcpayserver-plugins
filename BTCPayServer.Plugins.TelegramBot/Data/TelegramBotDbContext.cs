@@ -14,7 +14,7 @@ public class TelegramBotDbContext : DbContext
     }
 
     public DbSet<TelegramBotSettings> Settings { get; set; }
-    public DbSet<string> Config { get; set; }
+    public DbSet<TelegramBotConfig> Config { get; set; }
     public DbSet<TelegramBotInvoices> TelegramInvoices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

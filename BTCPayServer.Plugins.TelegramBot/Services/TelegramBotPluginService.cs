@@ -3,6 +3,7 @@ using BTCPayServer.Client.Models;
 using BTCPayServer.Data;
 using BTCPayServer.Plugins.TelegramBot.Data;
 using BTCPayServer.Plugins.TelegramBot.Models;
+using BTCPayServer.Security.Greenfield;
 using BTCPayServer.Services.Apps;
 using BTCPayServer.Services.Invoices;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,12 +22,13 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
 {
     public class TelegramBotPluginService(AppService appService,
                                           ILoggerFactory loggerFactory,
-                                          TelegramBotDbContextFactory dbContextFactory)
+                                          TelegramBotDbContextFactory dbContextFactory,
+                                          APIKeyRepository apiKeyRepository)
     {
         private readonly ILogger<TelegramBotPluginService> logger = loggerFactory.CreateLogger<TelegramBotPluginService>();
         public List<TelegramBot> telegramBots = new();
 
-        private string? serverBaseUrl = null;
+        private TelegramBotConfig? serverConfig = null;
 
         private TelegramBotAppData BuildAppData(AppData app, PointOfSaleSettings appSettings, string botToken, bool isEnabled)
         {
@@ -43,7 +46,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             };
         }
 
-        public async Task InitBaseUrl(string baseUrl)
+        public async Task InitConfig(string baseUrl, string userId)
         {
             try
             {
@@ -53,12 +56,37 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     var config = await context.Config.FirstOrDefaultAsync();
                     if (config == null)
                     {
-                        context.Config.Add(baseUrl);
+                        var keyBytes = new byte[20];
+                        RandomNumberGenerator.Fill(keyBytes);
+                        var apiKey = Convert.ToHexString(keyBytes).ToLowerInvariant();
+
+                        var apiKeyData = new APIKeyData
+                        {
+                            Id = apiKey,
+                            Type = APIKeyType.Permanent,
+                            Label = "Telegram Bot Plugin",
+                            UserId = userId
+                        };
+
+                        apiKeyData.SetBlob(new APIKeyBlob
+                        {
+                            Permissions = new[] { Permission.Create(Policies.CanCreateInvoice).ToString() }
+                        });
+
+                        await apiKeyRepository.CreateKey(apiKeyData);
+
+                        config = new TelegramBotConfig
+                        { 
+                            BaseUrl = baseUrl,
+                            ApiKey = apiKey
+                        };
+                        context.Config.Add(config);
                         bUpdate = true;
                     }
-                    else if (config != baseUrl)
+                    else if (config.BaseUrl != baseUrl)
                     {
-                        context.Config.Update(baseUrl);
+                        config.BaseUrl = baseUrl;
+                        context.Config.Update(config);
                         bUpdate = true;
                     }
                     if (bUpdate)
@@ -72,22 +100,17 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             }
         }
 
-        public string GetServerUrl()
+        public TelegramBotConfig GetConfig()
         {
-            if (serverBaseUrl != null)
-                return serverBaseUrl;
+            if (serverConfig != null)
+                return serverConfig;
 
             try
             {
                 using (var context = dbContextFactory.CreateContext())
                 {
-                    var config = context.Config.FirstOrDefault();
-                    if (config != null)
-                    {
-                        serverBaseUrl = config;
-                        return config;
-                    }
-                    return string.Empty;
+                    serverConfig = context.Config.FirstOrDefault();
+                    return serverConfig;
                 }
             }
             catch (Exception e)
@@ -305,22 +328,23 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     Metadata = JObject.FromObject(new
                     {
                         
-                        ItemDesc = $"From Telegram Bot ({posSettings.Title}) - {appId}" ,
-                        AppId = appId,
-                        ChatId = chatId,
-                        BuyerEmail = buyerEmail,
-                        BuyerName = buyerName,
-                        BuyerAddress1 = buyerAddress,
-                        BuyerCity = buyerCity,
-                        BuyerZip = buyerPostalCode,
-                        BuyerCountry = buyerCountry,
-                        PosData = posData,
+                        itemDesc = $"From Telegram Bot: {posSettings.Title}" ,
+                        appId = appId,
+                        chatId = chatId,
+                        buyerEmail = buyerEmail,
+                        buyerName = buyerName,
+                        buyerAddress1 = buyerAddress,
+                        buyerCity = buyerCity,
+                        buyerZip = buyerPostalCode,
+                        buyerCountry = buyerCountry,
+                        posData = posData,
                     }),
                     Receipt = new InvoiceDataBase.ReceiptOptions() { Enabled = true }
                 };
 
-                var btcpayUri = new Uri(GetServerUrl());
-                var client = new BTCPayServerClient(btcpayUri);
+                var config = GetConfig();
+                var btcpayUri = new Uri(config.BaseUrl);
+                var client = new BTCPayServerClient(btcpayUri, config.ApiKey);
                 var invoice = await client.CreateInvoice(storeId, invoiceReq);
 
                 using (var context = dbContextFactory.CreateContext())

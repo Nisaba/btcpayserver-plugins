@@ -47,6 +47,25 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 _cancellationTokenSource.Token
             );
 
+            // Configurer le menu des commandes persistantes
+            var commands = new List<BotCommand>
+            {
+                new() { Command = "menu", Description = "🛍️ Browse Products" },
+                new() { Command = "cart", Description = "🛒 My Cart" },
+                new() { Command = "checkout", Description = "💳 Pay" },
+                new() { Command = "clear", Description = "🗑️ Clear Cart" },
+                new() { Command = "help", Description = "❓ Help" }
+            };
+
+            _bot.SetMyCommands(commands, cancellationToken: _cancellationTokenSource.Token)
+                .ContinueWith(t =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        logger.LogError(t.Exception, "Error setting Telegram bot commands for app {AppName}", appData.Name);
+                    }
+                }, _cancellationTokenSource.Token);
+
             logger.LogInformation("Telegram bot started for app {AppName}", appData.Name);
         }
 
@@ -85,179 +104,207 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error processing Telegram update");
+                logger.LogError(ex, "TelegramBot:HandleUpdate()");
             }
         }
 
         private async Task HandleMessage(ITelegramBotClient bot, Message message, CancellationToken token)
         {
-            var chatId = message.Chat.Id;
-            var text = message.Text!;
-            var session = GetOrCreateSession(chatId);
-
-            switch (text.ToLower())
+            try
             {
-                case "/start":
-                    await SendWelcomeMessage(bot, chatId, token);
-                    break;
-                case "/menu" or "/products":
-                    await SendProductList(bot, chatId, token);
-                    break;
-                case "/cart" or "/shopping":
-                    await SendCartSummary(bot, chatId, token);
-                    break;
-                case "/checkout" or "/pay":
-                    await StartCheckout(bot, chatId, session, token);
-                    break;
-                case "/clear" or "/empty":
-                    session.Cart.Clear();
-                    await bot.SendMessage(chatId, "🗑️ Your cart has been cleared.", cancellationToken: token);
-                    break;
-                case "/help":
-                    await SendHelpMessage(bot, chatId, token);
-                    break;
-                default:
-                    await HandleUserInput(bot, chatId, text, session, token);
-                    break;
+                var chatId = message.Chat.Id;
+                var text = message.Text!;
+                var session = GetOrCreateSession(chatId);
+
+                switch (text.ToLower())
+                {
+                    case "/start":
+                        await SendWelcomeMessage(bot, chatId, token);
+                        break;
+                    case "/menu" or "/products":
+                        await SendProductList(bot, chatId, token);
+                        break;
+                    case "/cart" or "/shopping":
+                        await SendCartSummary(bot, chatId, token);
+                        break;
+                    case "/checkout" or "/pay":
+                        await StartCheckout(bot, chatId, session, token);
+                        break;
+                    case "/clear" or "/empty":
+                        session.Cart.Clear();
+                        await bot.SendMessage(chatId, "🗑️ Your cart has been cleared.", cancellationToken: token);
+                        break;
+                    case "/help":
+                        await SendHelpMessage(bot, chatId, token);
+                        break;
+                    default:
+                        await HandleUserInput(bot, chatId, text, session, token);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "TelegramBot:HandleMessage()");
             }
         }
 
         private async Task HandleUserInput(ITelegramBotClient bot, long chatId, string text, UserSession session, CancellationToken token)
         {
-            switch (session.State)
+            try
             {
-                case UserState.WaitingForEmail:
-                    if (IsValidEmail(text))
-                    {
-                        session.CustomerEmail = text;
-                        session.State = session.RequiresShippingAddress ? UserState.WaitingForName : UserState.Ready;
-                        if (session.RequiresShippingAddress)
+                switch (session.State)
+                {
+                    case UserState.WaitingForEmail:
+                        if (IsValidEmail(text))
                         {
-                            await bot.SendMessage(chatId, "👤 Veuillez entrer votre nom complet :", cancellationToken: token);
+                            session.CustomerEmail = text;
+                            session.State = session.RequiresShippingAddress ? UserState.WaitingForName : UserState.Ready;
+                            if (session.RequiresShippingAddress)
+                            {
+                                await bot.SendMessage(chatId, "👤 Veuillez entrer votre nom complet :", cancellationToken: token);
+                            }
+                            else
+                            {
+                                await FinalizeCheckout(bot, chatId, session, token);
+                            }
                         }
                         else
                         {
-                            await FinalizeCheckout(bot, chatId, session, token);
+                            await bot.SendMessage(chatId, "❌ Invalid email. Please enter a valid email address:", cancellationToken: token);
                         }
-                    }
-                    else
-                    {
-                        await bot.SendMessage(chatId, "❌ Invalid email. Please enter a valid email address:", cancellationToken: token);
-                    }
-                    break;
-                case UserState.WaitingForName:
-                    session.CustomerName = text;
-                    session.State = UserState.WaitingForAddress;
-                    await bot.SendMessage(chatId, "🏠 Please enter your street address:", cancellationToken: token);
-                    break;
-                case UserState.WaitingForAddress:
-                    session.CustomerAddress = text;
-                    session.State = UserState.WaitingForCity;
-                    await bot.SendMessage(chatId, "🏙️ Please enter your city:", cancellationToken: token);
-                    break;
-                case UserState.WaitingForCity:
-                    session.CustomerCity = text;
-                    session.State = UserState.WaitingForPostalCode;
-                    await bot.SendMessage(chatId, "📮 Please enter your postal code:", cancellationToken: token);
-                    break;
-                case UserState.WaitingForPostalCode:
-                    session.CustomerPostalCode = text;
-                    session.State = UserState.WaitingForCountry;
-                    await bot.SendMessage(chatId, "🌍 Please enter your country:", cancellationToken: token);
-                    break;
-                case UserState.WaitingForCountry:
-                    session.CustomerCountry = text;
-                    session.State = UserState.Ready;
-                    await FinalizeCheckout(bot, chatId, session, token);
-                    break;
-                case UserState.WaitingForQuantity:
-                    if (int.TryParse(text, out var quantity) && quantity > 0 && session.PendingItemId != null)
-                    {
-                        await AddItemToCart(bot, chatId, session.PendingItemId, quantity, session, token);
-                        session.PendingItemId = null;
-                        session.State = UserState.Browsing;
-                    }
-                    else
-                    {
-                        await bot.SendMessage(chatId, "❌ Invalid quantity. Please enter a positive number:", cancellationToken: token);
-                    }
-                    break;
-                default:
-                    await bot.SendMessage(chatId, "💡 Use /menu to view products or /help for assistance.", cancellationToken: token);
-                    break;
+                        break;
+                    case UserState.WaitingForName:
+                        session.CustomerName = text;
+                        session.State = UserState.WaitingForAddress;
+                        await bot.SendMessage(chatId, "🏠 Please enter your street address:", cancellationToken: token);
+                        break;
+                    case UserState.WaitingForAddress:
+                        session.CustomerAddress = text;
+                        session.State = UserState.WaitingForCity;
+                        await bot.SendMessage(chatId, "🏙️ Please enter your city:", cancellationToken: token);
+                        break;
+                    case UserState.WaitingForCity:
+                        session.CustomerCity = text;
+                        session.State = UserState.WaitingForPostalCode;
+                        await bot.SendMessage(chatId, "📮 Please enter your postal code:", cancellationToken: token);
+                        break;
+                    case UserState.WaitingForPostalCode:
+                        session.CustomerPostalCode = text;
+                        session.State = UserState.WaitingForCountry;
+                        await bot.SendMessage(chatId, "🌍 Please enter your country:", cancellationToken: token);
+                        break;
+                    case UserState.WaitingForCountry:
+                        session.CustomerCountry = text;
+                        session.State = UserState.Ready;
+                        await FinalizeCheckout(bot, chatId, session, token);
+                        break;
+                    case UserState.WaitingForQuantity:
+                        if (int.TryParse(text, out var quantity) && quantity > 0 && session.PendingItemId != null)
+                        {
+                            await AddItemToCart(bot, chatId, session.PendingItemId, quantity, session, token);
+                            session.PendingItemId = null;
+                            session.State = UserState.Browsing;
+                        }
+                        else
+                        {
+                            await bot.SendMessage(chatId, "❌ Invalid quantity. Please enter a positive number:", cancellationToken: token);
+                        }
+                        break;
+                    default:
+                        await bot.SendMessage(chatId, "💡 Use /menu to view products or /help for assistance.", cancellationToken: token);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "TelegramBot:HandleUserInput()");
             }
         }
 
         private async Task HandleCallbackQuery(ITelegramBotClient bot, CallbackQuery callbackQuery, CancellationToken token)
         {
-            var chatId = callbackQuery.Message!.Chat.Id;
-            var data = callbackQuery.Data!;
-            var session = GetOrCreateSession(chatId);
+            try
+            {
+                var chatId = callbackQuery.Message!.Chat.Id;
+                var data = callbackQuery.Data!;
+                var session = GetOrCreateSession(chatId);
 
-            await bot.AnswerCallbackQuery(callbackQuery.Id, cancellationToken: token);
+                await bot.AnswerCallbackQuery(callbackQuery.Id, cancellationToken: token);
 
-            if (data.StartsWith("view_"))
-            {
-                var itemId = data[5..];
-                await SendProductDetails(bot, chatId, itemId, token);
+                if (data.StartsWith("view_"))
+                {
+                    var itemId = data[5..];
+                    await SendProductDetails(bot, chatId, itemId, token);
+                }
+                else if (data.StartsWith("add_"))
+                {
+                    var itemId = data[4..];
+                    session.PendingItemId = itemId;
+                    session.State = UserState.WaitingForQuantity;
+                    await bot.SendMessage(chatId, "🔢 Enter the desired quantity:", cancellationToken: token);
+                }
+                else if (data.StartsWith("quick_add_"))
+                {
+                    var itemId = data[10..];
+                    await AddItemToCart(bot, chatId, itemId, 1, session, token);
+                }
+                else if (data.StartsWith("remove_"))
+                {
+                    var itemId = data[7..];
+                    session.Cart.Remove(itemId);
+                    await SendCartSummary(bot, chatId, token);
+                }
+                else if (data.StartsWith("cat_"))
+                {
+                    var category = data[4..];
+                    await SendProductsByCategory(bot, chatId, category, token);
+                }
+                else if (data == "checkout")
+                {
+                    await StartCheckout(bot, chatId, session, token);
+                }
+                else if (data == "continue")
+                {
+                    await SendProductList(bot, chatId, token);
+                }
+                else if (data == "cart")
+                {
+                    await SendCartSummary(bot, chatId, token);
+                }
             }
-            else if (data.StartsWith("add_"))
+            catch (Exception ex)
             {
-                var itemId = data[4..];
-                session.PendingItemId = itemId;
-                session.State = UserState.WaitingForQuantity;
-                await bot.SendMessage(chatId, "🔢 Enter the desired quantity:", cancellationToken: token);
-            }
-            else if (data.StartsWith("quick_add_"))
-            {
-                var itemId = data[10..];
-                await AddItemToCart(bot, chatId, itemId, 1, session, token);
-            }
-            else if (data.StartsWith("remove_"))
-            {
-                var itemId = data[7..];
-                session.Cart.Remove(itemId);
-                await SendCartSummary(bot, chatId, token);
-            }
-            else if (data.StartsWith("cat_"))
-            {
-                var category = data[4..];
-                await SendProductsByCategory(bot, chatId, category, token);
-            }
-            else if (data == "checkout")
-            {
-                await StartCheckout(bot, chatId, session, token);
-            }
-            else if (data == "continue")
-            {
-                await SendProductList(bot, chatId, token);
-            }
-            else if (data == "cart")
-            {
-                await SendCartSummary(bot, chatId, token);
+                logger.LogError(ex, "TelegramBot:HandleCallbackQuery()");
             }
         }
 
         private async Task SendWelcomeMessage(ITelegramBotClient bot, long chatId, CancellationToken token)
         {
-            if (appData == null) return;
-
-            var welcomeText = $"🎉 Welcome to *{EscapeMarkdown(appData.Title ?? appData.Name)}* !\n\n";
-
-            if (!string.IsNullOrEmpty(appData.Description))
+            try
             {
-                welcomeText += $"{EscapeMarkdown(appData.Description)}\n\n";
-            }
+                if (appData == null) return;
 
-            welcomeText += "📦 Use the commands below to navigate:";
+                var welcomeText = $"🎉 Welcome to *{EscapeMarkdown(appData.Title ?? appData.Name)}* !\n\n";
 
-            var keyboard = new InlineKeyboardMarkup(new[]
-            {
+                if (!string.IsNullOrEmpty(appData.Description))
+                {
+                    welcomeText += $"{EscapeMarkdown(appData.Description)}\n\n";
+                }
+
+                welcomeText += "📦 Use the commands below to navigate:";
+
+                var keyboard = new InlineKeyboardMarkup(new[]
+                {
                 new[] { InlineKeyboardButton.WithCallbackData("🛍️ Browse Products", "cat_all") },
                 new[] { InlineKeyboardButton.WithCallbackData("🛒 My Cart", "cart") }
             });
 
-            await bot.SendMessage(chatId, welcomeText, parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
+                await bot.SendMessage(chatId, welcomeText, parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "TelegramBot:SendWelcomeMessage()");
+            }
         }
 
         private async Task SendProductList(ITelegramBotClient bot, long chatId, CancellationToken token)
@@ -267,144 +314,170 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
 
         private async Task SendProductsByCategory(ITelegramBotClient bot, long chatId, string category, CancellationToken token)
         {
-            if (appData?.ShopItems == null || !appData.ShopItems.Any())
+            try
             {
-                await bot.SendMessage(chatId, "😢 No products in this category.", cancellationToken: token);
-                return;
+                if (appData?.ShopItems == null || !appData.ShopItems.Any())
+                {
+                    await bot.SendMessage(chatId, "😢 No products in this category.", cancellationToken: token);
+                    return;
+                }
+
+                var items = appData.ShopItems
+                    .Where(i => !i.Disabled)
+                    .Where(i => category == "all" || (i.Categories?.Contains(category) ?? false))
+                    .ToList();
+
+                if (!items.Any())
+                {
+                    await bot.SendMessage(chatId, "😢 No products in this category.", cancellationToken: token);
+                    return;
+                }
+
+                // Afficher les catégories disponibles
+                var categories = appData.ShopItems
+                    .Where(i => !i.Disabled && i.Categories != null)
+                    .SelectMany(i => i.Categories!)
+                    .Distinct()
+                    .ToList();
+
+                if (categories.Any())
+                {
+                    var catButtons = categories.Select(c =>
+                        InlineKeyboardButton.WithCallbackData($"📂 {c}", $"cat_{c}")).ToList();
+                    catButtons.Insert(0, InlineKeyboardButton.WithCallbackData("📂 All", "cat_all"));
+
+                    var catKeyboard = new InlineKeyboardMarkup(catButtons.Chunk(2).Select(chunk => chunk.ToArray()));
+                    await bot.SendMessage(chatId, "📁 *Available Categories:*", parseMode: ParseMode.Markdown, replyMarkup: catKeyboard, cancellationToken: token);
+                }
+
+                // Afficher les produits
+                foreach (var item in items.Take(10)) // Limiter à 10 pour éviter le spam
+                {
+                    await SendProductCard(bot, chatId, item, token);
+                }
+
+                if (items.Count > 10)
+                {
+                    await bot.SendMessage(chatId, $"... and {items.Count - 10} more products. Use categories to filter.", cancellationToken: token);
+                }
             }
-
-            var items = appData.ShopItems
-                .Where(i => !i.Disabled)
-                .Where(i => category == "all" || (i.Categories?.Contains(category) ?? false))
-                .ToList();
-
-            if (!items.Any())
+            catch (Exception ex)
             {
-                await bot.SendMessage(chatId, "😢 No products in this category.", cancellationToken: token);
-                return;
-            }
-
-            // Afficher les catégories disponibles
-            var categories = appData.ShopItems
-                .Where(i => !i.Disabled && i.Categories != null)
-                .SelectMany(i => i.Categories!)
-                .Distinct()
-                .ToList();
-
-            if (categories.Any())
-            {
-                var catButtons = categories.Select(c =>
-                    InlineKeyboardButton.WithCallbackData($"📂 {c}", $"cat_{c}")).ToList();
-                catButtons.Insert(0, InlineKeyboardButton.WithCallbackData("📂 All", "cat_all"));
-
-                var catKeyboard = new InlineKeyboardMarkup(catButtons.Chunk(2).Select(chunk => chunk.ToArray()));
-                await bot.SendMessage(chatId, "📁 *Available Categories:*", parseMode: ParseMode.Markdown, replyMarkup: catKeyboard, cancellationToken: token);
-            }
-
-            // Afficher les produits
-            foreach (var item in items.Take(10)) // Limiter à 10 pour éviter le spam
-            {
-                await SendProductCard(bot, chatId, item, token);
-            }
-
-            if (items.Count > 10)
-            {
-                await bot.SendMessage(chatId, $"... and {items.Count - 10} more products. Use categories to filter.", cancellationToken: token);
+                logger.LogError(ex, "TelegramBot:SendProductsByCategory()");
             }
         }
 
         private async Task SendProductCard(ITelegramBotClient bot, long chatId, AppItem item, CancellationToken token)
         {
-            var priceText = item.PriceType switch
+            try
             {
-                AppItemPriceType.Fixed => $"💰 {item.Price} {appData?.CurrencyCode}",
-                AppItemPriceType.Minimum => $"💰 Minimum {item.Price} {appData?.CurrencyCode}",
-                AppItemPriceType.Topup => "💰 Pay what you want",
-                _ => ""
-            };
+                var priceText = item.PriceType switch
+                {
+                    AppItemPriceType.Fixed => $"💰 {item.Price} {appData?.CurrencyCode}",
+                    AppItemPriceType.Minimum => $"💰 Minimum {item.Price} {appData?.CurrencyCode}",
+                    AppItemPriceType.Topup => "💰 Pay what you want",
+                    _ => ""
+                };
 
-            var stockText = "";
-            if (item.Inventory.HasValue)
-            {
-                stockText = item.Inventory > 0
-                    ? $"\n📦 Stock: {item.Inventory} available"
-                    : "\n❌ Out of stock";
-            }
+                var stockText = "";
+                if (item.Inventory.HasValue)
+                {
+                    stockText = item.Inventory > 0
+                        ? $"\n📦 Stock: {item.Inventory} available"
+                        : "\n❌ Out of stock";
+                }
 
-            var taxText = item.TaxRate.HasValue && item.TaxRate > 0
-                ? $"\n🧾 Tax: {item.TaxRate}%"
-                : "";
+                var taxText = item.TaxRate.HasValue && item.TaxRate > 0
+                    ? $"\n🧾 Tax: {item.TaxRate}%"
+                    : "";
 
-            var caption = $"*{EscapeMarkdown(item.Title)}*\n\n{EscapeMarkdown(item.Description ?? "")}\n\n{priceText}{stockText}{taxText}";
+                var caption = $"*{EscapeMarkdown(item.Title)}*\n\n{EscapeMarkdown(item.Description ?? "")}\n\n{priceText}{stockText}{taxText}";
 
-            var buttons = new List<InlineKeyboardButton[]>();
+                var buttons = new List<InlineKeyboardButton[]>();
 
-            if (!item.Inventory.HasValue || item.Inventory > 0)
-            {
-                buttons.Add([
-                    InlineKeyboardButton.WithCallbackData("➕ Ajouter (1)", $"quick_add_{item.Id}"),
+                if (!item.Inventory.HasValue || item.Inventory > 0)
+                {
+                    buttons.Add([
+                        InlineKeyboardButton.WithCallbackData("➕ Ajouter (1)", $"quick_add_{item.Id}"),
                     InlineKeyboardButton.WithCallbackData("🔢 Quantité", $"add_{item.Id}")
-                ]);
+                    ]);
+                }
+
+                var keyboard = new InlineKeyboardMarkup(buttons);
+
+                var imageUrl = item.Image;
+
+                if (!string.IsNullOrEmpty(imageUrl))
+                {
+                    if (imageUrl.StartsWith("~/", StringComparison.Ordinal))
+                    {
+                        imageUrl = imageUrl.Substring(1);
+                    }
+
+                    if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        imageUrl = pluginService.GetConfig().BaseUrl.TrimEnd('/') + imageUrl;
+                    }
+                    if (!imageUrl.ToLower().Contains("localhost"))
+                    {
+                        await bot.SendPhoto(chatId, InputFile.FromUri(imageUrl), caption: caption, parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
+                        return;
+                    }
+                }
+
+                await bot.SendMessage(chatId, caption, parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
             }
-
-            var keyboard = new InlineKeyboardMarkup(buttons);
-
-            var imageUrl = item.Image;
-
-            if (!string.IsNullOrEmpty(imageUrl))
+            catch (Exception ex)
             {
-                if (imageUrl.StartsWith("~/", StringComparison.Ordinal))
-                {
-                    imageUrl = imageUrl.Substring(1);
-                }
-
-                if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                {
-                    imageUrl = pluginService.GetServerUrl().TrimEnd('/') + imageUrl;
-                }
-                await bot.SendPhoto(chatId, InputFile.FromUri(imageUrl), caption: caption, parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
-                return;
+                logger.LogError(ex, "TelegramBot:SendProductCard()");
             }
-
-            await bot.SendMessage(chatId, caption, parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
         }
 
         private async Task SendProductDetails(ITelegramBotClient bot, long chatId, string itemId, CancellationToken token)
         {
-            var item = appData?.ShopItems?.FirstOrDefault(i => i.Id == itemId);
-            if (item == null)
+            try
             {
-                await bot.SendMessage(chatId, "❌ Product not found.", cancellationToken: token);
-                return;
-            }
+                var item = appData?.ShopItems?.FirstOrDefault(i => i.Id == itemId);
+                if (item == null)
+                {
+                    await bot.SendMessage(chatId, "❌ Product not found.", cancellationToken: token);
+                    return;
+                }
 
-            await SendProductCard(bot, chatId, item, token);
+                await SendProductCard(bot, chatId, item, token);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "TelegramBot:SendProductDetails()");
+            }
         }
 
         private async Task AddItemToCart(ITelegramBotClient bot, long chatId, string itemId, int quantity, UserSession session, CancellationToken token)
         {
-            var item = appData?.ShopItems?.FirstOrDefault(i => i.Id == itemId);
-            if (item == null)
+            try
             {
-                await bot.SendMessage(chatId, "❌ Product not found.", cancellationToken: token);
-                return;
-            }
-
-            // Vérifier le stock
-            if (item.Inventory.HasValue)
-            {
-                var currentInCart = session.Cart.GetValueOrDefault(itemId, 0);
-                if (currentInCart + quantity > item.Inventory.Value)
+                var item = appData?.ShopItems?.FirstOrDefault(i => i.Id == itemId);
+                if (item == null)
                 {
-                    await bot.SendMessage(chatId, $"❌ Insufficient stock. Available: {item.Inventory - currentInCart}", cancellationToken: token);
+                    await bot.SendMessage(chatId, "❌ Product not found.", cancellationToken: token);
                     return;
                 }
-            }
 
-            session.Cart[itemId] = session.Cart.GetValueOrDefault(itemId, 0) + quantity;
+                // Vérifier le stock
+                if (item.Inventory.HasValue)
+                {
+                    var currentInCart = session.Cart.GetValueOrDefault(itemId, 0);
+                    if (currentInCart + quantity > item.Inventory.Value)
+                    {
+                        await bot.SendMessage(chatId, $"❌ Insufficient stock. Available: {item.Inventory - currentInCart}", cancellationToken: token);
+                        return;
+                    }
+                }
 
-            var keyboard = new InlineKeyboardMarkup(new[]
-            {
+                session.Cart[itemId] = session.Cart.GetValueOrDefault(itemId, 0) + quantity;
+
+                var keyboard = new InlineKeyboardMarkup(new[]
+                {
                 new[]
                 {
                     InlineKeyboardButton.WithCallbackData("🛒 View Cart", "cart"),
@@ -412,93 +485,107 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 }
             });
 
-            await bot.SendMessage(chatId, $"✅ *{quantity}x {EscapeMarkdown(item.Title)}* added to cart!",
-                parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
+                await bot.SendMessage(chatId, $"✅ *{quantity}x {EscapeMarkdown(item.Title)}* added to cart!",
+                    parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "TelegramBot:AddItemToCart()");
+            }
         }
 
         private async Task SendCartSummary(ITelegramBotClient bot, long chatId, CancellationToken token)
         {
-            var session = GetOrCreateSession(chatId);
-
-            if (!session.Cart.Any())
+            try
             {
-                var emptyKeyboard = new InlineKeyboardMarkup(new[]
+                var session = GetOrCreateSession(chatId);
+
+                if (!session.Cart.Any())
                 {
+                    var emptyKeyboard = new InlineKeyboardMarkup(new[]
+                    {
                     new[] { InlineKeyboardButton.WithCallbackData("🛍️ Browse Products", "cat_all") }
                 });
-                await bot.SendMessage(chatId, "🛒 Your cart is empty.", replyMarkup: emptyKeyboard, cancellationToken: token);
-                return;
-            }
+                    await bot.SendMessage(chatId, "🛒 Your cart is empty.", replyMarkup: emptyKeyboard, cancellationToken: token);
+                    return;
+                }
 
-            var cartText = "🛒 *Your Cart:*\n\n";
-            decimal total = 0;
-            decimal totalTax = 0;
-            var buttons = new List<InlineKeyboardButton[]>();
+                var cartText = "🛒 *Your Cart:*\n\n";
+                decimal total = 0;
+                decimal totalTax = 0;
+                var buttons = new List<InlineKeyboardButton[]>();
 
-            foreach (var (itemId, quantity) in session.Cart)
-            {
-                var item = appData?.ShopItems?.FirstOrDefault(i => i.Id == itemId);
-                if (item == null) continue;
+                foreach (var (itemId, quantity) in session.Cart)
+                {
+                    var item = appData?.ShopItems?.FirstOrDefault(i => i.Id == itemId);
+                    if (item == null) continue;
 
-                var itemPrice = item.Price ?? 0;
-                var itemTotal = itemPrice * quantity;
-                var itemTax = item.TaxRate.HasValue ? itemTotal * (item.TaxRate.Value / 100) : 0;
+                    var itemPrice = item.Price ?? 0;
+                    var itemTotal = itemPrice * quantity;
+                    var itemTax = item.TaxRate.HasValue ? itemTotal * (item.TaxRate.Value / 100) : 0;
 
-                total += itemTotal;
-                totalTax += itemTax;
+                    total += itemTotal;
+                    totalTax += itemTax;
 
-                cartText += $"• *{EscapeMarkdown(item.Title)}* x{quantity} = {itemTotal} {appData?.CurrencyCode}\n";
-                buttons.Add([InlineKeyboardButton.WithCallbackData($"❌ Remove {item.Title}", $"remove_{itemId}")]);
-            }
+                    cartText += $"• *{EscapeMarkdown(item.Title)}* x{quantity} = {itemTotal} {appData?.CurrencyCode}\n";
+                    buttons.Add([InlineKeyboardButton.WithCallbackData($"❌ Remove {item.Title}", $"remove_{itemId}")]);
+                }
 
-            if (totalTax > 0)
-            {
-                cartText += $"\n🧾 Tax: {totalTax:F2} {appData?.CurrencyCode}";
-                total += totalTax;
-            }
+                if (totalTax > 0)
+                {
+                    cartText += $"\n🧾 Tax: {totalTax:F2} {appData?.CurrencyCode}";
+                    total += totalTax;
+                }
 
-            cartText += $"\n\n💳 *Total: {total:F2} {appData?.CurrencyCode}*";
+                cartText += $"\n\n💳 *Total: {total:F2} {appData?.CurrencyCode}*";
 
-            buttons.Add([
-                InlineKeyboardButton.WithCallbackData("💳 Checkout", "checkout"),
+                buttons.Add([
+                    InlineKeyboardButton.WithCallbackData("💳 Checkout", "checkout"),
                 InlineKeyboardButton.WithCallbackData("🛍️ Continue Shopping", "continue")
-            ]);
+                ]);
 
-            var keyboard = new InlineKeyboardMarkup(buttons);
-            await bot.SendMessage(chatId, cartText, parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
+                var keyboard = new InlineKeyboardMarkup(buttons);
+                await bot.SendMessage(chatId, cartText, parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "TelegramBot:SendCartSummary()");
+            }
+
         }
 
         private async Task StartCheckout(ITelegramBotClient bot, long chatId, UserSession session, CancellationToken token)
         {
-            if (!session.Cart.Any())
+            try
             {
-                await bot.SendMessage(chatId, "🛒 Your cart is empty. Add products before proceeding to checkout.", cancellationToken: token);
-                return;
+                if (!session.Cart.Any())
+                {
+                    await bot.SendMessage(chatId, "🛒 Your cart is empty. Add products before proceeding to checkout.", cancellationToken: token);
+                    return;
+                }
+
+                // Déterminer les informations client requises
+                // TODO: Récupérer depuis les paramètres du POS/Store
+                var requiresEmail = true; // Par défaut, demander l'email
+                session.RequiresShippingAddress = false; // TODO: Récupérer depuis FormId ou settings
+
+                if (requiresEmail && string.IsNullOrEmpty(session.CustomerEmail))
+                {
+                    session.State = UserState.WaitingForEmail;
+                    await bot.SendMessage(chatId, "📧 Please enter your email address:", cancellationToken: token);
+                    return;
+                }
+
+                await FinalizeCheckout(bot, chatId, session, token);
             }
-
-            // Déterminer les informations client requises
-            // TODO: Récupérer depuis les paramètres du POS/Store
-            var requiresEmail = true; // Par défaut, demander l'email
-            session.RequiresShippingAddress = false; // TODO: Récupérer depuis FormId ou settings
-
-            if (requiresEmail && string.IsNullOrEmpty(session.CustomerEmail))
+            catch (Exception ex)
             {
-                session.State = UserState.WaitingForEmail;
-                await bot.SendMessage(chatId, "📧 Please enter your email address:", cancellationToken: token);
-                return;
+                logger.LogError(ex, "TelegramBot:StartCheckout()");
             }
-
-            await FinalizeCheckout(bot, chatId, session, token);
         }
 
         private async Task FinalizeCheckout(ITelegramBotClient bot, long chatId, UserSession session, CancellationToken token)
         {
-            if (appData == null)
-            {
-                await bot.SendMessage(chatId, "❌ Configuration error.", cancellationToken: token);
-                return;
-            }
-
             try
             {
                 // Calculer le total avec taxes
@@ -563,7 +650,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error creating invoice");
+                logger.LogError(ex, "TelegramBot:FinalizeCheckout()");
                 await bot.SendMessage(chatId, "❌ Error creating invoice. Please try again.", cancellationToken: token);
             }
         }

@@ -10,8 +10,16 @@ using System.Linq;
 
 namespace BTCPayServer.Plugins.TelegramBot.Services
 {
-    public class TelegramBotHostedService(TelegramBotPluginService service, ILogger<TelegramBotHostedService> logger): EventHostedServiceBase
+    public class TelegramBotHostedService : EventHostedServiceBase
     {
+        private readonly TelegramBotPluginService _service;
+        private readonly ILogger<TelegramBotHostedService> _logger;
+
+        public TelegramBotHostedService(TelegramBotPluginService service, ILogger<TelegramBotHostedService> logger, EventAggregator eventAggregator, Logs logs) : base(eventAggregator, logs)
+        {
+            _service = service;
+            _logger = logger;
+        }
 
         protected override void SubscribeToEvents()
         {
@@ -28,17 +36,17 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     case InvoiceEvent invoiceEvent when new[]
                         {
                         InvoiceEvent.MarkedCompleted,
-                        InvoiceEvent.MarkedInvalid,
-                        InvoiceEvent.Expired,
-                        InvoiceEvent.Confirmed,
-                        InvoiceEvent.Completed
-                    }.Contains(invoiceEvent.Name):
+                            InvoiceEvent.MarkedInvalid,
+                            InvoiceEvent.Expired,
+                            InvoiceEvent.Confirmed,
+                            InvoiceEvent.Completed
+                        }.Contains(invoiceEvent.Name):
                         {
                             var invoice = invoiceEvent.Invoice;
                             var itemDesc = invoice.Metadata.ItemDesc;
-                            if (itemDesc != null && itemDesc.StartsWith("From Telegram Bot:"))
+                            if (itemDesc != null && itemDesc.StartsWith("From Telegram Bot"))
                             {
-                                var appId = invoice.Metadata.GetAdditionalData<string>("AppId");
+                                var appId = invoice.Metadata.GetAdditionalData<string>("appId");
                                 string invoiceStatus = invoice.Status.ToString().ToLower();
                                 bool? success = invoiceStatus switch
                                 {
@@ -48,8 +56,8 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                                 };
                                 if (success.HasValue)
                                 {
-                                    var bot = service.telegramBots.Where(a => a.AppData.Id == appId).FirstOrDefault();
-                                    var chatId = invoice.Metadata.GetAdditionalData<long>("ChatId");
+                                    var bot = _service.telegramBots.Where(a => a.AppData.Id == appId).FirstOrDefault();
+                                    var chatId = invoice.Metadata.GetAdditionalData<long>("chatId");
                                     if (success.Value)
                                     {
                                         await bot.SendPaymentSuccess(chatId);
@@ -58,6 +66,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                                     {
                                         await bot.SendPaymentFailure(chatId);
                                     }
+                                }
                             }
                             break;
                         }
@@ -66,7 +75,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "EcwidPlugin:HostedService()");
+                _logger.LogError(ex, "TelegramBotPlugin:HostedService()");
             }
             await base.ProcessEvent(evt, cancellationToken);
         }

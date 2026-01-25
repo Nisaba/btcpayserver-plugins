@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
 {
     [DbContext(typeof(TelegramBotDbContext))]
-    [Migration("20260123_Invoices")]
+    [Migration("20260125_Invoices")]
     public partial class InitInvoices : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)

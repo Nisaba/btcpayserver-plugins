@@ -7,24 +7,25 @@ using System.Collections.Generic;
 namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
 {
     [DbContext(typeof(TelegramBotDbContext))]
-    [Migration("20260122_InitBaseUrl")]
-    public partial class InitBaseUrl : Migration
+    [Migration("20260126_ApiKey")]
+    public partial class InitApiKey : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "Config",
+
+            migrationBuilder.AddColumn<string>(
+                name: "ApiKey",
                 schema: "BTCPayServer.Plugins.TelegramBot",
-                columns: table => new
-                {
-                    BaseUrl = table.Column<string>(nullable: false),
-                });
+                table: "Config",
+                nullable: false,
+                defaultValue: string.Empty);
+
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Config",
+                name: "TelegramInvoices",
                 schema: "BTCPayServer.Plugins.TelegramBot");
         }
     }
