@@ -7,7 +7,7 @@
 	<PropertyGroup>
 		<Product>Telegram Shopping Bot</Product>
 		<Description>
-			Allows merchants to create a Telegram Bot and synchronize their BTCPay stores with it.
+			Allows merchants to create a Telegram Bot and synchronize their BTCPay points of sales with it.
 		</Description>
 		<Version>1.0.1</Version>
 	</PropertyGroup>
@@ -54,7 +54,7 @@
 
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
+		<ProjectReference Include="..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
 	</ItemGroup>
 
 
