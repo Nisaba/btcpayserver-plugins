@@ -257,7 +257,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                         if (app != null)
                         {
                             var appSettings = app.GetSettings<PointOfSaleSettings>();
-                            appSettings.
                             var appData = BuildAppData(app, appSettings, settings.BotToken, settings.IsEnabled);
 
                             var telegramBotLogger = loggerFactory.CreateLogger<TelegramBot>();
