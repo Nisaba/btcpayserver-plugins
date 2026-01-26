@@ -25,7 +25,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
         private ITelegramBotClient? _bot;
         private CancellationTokenSource? _cancellationTokenSource;
 
-        // Stockage des paniers et états utilisateurs (en production, utilisez une base de données)
         private readonly Dictionary<long, UserSession> _userSessions = new();
 
         public void StartBot(CancellationToken cancellationToken)
@@ -37,7 +36,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 AllowedUpdates = [UpdateType.Message, UpdateType.CallbackQuery]
             };
 
-            // Créer un nouveau CancellationTokenSource lié au token fourni
             _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
             _bot.StartReceiving(
@@ -47,7 +45,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 _cancellationTokenSource.Token
             );
 
-            // Configurer le menu des commandes persistantes
             var commands = new List<BotCommand>
             {
                 new() { Command = "menu", Description = "🛍️ Browse Products" },
@@ -78,7 +75,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 _cancellationTokenSource?.Dispose();
                 _cancellationTokenSource = null;
 
-                // Nettoyer le client bot
                 _bot = null;
 
                 logger.LogInformation("Telegram bot stopped for app {AppName}", appData.Name);
@@ -114,7 +110,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             {
                 var chatId = message.Chat.Id;
                 var text = message.Text!;
-                var session = GetOrCreateSession(chatId);
+                var session = GetOrCreateSession(chatId, message.From);
 
                 switch (text.ToLower())
                 {
@@ -161,7 +157,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                             session.State = session.RequiresShippingAddress ? UserState.WaitingForName : UserState.Ready;
                             if (session.RequiresShippingAddress)
                             {
-                                await bot.SendMessage(chatId, "👤 Veuillez entrer votre nom complet :", cancellationToken: token);
+                                await bot.SendMessage(chatId, "👤 Please enter your full name :", cancellationToken: token);
                             }
                             else
                             {
@@ -227,7 +223,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             {
                 var chatId = callbackQuery.Message!.Chat.Id;
                 var data = callbackQuery.Data!;
-                var session = GetOrCreateSession(chatId);
+                var session = GetOrCreateSession(chatId, callbackQuery.From);
 
                 await bot.AnswerCallbackQuery(callbackQuery.Id, cancellationToken: token);
 
@@ -277,7 +273,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 logger.LogError(ex, "TelegramBot:HandleCallbackQuery()");
             }
         }
-
         private async Task SendWelcomeMessage(ITelegramBotClient bot, long chatId, CancellationToken token)
         {
             try
@@ -333,7 +328,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     return;
                 }
 
-                // Afficher les catégories disponibles
                 var categories = appData.ShopItems
                     .Where(i => !i.Disabled && i.Categories != null)
                     .SelectMany(i => i.Categories!)
@@ -350,7 +344,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     await bot.SendMessage(chatId, "📁 *Available Categories:*", parseMode: ParseMode.Markdown, replyMarkup: catKeyboard, cancellationToken: token);
                 }
 
-                // Afficher les produits
                 foreach (var item in items.Take(10)) // Limiter à 10 pour éviter le spam
                 {
                     await SendProductCard(bot, chatId, item, token);
@@ -463,7 +456,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     return;
                 }
 
-                // Vérifier le stock
                 if (item.Inventory.HasValue)
                 {
                     var currentInCart = session.Cart.GetValueOrDefault(itemId, 0);
@@ -564,10 +556,22 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     return;
                 }
 
-                // Déterminer les informations client requises
-                // TODO: Récupérer depuis les paramètres du POS/Store
-                var requiresEmail = true; // Par défaut, demander l'email
-                session.RequiresShippingAddress = false; // TODO: Récupérer depuis FormId ou settings
+
+                var requiresEmail = false;
+                session.RequiresShippingAddress = false;
+
+                switch (appData.FormId)
+                {
+                    case "":
+                        break;
+                    case "Email":
+                        requiresEmail = true;
+                        break;
+                    default:
+                        requiresEmail = true;
+                        session.RequiresShippingAddress = true;
+                        break;
+                }
 
                 if (requiresEmail && string.IsNullOrEmpty(session.CustomerEmail))
                 {
@@ -588,7 +592,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
         {
             try
             {
-                // Calculer le total avec taxes
                 decimal total = 0;
                 var cartItems = new List<PosCartItem>();
 
@@ -619,6 +622,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     total,
                     appData.CurrencyCode,
                     cartItems,
+                    session.TelegramUser,
                     session.CustomerEmail,
                     session.CustomerName,
                     session.CustomerAddress,
@@ -644,7 +648,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     replyMarkup: keyboard,
                     cancellationToken: token);
 
-                // Réinitialiser le panier après le checkout
                 session.Cart.Clear();
                 session.State = UserState.Browsing;
             }
@@ -698,16 +701,22 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             return Task.CompletedTask;
         }
 
-        private UserSession GetOrCreateSession(long chatId)
+        private UserSession GetOrCreateSession(long chatId, User? telegramUser = null)
         {
             if (!_userSessions.TryGetValue(chatId, out var session))
             {
                 session = new UserSession();
+                if (telegramUser != null)
+                {
+                    var username = !string.IsNullOrEmpty(telegramUser.Username)
+                        ? telegramUser.Username
+                        : $"{telegramUser.FirstName} {telegramUser.LastName}".Trim();
+                    session.TelegramUser = username;
+                }
                 _userSessions[chatId] = session;
             }
             return session;
         }
-
         private static string EscapeMarkdown(string? text)
         {
             if (string.IsNullOrEmpty(text)) return "";
@@ -737,6 +746,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
         public Dictionary<string, int> Cart { get; set; } = new();
         public UserState State { get; set; } = UserState.Browsing;
         public string? PendingItemId { get; set; }
+        public string? TelegramUser { get; set; }
         public string? CustomerEmail { get; set; }
         public string? CustomerName { get; set; }
         public string? CustomerAddress { get; set; }

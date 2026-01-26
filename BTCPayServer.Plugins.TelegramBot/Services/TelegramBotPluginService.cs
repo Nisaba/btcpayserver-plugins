@@ -43,6 +43,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 IsEnabled = isEnabled,
                 ShopItems = AppService.Parse(appSettings.Template).ToList(),
                 DefaultTaxRate = appSettings.DefaultTaxRate,
+                FormId = appSettings.FormId
             };
         }
 
@@ -256,6 +257,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                         if (app != null)
                         {
                             var appSettings = app.GetSettings<PointOfSaleSettings>();
+                            appSettings.
                             var appData = BuildAppData(app, appSettings, settings.BotToken, settings.IsEnabled);
 
                             var telegramBotLogger = loggerFactory.CreateLogger<TelegramBot>();
@@ -282,6 +284,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             decimal amount,
             string currency,
             List<PosCartItem> cartItems,
+            string telegramUser,
             string? buyerEmail,
             string? buyerName,
             string? buyerAddress,
@@ -330,6 +333,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                         
                         itemDesc = $"From Telegram Bot: {posSettings.Title}" ,
                         appId = appId,
+                        telegramUser = telegramUser,
                         chatId = chatId,
                         buyerEmail = buyerEmail,
                         buyerName = buyerName,

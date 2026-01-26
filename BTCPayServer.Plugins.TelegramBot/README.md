@@ -41,6 +41,7 @@ If you are running BTCPay Server locally (e.g., on `localhost`):
 
 ## Invoices listing
 In the plugin page, you can see the list of invoices created through the Telegram Bot.
+You will find useful information about the Telegram order in the invoice details.
 
 <img width="1008" height="397" alt="image" src="https://github.com/user-attachments/assets/0fbbb848-8ca3-430e-996c-2ba92b314bfe" />
 

@@ -13,6 +13,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Models
         public string? Title { get; set; }
         public string? Description { get; set; }
         public string CurrencyCode { get; set; }
+        public string FormId { get; set; }
         public decimal DefaultTaxRate { get; set; }
         public string BotToken { get; set; }
         public bool IsEnabled { get; set; }
