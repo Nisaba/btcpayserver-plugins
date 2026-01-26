@@ -19,7 +19,6 @@ public class Plugin : BaseBTCPayServerPlugin
         services.AddUIExtension("header-nav", "ExolixPluginHeaderNav")
                 .AddUIExtension("checkout-payment-method", "CheckoutV2/CheckoutPaymentMethodExtension")
                 .AddUIExtension("checkout-payment", "CheckoutV2/CheckoutPaymentExtension")
-                .AddHostedService<ApplicationPartsLogger>()
                 .AddSingleton<ExolixPluginDbContextFactory>()
                 .AddHostedService<PluginMigrationRunner>()
                 .AddSingleton<ExolixService>()

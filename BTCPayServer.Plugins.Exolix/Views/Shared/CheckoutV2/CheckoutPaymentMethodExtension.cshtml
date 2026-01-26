@@ -6,7 +6,8 @@
     if (settings?.Enabled is not true || settings.AcceptedCryptos.Count == 0) return;
 }
 
-<a href="#Exolix" class="btcpay-pill m-0 payment-method" :class="{ active: pmId === 'Exolix' }" v-on:click.prevent="changePaymentMethod('Exolix')">
+<a href="#Exolix" class="btcpay-pill m-0 payment-method" :class="{ active: pmId === 'Exolix' }"
+    v-on:click.prevent="pmId === 'BTC-CHAIN' ? changePaymentMethod('Exolix') : alert('Please select the Bitcoin payment method first before choosing Altcoins.')">
     <div style="text-align: center;">
         <span style="display: block;">Altcoins</span>
     </div>
