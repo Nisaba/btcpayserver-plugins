@@ -42,6 +42,10 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                             StoreDataId = app.StoreDataId,
                             CurrencyCode = appSettings.Currency,
                             Location = storeAppSettings?.Location ?? string.Empty,
+                            FlashSales = storeAppSettings.FlashSales,
+                            Condition = storeAppSettings.Condition,
+                            ValidDateT = storeAppSettings.ValidDateT,
+                            Restrictions = storeAppSettings.Restrictions,
                             ShopItems = AppService.Parse(appSettings.Template).ToList()
                         });
                     }
@@ -77,25 +81,25 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 throw;
             }
         }
-        public async Task UpdateSettings(string storeId, string appId, string location)
+
+        public async Task UpdateSettings(ShopstrSettings settings)
             {
                 try
                 {
                     using (var context = dbContextFactory.CreateContext())
                     {
-                        var dbSettings = await context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId);
+                        var dbSettings = await context.Settings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
                         if (dbSettings == null)
                         {
-                            context.Settings.Add( new ShopstrSettings
-                            {
-                                StoreId = storeId,
-                                AppId = appId,
-                                Location = location.Trim()
-                            });
+                            context.Settings.Add( settings);
                         }
                         else
                         {
-                            dbSettings.Location = location.Trim();
+                            dbSettings.Location = settings.Location;
+                            dbSettings.FlashSales = settings.FlashSales;
+                            dbSettings.Condition = settings.Condition;
+                            dbSettings.ValidDateT = settings.ValidDateT;
+                            dbSettings.Restrictions = settings.Restrictions;
                             context.Settings.Update(dbSettings);
                         }
 

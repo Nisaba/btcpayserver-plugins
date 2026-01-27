@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace BTCPayServer.Plugins.Shopstr.Models
@@ -13,5 +15,38 @@ namespace BTCPayServer.Plugins.Shopstr.Models
 
         public string Location { get; set; }
 
+        public bool FlashSales { get; set; }
+
+        public ConditionEnum Condition { get; set; }
+
+        public DateTimeOffset? ValidDateT { get; set; }
+
+        public string Restrictions { get; set; }
+
     }
+
+    public enum ConditionEnum
+    {
+        [Description("")]
+        None,
+
+        [Description("New")]
+        New,
+
+        [Description("Renewed")]
+        Renewed,
+
+        [Description("Used - Like New")]
+        UsedLikeNew,
+
+        [Description("Used - Very Good")]
+        UsedVeryGood,
+
+        [Description("Used - Good")]
+        UsedGood,
+
+        [Description("Used - Acceptable")]
+        UsedAcceptable
+    }
+
 }

@@ -1,6 +1,8 @@
 ﻿@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.Shopstr.Models
 @using BTCPayServer.Plugins.Shopstr.Models.Shopstr
 @using BTCPayServer.Plugins.Shopstr.Views
+@using System.ComponentModel
 
 @model ShopstrViewModel
 @{
@@ -112,37 +114,94 @@ else
 
 
     <br/>
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>App Name</th>
-                <th>Items</th>
-                <th>Location</th>
-                <th></th>
-                <th></th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var app in Model.StoreApps)
-            {
+
+    <div class="table-responsive">
+        <table class="table table-hover mass-action">
+            <thead>
                 <tr>
-                    <td><div class="badge badge-settled">@app.Name</div></td>
-                    <td><div class="badge badge-expired">@app.ShopItems.Count</div></td>
-                    <td width="150"><input id="txtAppLocation@{@app.Id}" type="text" value="@app.Location" placeholder="must match shopstr filters" /></td>
-                    <td><button class="btn btn-secondary" onclick="BtSaveApp('@app.Id')">Save</button></td>
-                    <td align="center">
-                        <button id="BtPublish@{@app.Id}" class="btn btn-secondary" onclick="DoPublish('@app.Id')">Publish on Nostr</button>
-                        <img id="WaitPublish@{@app.Id}" src="/Resources/img/waiting.webp" style="display:none" />
-                    </td>
-                    <td align="center">
-                        <button id="BtUnpublish@{@app.Id}" class="btn btn-secondary" onclick="DoUnpublish('@app.Id')">Unpublish</button>
-                        <img id="WaitUnpublish@{@app.Id}" src="/Resources/img/waiting.webp" style="display:none" />
-                    </td>
+                    <th>App Name</th>
+                    <th>Items</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var app in Model.StoreApps)
+                {
+                    var detailsId = $"appDetails_{app.Id}";
+                    <tr>
+                        <td><div class="badge badge-settled">@app.Name</div></td>
+                        <td><div class="badge badge-expired">@app.ShopItems.Count</div></td>
+                        <td align="center">
+                            <button id="BtPublish@{@app.Id}" class="btn btn-secondary" onclick="DoPublish('@app.Id')">Publish on Nostr</button>
+                            <img id="WaitPublish@{@app.Id}" src="/Resources/img/waiting.webp" style="display:none" />
+                        </td>
+                        <td align="center">
+                            <button id="BtUnpublish@{@app.Id}" class="btn btn-secondary" onclick="DoUnpublish('@app.Id')">Unpublish</button>
+                            <img id="WaitUnpublish@{@app.Id}" src="/Resources/img/waiting.webp" style="display:none" />
+                        </td>
+                        <td class="align-middle text-end">
+                            <div class="d-inline-flex align-items-center gap-2">
+                                <span class="text-muted small me-1">Default settings</span>
+                                <button class="accordion-button collapsed only-for-js ms-0 d-inline-block" type="button" data-bs-toggle="collapse" data-bs-target="#@detailsId" aria-expanded="false" aria-controls="@detailsId" aria-label="Toggle default settings">
+                                    <vc:icon symbol="caret-down" />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr id="@detailsId" class="invoice-details-row collapse">
+                        <td colspan="5" class="border-top-0">
+                            <div class="p-3">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label for="txtAppLocation@{@app.Id}" class="form-label">Location</label>
+                                        <input id="txtAppLocation@{@app.Id}" type="text" value="@app.Location" class="form-control" placeholder="must match shopstr filters" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="chkFlashSales@{@app.Id}" class="form-label">Flash Sales</label>
+                                        <div class="form-check mt-2">
+                                            <input id="chkFlashSales@{@app.Id}" class="form-check-input" type="checkbox" @(app.FlashSales ? "checked" : "") />
+                                            <label class="form-check-label" for="chkFlashSales@{@app.Id}">Enabled</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="selCondition@{@app.Id}" class="form-label">Condition</label>
+                                        <select id="selCondition@{@app.Id}" class="form-select">
+                                            @foreach (var condition in Enum.GetValues(typeof(ConditionEnum)))
+                                            {
+                                                var field = typeof(ConditionEnum).GetField(condition.ToString());
+                                                var descAttr = (DescriptionAttribute)field.GetCustomAttributes(typeof(DescriptionAttribute), false).FirstOrDefault();
+                                                var displayText = descAttr?.Description ?? condition.ToString();
+                                                var isSelected = (ConditionEnum)condition == app.Condition;
+                                                <option value="@condition" selected="@(isSelected ? "selected" : null)">@displayText</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="dtValidDateT@{@app.Id}" class="form-label">Valid Date</label>
+                                        <input id="dtValidDateT@{@app.Id}" type="date" value="@(app.ValidDateT?.ToString("yyyy-MM-dd"))" class="form-control" />
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <label for="txtRestrictions@{@app.Id}" class="form-label">Restrictions</label>
+                                        <input id="txtRestrictions@{@app.Id}" type="text" value="@app.Restrictions" class="form-control" placeholder="US shipping only, signature required, no P.O. box delivery, etc."/>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-3">
+                                    <div class="col-12 d-flex justify-content-end gap-2">
+                                        <button id="BtSave@{@app.Id}" class="btn btn-primary" onclick="BtSaveApp('@app.Id')">Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
     @Html.AntiForgeryToken()
 
@@ -151,11 +210,34 @@ else
     
     function BtSaveApp(appId) {
         var location = $('#txtAppLocation' + appId).val();
+        var flashSales = $('#chkFlashSales' + appId).is(':checked');
+        var condition = $('#selCondition' + appId).val();
+
+        var dtEl = document.getElementById('dtValidDateT' + appId);
+        var validDateT = '';
+        if (dtEl) {
+            validDateT = dtEl.value || dtEl.getAttribute('value') || '';
+        }
+        var day = '';
+        var month = '';
+        var year = '';
+        if (validDateT) {
+            var datePart = validDateT.split('T')[0];
+            var parts = datePart.split('-');
+            if (parts.length === 3) {
+                year = parseInt(parts[0], 10) || '';
+                month = parseInt(parts[1], 10) || '';
+                day = parseInt(parts[2], 10) || '';
+            }
+        }
+
+        var restrictions = $('#txtRestrictions' + appId).val();
+
         $('#BtSave' + appId).hide();
         $.ajax({
             url: 'Shopstr/SaveSettings',
             type: 'POST',
-            data: { appId: appId, location: location },
+            data: { appId: appId, location: location, flashSales: flashSales, condition: condition, day: day, month: month, year: year, restrictions: restrictions },
             headers: {
                 'RequestVerificationToken': antiForgeryToken
             },

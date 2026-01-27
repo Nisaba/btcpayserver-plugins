@@ -2,6 +2,7 @@
 using BTCPayServer.Abstractions.Extensions;
 using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Client;
+using BTCPayServer.Plugins.Shopstr.Models;
 using BTCPayServer.Plugins.Shopstr.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,25 +28,20 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
 
         [HttpPost]
         [Route("SaveSettings")]
-        public async Task<IActionResult> SaveSettings([FromRoute] string storeId, [FromForm] string appId, [FromForm] string location)
+        public async Task<IActionResult> SaveSettings([FromRoute] string storeId, [FromForm] string appId, [FromForm] string location, [FromForm] bool flashSales, [FromForm] string condition, [FromForm] int day, [FromForm] int month, [FromForm] int year, [FromForm] string restrictions)
         {
-            try {
-                await pluginService.UpdateSettings(storeId, appId, location);
-                TempData.SetStatusMessageModel(new StatusMessageModel()
-                {
-                    Message = "Shopstr settings updated",
-                    Severity = StatusMessageModel.StatusSeverity.Success
-                });
-            }
-            catch (System.Exception ex)
+            var settings = new ShopstrSettings
             {
-                TempData.SetStatusMessageModel(new StatusMessageModel()
-                {
-                    Message = $"Error updating Shopstr settings: {ex.Message}",
-                    Severity = StatusMessageModel.StatusSeverity.Error
-                });
-            }
-            return RedirectToAction("Index", new { storeId = storeId });
+                StoreId = storeId,
+                AppId = appId,
+                Location = location.Trim(),
+                FlashSales = flashSales,
+                Condition = Enum.Parse<ConditionEnum>(condition),
+                ValidDateT = day == 0 ? null : new DateTimeOffset(new DateTime(year, month, day, 0, 0, 0)),
+                Restrictions = restrictions
+            };
+            await pluginService.UpdateSettings(settings);
+            return Ok();
         }
 
         [HttpPost]

@@ -24,9 +24,10 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "TelegramInvoices",
-                schema: "BTCPayServer.Plugins.TelegramBot");
+            migrationBuilder.DropColumn(
+                name: "ApiKey",
+                schema: "BTCPayServer.Plugins.TelegramBot",
+                table: "Config");
         }
     }
 }
