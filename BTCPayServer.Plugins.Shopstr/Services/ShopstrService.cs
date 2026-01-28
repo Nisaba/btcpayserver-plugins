@@ -1,6 +1,9 @@
-﻿using BTCPayServer.Client.Models;
+﻿using Amazon.Auth.AccessControlPolicy;
+using BTCPayServer.Client.Models;
+using BTCPayServer.Plugins.Shopstr.Models;
 using BTCPayServer.Plugins.Shopstr.Models.External;
 using BTCPayServer.Plugins.Shopstr.Models.Nostr;
+using BTCPayServer.Plugins.Shopstr.Models.Shopstr;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using NBitcoin.Secp256k1;
@@ -8,13 +11,14 @@ using Newtonsoft.Json;
 using NNostr.Client;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.Shopstr.Services
 {
-    public class ShopstrService (ILogger<ShopstrService> logger)
+    public class ShopstrService (ILogger<ShopstrService> logger, NostrClientPool nostrClientPool)
     {
         private CompositeNostrClient _client;
 
@@ -113,14 +117,20 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                             {
                                 Id = nostrEvent.GetTaggedData("d")[0],
                                 Name = nostrEvent.GetTaggedData("title")[0],
-                                Description = nostrEvent.GetTaggedData("summary")[0],
-                                Categories = nostrEvent.GetTaggedData("t").Where(t => t != "shopstr").ToArray(),
+                                Description = nostrEvent.GetTaggedData("summary")?.FirstOrDefault() ?? "",
+                                Categories = nostrEvent.GetTaggedData("t")?.Where(t => t != "shopstr").ToArray() ?? Array.Empty<string>(),
                                 Location = nostrEvent.GetTaggedData("location")?.FirstOrDefault() ?? "",
+                                Condition = Enum.TryParse<ConditionEnum>(nostrEvent.GetTaggedData("condition")?.FirstOrDefault(), out var condition) ? condition : ConditionEnum.None,
+                                Restrictions = nostrEvent.GetTaggedData("restrictions")?.FirstOrDefault() ?? "",
+                                ValidDateT = nostrEvent.GetTaggedData("valid_until") != null &&
+                                             long.TryParse(nostrEvent.GetTaggedData("valid_until").FirstOrDefault(), out var validUntilUnix)
+                                    ? DateTimeOffset.FromUnixTimeSeconds(validUntilUnix)
+                                    : null,
                                 TimeStamp = int.TryParse(nostrEvent.GetTaggedData("published_at")?.FirstOrDefault(), out var timestamp) ? timestamp : 0,
                                 Qty = int.TryParse(nostrEvent.GetTaggedData("quantity")?.FirstOrDefault(), out var qty) ? qty : 0,
                                 Price = decimal.TryParse(nostrEvent.GetTaggedData("price")?.FirstOrDefault(), out var price) ? price : 0,
                                 Status = nostrEvent.GetTaggedData("status")[0] == "active",
-                                Image = nostrEvent.GetTaggedData("image")[0]
+                                Image = nostrEvent.GetTaggedData("image")?.FirstOrDefault() ?? ""
                             });
 
                     }
@@ -142,7 +152,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 .ToList();
         }
 
-        public async Task CreateShopstrProduct(AppItem appItem, string shopCurrency, string shopLocation,  Nip5StoreSettings nostrSettings, string baseUrl, bool bUnpublished = false)
+        public async Task CreateShopstrProduct(AppItem appItem, ShopstrAppData appData, Nip5StoreSettings nostrSettings, string baseUrl, bool bUnpublished = false)
         {
             try
             {
@@ -160,40 +170,68 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                              $"31990:{nostrSettings.PubKey}:btcpayserver-shopstr",
                              relayUris[0].ToString()]);
 
+                string imageUrl = appItem.Image;
+                if (!string.IsNullOrEmpty(imageUrl))
+                {
+                    if (imageUrl.StartsWith("~/", StringComparison.Ordinal))
+                    {
+                        imageUrl = imageUrl.Substring(1);
+                    }
+                    if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        imageUrl = baseUrl.TrimEnd('/') + imageUrl;
+                    }
+                }
+
                 if (bUnpublished)
                 {
                     nostrEvent.SetTag("title", "[UNPUBLISHED] " + appItem.Title);
                     nostrEvent.SetTag("status", "deleted");
-                } else
+
+                    if (appData.FlashSales)
+                    {
+                        await PublishFlashSaleEvent(appItem, appData, nostrSettings, dtNow, imageUrl, true);
+                    }
+                }
+                else
                 {
                     nostrEvent.SetTag("title", appItem.Title);
                     nostrEvent.SetTag("alt", "Product listing: " + appItem.Title);
                     nostrEvent.SetTag("summary", appItem.Description ?? "");
-                    nostrEvent.SetTag("price", [appItem.Price.ToString(), shopCurrency]);
-                    nostrEvent.SetTag("location", shopLocation);
+                    nostrEvent.SetTag("price", [appItem.Price.ToString(), appData.CurrencyCode]);
+                    nostrEvent.SetTag("location", appData.Location);
                     nostrEvent.SetTag("t", "shopstr");
                     if (appItem.Categories != null && appItem.Categories.Length > 0)
                         nostrEvent.SetTag("t", appItem.Categories);
                     nostrEvent.SetTag("status", appItem.Disabled || appItem.Inventory == 0 ? "sold" : "active");
                     nostrEvent.SetTag("published_at", dtNow.ToUnixTimeSeconds().ToString());
 
-                    var imageUrl = appItem.Image;
-
+                    if (appData.Condition != ConditionEnum.None)
+                    {
+                        var field = typeof(ConditionEnum).GetField(appData.Condition.ToString());
+                        var descAttr = (DescriptionAttribute)field.GetCustomAttributes(typeof(DescriptionAttribute), false).FirstOrDefault();
+                        var displayCondition = descAttr?.Description ?? appData.Condition.ToString();
+                        nostrEvent.SetTag("condition", displayCondition);
+                    }
+                    if (!string.IsNullOrEmpty(appData.Restrictions))
+                    {
+                        nostrEvent.SetTag("restrictions", appData.Restrictions);
+                    }
+                    if (appData.ValidDateT.HasValue)
+                    {
+                        nostrEvent.SetTag("valid_until", appData.ValidDateT.Value.ToUnixTimeSeconds().ToString());
+                    }
                     if (!string.IsNullOrEmpty(imageUrl))
                     {
-                        if (imageUrl.StartsWith("~/", StringComparison.Ordinal))
-                        {
-                            imageUrl = imageUrl.Substring(1);
-                        }
-
-                        if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                        {
-                            imageUrl = baseUrl.TrimEnd('/') + imageUrl;
-                        }
                         nostrEvent.SetTag("image", imageUrl);
                     }
+
+                    if (appData.FlashSales)
+                    {
+                        await PublishFlashSaleEvent(appItem, appData, nostrSettings, dtNow, imageUrl, false);
+                    }
                 }
-                
+
                 var tagsForSerialization = nostrEvent.Tags
                     .Select(tag => tag.TagIdentifier == null 
                         ? tag.Data.ToArray() 
@@ -250,6 +288,86 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 logger.LogError(ex, "Shopstr Plugin: Error while creating Nostr product");
                 throw;
             }
+        }
+
+        private async Task PublishFlashSaleEvent(AppItem appItem, ShopstrAppData appData, Nip5StoreSettings nostrSettings, DateTimeOffset dtNow, string imageUrl, bool isUnpublish)
+        {
+            try
+            {
+                var flashEvent = new NostrEvent()
+                {
+                    PublicKey = nostrSettings.PubKey,
+                    Kind = 1,
+                    CreatedAt = dtNow,
+                    Content = BuildFlashSaleContent(appItem, appData, isUnpublish, imageUrl),
+                };
+
+                flashEvent.SetTag("t", "zapsnag");
+                flashEvent.SetTag("t", "shopstr-zapsnag");
+                flashEvent.SetTag("d", "zapsnag");
+                flashEvent.SetTag("status", isUnpublish ? "deleted" : "active");
+
+                if (!isUnpublish) 
+                {
+                    if (!string.IsNullOrEmpty(imageUrl))
+                        flashEvent.SetTag("image", imageUrl);
+                    if (appItem?.Inventory != null && appItem?.Inventory > 0)
+                        flashEvent.SetTag("quantity", appItem.Inventory.ToString());
+                }
+
+                var tagsForSerializationFlash = flashEvent.Tags
+                    .Select(tag => tag.TagIdentifier == null
+                        ? tag.Data.ToArray()
+                        : new[] { tag.TagIdentifier }.Concat(tag.Data ?? Enumerable.Empty<string>()).ToArray())
+                    .ToList();
+
+                var createdAtFlash = (flashEvent.CreatedAt ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds();
+
+                var eventDataFlash = new object[]
+                {
+                    0,
+                    flashEvent.PublicKey,
+                    createdAtFlash,
+                    flashEvent.Kind,
+                    tagsForSerializationFlash,
+                    flashEvent.Content ?? ""
+                };
+
+                var serializedFlash = JsonConvert.SerializeObject(eventDataFlash,
+                    Formatting.None,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Include
+                    });
+
+                using var sha256Flash = System.Security.Cryptography.SHA256.Create();
+                var hashFlash = sha256Flash.ComputeHash(System.Text.Encoding.UTF8.GetBytes(serializedFlash));
+                flashEvent.Id = Convert.ToHexString(hashFlash).ToLowerInvariant();
+
+                var ecPrivKeyFlash = ECPrivKey.Create(Convert.FromHexString(nostrSettings.PrivateKey));
+                flashEvent.Signature = NostrExtensions.ComputeSignature(flashEvent, ecPrivKeyFlash);
+
+                await _client.PublishEvent(flashEvent, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, isUnpublish ? "Shopstr Plugin: Error while unpublishing flash sale (zapsnag) event" : "Shopstr Plugin: Error while publishing flash sale (zapsnag) event");
+            }
+        }
+
+        private string BuildFlashSaleContent(AppItem appItem, ShopstrAppData appData, bool isUnpublish, string imageUrl)
+        {
+            var statusText = isUnpublish ? "REMOVED FROM SALE" : "FLASH SALE";
+            var currencySymbol = appData.CurrencyCode; // Assuming this contains the currency symbol
+            var priceInfo = isUnpublish ? "" : $"Price: {appItem.Price} {currencySymbol}";
+
+            return string.Concat(
+                $"{appItem.Title}",
+                $"\n{statusText}",
+                $"\n{priceInfo}",
+                $"\n\n#zapsnag",
+                $"{(string.IsNullOrEmpty(imageUrl) ? "" : "\n" + imageUrl)}"
+            );
         }
     }
 }

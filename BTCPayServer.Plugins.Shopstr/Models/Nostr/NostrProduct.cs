@@ -1,4 +1,6 @@
 ﻿using BTCPayServer.Client.Models;
+using BTCPayServer.Plugins.Shopstr.Models.Shopstr;
+using System;
 using System.Collections.Generic;
 
 namespace BTCPayServer.Plugins.Shopstr.Models.Nostr
@@ -8,6 +10,10 @@ namespace BTCPayServer.Plugins.Shopstr.Models.Nostr
         public string Id { get; set; }
         public string[] Categories { get; set; }
         public string Location { get; set; }
+        public ConditionEnum Condition { get; set; }
+        public DateTimeOffset? ValidDateT { get; set; }
+        public string Restrictions { get; set; }
+
         public int Qty { get; set; }
         public int TimeStamp { get; set; }
         public string Name { get; set; }
@@ -17,12 +23,15 @@ namespace BTCPayServer.Plugins.Shopstr.Models.Nostr
         public string Image { get; set; }
         public bool Status { get; set; }
 
-        public bool Compare(AppItem appItem, string sLocation) { 
+        public bool Compare(AppItem appItem, ShopstrAppData app) { 
             return Id == appItem.Id &&
                    Name == appItem.Title &&
                    Description == appItem.Description &&
                    CategoriesEqual(Categories, appItem.Categories) &&
-                   Location == sLocation &&
+                   Location == app.Location &&
+                   Condition == app.Condition &&
+                   ValidDateT?.Date == app.ValidDateT?.Date &&
+                   Restrictions == app.Restrictions &&
                    Qty == appItem.Inventory &&
                    Price == appItem.Price &&
                    Image.Contains(appItem.Image.Substring(1)) &&

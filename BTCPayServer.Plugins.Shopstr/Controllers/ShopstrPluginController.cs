@@ -65,10 +65,10 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
                 foreach (var item in app.ShopItems)
                 {
                     var existingProduct = productsFromShopstr.FirstOrDefault(p => p.Id == item.Id);
-                    var bPublishToShopStr = existingProduct == null ? true : !existingProduct.Compare(item, app.Location);
+                    var bPublishToShopStr = existingProduct == null ? true : !existingProduct.Compare(item, app);
                     if (bPublishToShopStr)
                     {
-                        await shopstrService.CreateShopstrProduct(item, app.CurrencyCode, app.Location, nostrSettings, baseUrl);
+                        await shopstrService.CreateShopstrProduct(item, app, nostrSettings, baseUrl);
                     }
                 }
                 return Ok();
@@ -104,7 +104,7 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
                 foreach (var item in app.ShopItems)
                 {
                     if (productsFromShopstr.Any(p => p.Id == item.Id))
-                        await shopstrService.CreateShopstrProduct(item, app.CurrencyCode, app.Location, nostrSettings, "", true);
+                        await shopstrService.CreateShopstrProduct(item, app, nostrSettings, "", true);
                 }
                 return Ok();
             }
