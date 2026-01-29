@@ -188,6 +188,9 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     nostrEvent.SetTag("title", "[UNPUBLISHED] " + appItem.Title);
                     nostrEvent.SetTag("status", "deleted");
 
+                    //var addressableTag = $"{nostrEvent.Kind}:{nostrEvent.PublicKey}:{appItem.Id}";
+                    //await PublishDeletionEvent(nostrSettings, aTags: new[] { addressableTag });
+
                     if (appData.FlashSales)
                     {
                         await PublishFlashSaleEvent(appItem, appData, nostrSettings, dtNow, imageUrl, true);
@@ -226,47 +229,13 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                         nostrEvent.SetTag("image", imageUrl);
                     }
 
-                    if (appData.FlashSales)
+                    if (appData.FlashSales && !(appItem.Disabled || appItem.Inventory == 0))
                     {
                         await PublishFlashSaleEvent(appItem, appData, nostrSettings, dtNow, imageUrl, false);
                     }
                 }
 
-                var tagsForSerialization = nostrEvent.Tags
-                    .Select(tag => tag.TagIdentifier == null 
-                        ? tag.Data.ToArray() 
-                        : new[] { tag.TagIdentifier }.Concat(tag.Data ?? Enumerable.Empty<string>()).ToArray())
-                    .ToList();
-
-                var createdAt = (nostrEvent.CreatedAt ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds();
-
-                // Sérialisation selon NIP-01 : [0, pubkey, created_at, kind, tags, content]
-                var eventData = new object[]
-                {
-                    0,
-                    nostrEvent.PublicKey,
-                    createdAt,
-                    nostrEvent.Kind,
-                    tagsForSerialization,
-                    nostrEvent.Content ?? ""
-                };
-
-                var serialized = JsonConvert.SerializeObject(eventData, 
-                    Formatting.None, 
-                    new JsonSerializerSettings 
-                    { 
-                        NullValueHandling = NullValueHandling.Include 
-                    });
-
-                using var sha256 = System.Security.Cryptography.SHA256.Create();
-                var hash = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(serialized));
-                nostrEvent.Id = Convert.ToHexString(hash).ToLowerInvariant();
-                
-                var ecPrivKey = ECPrivKey.Create(Convert.FromHexString(nostrSettings.PrivateKey));
-                nostrEvent.Signature = NostrExtensions.ComputeSignature(nostrEvent, ecPrivKey);
-
-                await _client.PublishEvent(nostrEvent, CancellationToken.None);
-                //_logger.LogInformation($"Shopstr Plugin: Event {nostrEvent.Id} published to relay(s)");
+                await SignAndPublishEvent(nostrEvent, nostrSettings.PrivateKey);
 
                 await Task.Delay(TimeSpan.FromSeconds(2));
 
@@ -290,10 +259,41 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             }
         }
 
-        private async Task PublishFlashSaleEvent(AppItem appItem, ShopstrAppData appData, Nip5StoreSettings nostrSettings, DateTimeOffset dtNow, string imageUrl, bool isUnpublish)
+         private async Task PublishFlashSaleEvent(AppItem appItem, ShopstrAppData appData, Nip5StoreSettings nostrSettings, DateTimeOffset dtNow, string imageUrl, bool isUnpublish)
         {
             try
             {
+                // NIP-09 retrieval for deletion
+                if (isUnpublish)
+                {
+                    try 
+                    {
+                        var filter = new NostrSubscriptionFilter()
+                        {
+                            Kinds = new[] { 1 },
+                            Authors = new[] { nostrSettings.PubKey },
+                            Limit = 5 
+                        };
+                        using var ctsSearch = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                        var events = await _client.SubscribeForEvents([filter], false, ctsSearch.Token).ToListAsync();
+                        
+                        var zapsnagToDelete = events
+                            .Where(e => e.GetTaggedData("d")?.Contains("zapsnag") == true)
+                            .OrderByDescending(e => e.CreatedAt)
+                            .FirstOrDefault();
+
+                        if (zapsnagToDelete != null)
+                        {
+                            await PublishDeletionEvent(nostrSettings, eTags: new[] { zapsnagToDelete.Id });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Shopstr Plugin: Could not fetch previous flash sale event for deletion");
+                    }
+                    return;
+                }
+
                 var flashEvent = new NostrEvent()
                 {
                     PublicKey = nostrSettings.PubKey,
@@ -315,44 +315,87 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                         flashEvent.SetTag("quantity", appItem.Inventory.ToString());
                 }
 
-                var tagsForSerializationFlash = flashEvent.Tags
-                    .Select(tag => tag.TagIdentifier == null
-                        ? tag.Data.ToArray()
-                        : new[] { tag.TagIdentifier }.Concat(tag.Data ?? Enumerable.Empty<string>()).ToArray())
-                    .ToList();
-
-                var createdAtFlash = (flashEvent.CreatedAt ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds();
-
-                var eventDataFlash = new object[]
-                {
-                    0,
-                    flashEvent.PublicKey,
-                    createdAtFlash,
-                    flashEvent.Kind,
-                    tagsForSerializationFlash,
-                    flashEvent.Content ?? ""
-                };
-
-                var serializedFlash = JsonConvert.SerializeObject(eventDataFlash,
-                    Formatting.None,
-                    new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Include
-                    });
-
-                using var sha256Flash = System.Security.Cryptography.SHA256.Create();
-                var hashFlash = sha256Flash.ComputeHash(System.Text.Encoding.UTF8.GetBytes(serializedFlash));
-                flashEvent.Id = Convert.ToHexString(hashFlash).ToLowerInvariant();
-
-                var ecPrivKeyFlash = ECPrivKey.Create(Convert.FromHexString(nostrSettings.PrivateKey));
-                flashEvent.Signature = NostrExtensions.ComputeSignature(flashEvent, ecPrivKeyFlash);
-
-                await _client.PublishEvent(flashEvent, CancellationToken.None);
+                await SignAndPublishEvent(flashEvent, nostrSettings.PrivateKey);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, isUnpublish ? "Shopstr Plugin: Error while unpublishing flash sale (zapsnag) event" : "Shopstr Plugin: Error while publishing flash sale (zapsnag) event");
             }
+        }
+
+        private async Task PublishDeletionEvent(Nip5StoreSettings nostrSettings, string[] eTags = null, string[] aTags = null)
+        {
+            try
+            {
+                var deleteEvent = new NostrEvent()
+                {
+                    PublicKey = nostrSettings.PubKey,
+                    Kind = 5,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    Content = "Item unpublish request"
+                };
+
+                if (eTags != null)
+                {
+                    foreach (var id in eTags)
+                    {
+                        deleteEvent.SetTag("e", id);
+                    }
+                }
+
+                if (aTags != null)
+                {
+                    foreach (var addr in aTags)
+                    {
+                        deleteEvent.SetTag("a", addr);
+                    }
+                }
+
+                await SignAndPublishEvent(deleteEvent, nostrSettings.PrivateKey);
+                logger.LogInformation("Shopstr Plugin: Deletion event (Kind 5) published.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Shopstr Plugin: Error while publishing deletion event");
+            }
+        }
+
+        private async Task SignAndPublishEvent(NostrEvent nostrEvent, string privateKeyHex)
+        {
+            var tagsForSerialization = nostrEvent.Tags
+                  .Select(tag => tag.TagIdentifier == null
+                      ? tag.Data.ToArray()
+                      : new[] { tag.TagIdentifier }.Concat(tag.Data ?? Enumerable.Empty<string>()).ToArray())
+                  .ToList();
+
+            var createdAt = (nostrEvent.CreatedAt ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds();
+
+            // Serilization NIP-01
+            var eventData = new object[]
+            {
+                0,
+                nostrEvent.PublicKey,
+                createdAt,
+                nostrEvent.Kind,
+                tagsForSerialization,
+                nostrEvent.Content ?? ""
+            };
+
+            var serialized = JsonConvert.SerializeObject(eventData,
+                Formatting.None,
+                new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Include
+                });
+
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var hash = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(serialized));
+            nostrEvent.Id = Convert.ToHexString(hash).ToLowerInvariant();
+
+            var ecPrivKey = ECPrivKey.Create(Convert.FromHexString(privateKeyHex));
+            nostrEvent.Signature = NostrExtensions.ComputeSignature(nostrEvent, ecPrivKey);
+
+            await _client.PublishEvent(nostrEvent, CancellationToken.None);
         }
 
         private string BuildFlashSaleContent(AppItem appItem, ShopstrAppData appData, bool isUnpublish, string imageUrl)
