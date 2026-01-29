@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.Shopstr.Services
 {
-    public class ShopstrService (ILogger<ShopstrService> logger, NostrClientPool nostrClientPool)
+    public class ShopstrService (ILogger<ShopstrService> logger)
     {
         private CompositeNostrClient _client;
 
