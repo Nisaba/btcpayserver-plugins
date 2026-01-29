@@ -42,10 +42,10 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                             StoreDataId = app.StoreDataId,
                             CurrencyCode = appSettings.Currency,
                             Location = storeAppSettings?.Location ?? string.Empty,
-                            FlashSales = storeAppSettings.FlashSales,
-                            Condition = storeAppSettings.Condition,
-                            ValidDateT = storeAppSettings.ValidDateT,
-                            Restrictions = storeAppSettings.Restrictions,
+                            FlashSales = storeAppSettings?.FlashSales ?? false,
+                            Condition = storeAppSettings?.Condition ?? ConditionEnum.None,
+                            ValidDateT = storeAppSettings?.ValidDateT ?? null,
+                            Restrictions = storeAppSettings?.Restrictions ?? string.Empty,
                             ShopItems = AppService.Parse(appSettings.Template).ToList()
                         });
                     }
