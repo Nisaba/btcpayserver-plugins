@@ -2,6 +2,9 @@
 
 This plugin allows you to link a Telegram Bot to a BTCPay Server Point of Sale (PoS), enabling users to browse products and create invoices directly within Telegram.
 
+Check this plugin demo video :
+https://youtu.be/eqrUFVStWCE
+
 ## Setup Instructions
 
 ### 1. Create a Telegram Bot
