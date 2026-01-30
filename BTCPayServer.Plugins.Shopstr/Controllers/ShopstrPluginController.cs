@@ -99,7 +99,7 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
 
                 await shopstrService.InitializeClient(nostrSettings.Relays);
                 var productsFromShopstr = await shopstrService.GetShopstrProducts(nostrSettings.PubKey);
-      //          productsFromShopstr.RemoveAll(e => !e.Status);
+                productsFromShopstr.RemoveAll(e => !e.Status);
 
                 foreach (var item in app.ShopItems)
                 {

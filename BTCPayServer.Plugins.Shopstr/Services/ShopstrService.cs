@@ -26,7 +26,14 @@ namespace BTCPayServer.Plugins.Shopstr.Services
         {
             try {
                 var relayUris = relayUrls.Select(r => new Uri(r)).ToArray();
-                _client = new CompositeNostrClient(relayUris);
+                _client = new CompositeNostrClient(relayUris, socket =>
+                {
+                    if (socket is System.Net.WebSockets.ClientWebSocket clientWebSocket)
+                    {
+                        clientWebSocket.Options.SetRequestHeader("User-Agent", "BTCPayServer-Shopstr/1.0");
+                        clientWebSocket.Options.SetRequestHeader("Origin", "https://btcpayserver.org");
+                    }
+                });
                 /* _client.MessageReceived += (s, e) =>
                  {
                      _logger.LogInformation($"Shopstr Plugin: Message received: {e}");
@@ -35,7 +42,9 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                  {
                      _logger.LogWarning($"Shopstr Plugin: Invalid message: {e}");
                  };*/
-                await _client.ConnectAndWaitUntilConnected(CancellationToken.None);
+
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                await _client.ConnectAndWaitUntilConnected(cts.Token);
             }
             catch (Exception ex)
             {
@@ -244,7 +253,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     Ids = new[] { nostrEvent.Id }
                 };
 
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
                 var verification = await _client.SubscribeForEvents([filter], false, cts.Token).FirstOrDefaultAsync();
 
                 if (verification == null)
@@ -274,7 +283,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                             Authors = new[] { nostrSettings.PubKey },
                             Limit = 5 
                         };
-                        using var ctsSearch = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                        using var ctsSearch = new CancellationTokenSource(TimeSpan.FromSeconds(10));
                         var events = await _client.SubscribeForEvents([filter], false, ctsSearch.Token).ToListAsync();
                         
                         var zapsnagToDelete = events
@@ -395,7 +404,8 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             var ecPrivKey = ECPrivKey.Create(Convert.FromHexString(privateKeyHex));
             nostrEvent.Signature = NostrExtensions.ComputeSignature(nostrEvent, ecPrivKey);
 
-            await _client.PublishEvent(nostrEvent, CancellationToken.None);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            await _client.PublishEvent(nostrEvent, cts.Token);
         }
 
         private string BuildFlashSaleContent(AppItem appItem, ShopstrAppData appData, bool isUnpublish, string imageUrl)
