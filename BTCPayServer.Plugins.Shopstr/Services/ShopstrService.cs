@@ -30,25 +30,29 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 {
                     if (socket is System.Net.WebSockets.ClientWebSocket clientWebSocket)
                     {
+                        clientWebSocket.Options.UseDefaultCredentials = false;
+
                         clientWebSocket.Options.SetRequestHeader("User-Agent", "BTCPayServer-Shopstr/1.0");
                         clientWebSocket.Options.SetRequestHeader("Origin", "https://btcpayserver.org");
                     }
                 });
-                /* _client.MessageReceived += (s, e) =>
-                 {
-                     _logger.LogInformation($"Shopstr Plugin: Message received: {e}");
-                 };
-                 _client.InvalidMessageReceived += (s, e) =>
-                 {
-                     _logger.LogWarning($"Shopstr Plugin: Invalid message: {e}");
-                 };*/
 
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                await _client.ConnectAndWaitUntilConnected(cts.Token);
+                _ = Task.Run(async () => 
+                {
+                    try 
+                    {
+                        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                        await _client.ConnectAndWaitUntilConnected(cts.Token);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, $"Shopstr Plugin: Background connection failure");
+                    }
+                });
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Shopstr Plugin: Error while opening Nostr connection");
+                logger.LogError(ex, $"Shopstr Plugin: Error while configuring Nostr client");
             }
         }
 
