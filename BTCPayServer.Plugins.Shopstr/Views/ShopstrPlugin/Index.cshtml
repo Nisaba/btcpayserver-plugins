@@ -157,8 +157,19 @@ else
                             <div class="p-3">
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <label for="txtAppLocation@{@app.Id}" class="form-label">Location</label>
-                                        <input id="txtAppLocation@{@app.Id}" type="text" value="@app.Location" class="form-control" placeholder="must match shopstr filters" />
+                                        <label for="selAppLocation@{@app.Id}" class="form-label">Location</label>
+                                        <select id="selAppLocation@{@app.Id}" class="form-select">
+                                            <option value="" selected="@(string.IsNullOrEmpty(app.Location) ? "selected" : null)">Select a location</option>
+                                            @foreach (var group in ShopstrSettings.AvailableLocations)
+                                            {
+                                                <optgroup label="@group.Key">
+                                                    @foreach (var location in group.Value)
+                                                    {
+                                                        <option value="@location" selected="@(app.Location == location ? "selected" : null)">@location</option>
+                                                    }
+                                                </optgroup>
+                                            }
+                                        </select>
                                     </div>
                                     <div class="col-md-3">
                                         <label for="chkFlashSales@{@app.Id}" class="form-label">Flash Sales</label>
@@ -205,13 +216,15 @@ else
         </table>
     </div>
 
+
+
     @Html.AntiForgeryToken()
 
     <script type="text/javascript" >
         var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
     
     function BtSaveApp(appId) {
-        var location = $('#txtAppLocation' + appId).val();
+        var location = $('#selAppLocation' + appId).val();
         var flashSales = $('#chkFlashSales' + appId).is(':checked');
         var condition = $('#selCondition' + appId).val();
 
