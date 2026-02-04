@@ -85,33 +85,24 @@ else
 }
 @if (bNostr && bApp)
 {
-    <br />
-    <p>You are all set! You can now start selling your products on Shopstr.
-        <!-- Go to <a href="https://shopstr.market/" target="_blank">Shopstr Market</a> and connect your BTCPay store using your Nostr pubkey. --> </p>
-
-<!--    <form asp-action="SaveSettings" method="post" class="mb-3">
-        at Html.AntiForgeryToken()
-        <table class="table table-sm mt-0 mx-0" width="100%">
-            <tr>
-                <td width="150">
-                    <label for="ShopStrShop" class="form-label">Your Shopstr shop Id</label>
-                </td>
-                <td width="300" class="border-0 ps-0 align-middle">
-                    <input type="text"
-                           class="form-control"
-                           id="ShopStrShop"
-                           name="ShopStrShop"
-                           value=""
-                           required
-                           placeholder="Find this value in your Shopstr shop profile" />
-                </td>
-                <td align="center">
-                    <button id="SaveButton" type="submit" class="btn btn-primary" value="Save" name="Command">Save</button>
-                </td>
-            </tr>
-        </table>
-        </form> -->
-
+    <div class="row mb-4">
+        <div class="col-md-6 pe-md-2">
+            <a href="https://shopstr.market/marketplace" target="_blank" class="card text-decoration-none h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Browse Latest Listings</h5>
+                    <p class="card-text text-muted mb-0">Explore the most recent product listings on Shopstr Marketplace.</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 ps-md-2">
+            <a href="https://shopstr.market/my-listings" target="_blank" class="card text-decoration-none h-100">
+                <div class="card-body">
+                    <h5 class="card-title">My Listings</h5>
+                    <p class="card-text text-muted mb-0">Manage and view your published listings on the Shopstr Marketplace.</p>
+                </div>
+            </a>
+        </div>
+    </div>
 
     <br/>
 
