@@ -8,7 +8,7 @@
 	<PropertyGroup>
 		<Product>Shopstr</Product>
 		<Description>Shopstr plugin allows merchants to synchronize their BTCPay stores with Shopstr marketplaces.</Description>
-		<Version>1.1.0</Version>
+		<Version>1.1.1</Version>
 	</PropertyGroup>
 
 	<!-- Plugin development properties -->

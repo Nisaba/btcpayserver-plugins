@@ -85,9 +85,17 @@ else
 }
 @if (bNostr && bApp)
 {
+    var isTor = Context.Request.Host.Host.Contains(".onion");
+    var shopstrMarketplaceUrl = isTor
+        ? "http://sva5te372puuuyhnp4mrspewm76x2jqnzgctdfde474owrdonu4xyoyd.onion/"
+        : "https://shopstr.market/marketplace";
+    var shopstrMyListingsUrl = isTor
+        ? "http://sva5te372puuuyhnp4mrspewm76x2jqnzgctdfde474owrdonu4xyoyd.onion/my-listings"
+        : "https://shopstr.market/my-listings";
+
     <div class="row mb-4">
         <div class="col-md-6 pe-md-2">
-            <a href="https://shopstr.market/marketplace" target="_blank" class="card text-decoration-none h-100">
+            <a href="@shopstrMarketplaceUrl" target="_blank" class="card text-decoration-none h-100">
                 <div class="card-body">
                     <h5 class="card-title">Browse Latest Listings</h5>
                     <p class="card-text text-muted mb-0">Explore the most recent product listings on Shopstr Marketplace.</p>
@@ -95,7 +103,7 @@ else
             </a>
         </div>
         <div class="col-md-6 ps-md-2">
-            <a href="https://shopstr.market/my-listings" target="_blank" class="card text-decoration-none h-100">
+            <a href="@shopstrMyListingsUrl" target="_blank" class="card text-decoration-none h-100">
                 <div class="card-body">
                     <h5 class="card-title">My Listings</h5>
                     <p class="card-text text-muted mb-0">Manage and view your published listings on the Shopstr Marketplace.</p>

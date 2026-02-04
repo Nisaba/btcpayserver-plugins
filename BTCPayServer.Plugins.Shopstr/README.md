@@ -26,5 +26,6 @@ The "Unpublish" button removes the BTCPay products that have been published on S
 ## Version History
 - **1.0.1** - Initial release
 - **1.1.0** - UI improvements, better relay management, better synchronization with Shopstr listings attributes
+- **1.1.1** - Small fixes
  
 
