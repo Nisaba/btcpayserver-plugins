@@ -12,9 +12,19 @@ You also need to verify that the list of retailers is correctly retrieved from y
 
 ## Using Shopstr plugin
 You can now publish your BTCPay point-of-sale items on Nostr.
-<img width="938" height="715" alt="image" src="https://github.com/user-attachments/assets/536922fa-c67c-482e-9b36-c7bd2df23ab3" />
+<img width="1123" height="665" alt="image" src="https://github.com/user-attachments/assets/825f5157-a03e-4d82-80ca-1578af8b63cc" />
 
-In the "Location" field, you can enter a value that matches the list found in the "Location" filter on the Shopstr homepage. Click "Save".
+Expand the “Default Settings” option. You can set here Shopstr options. Once published, you will find these options in your listings on Shopstr. 
+
+<img width="1135" height="396" alt="image" src="https://github.com/user-attachments/assets/a0e10f70-b04f-4aa2-9833-deb8953af611" />
+
+Note: quantities and categories are managed directly in the Point of Sale app. These values are also synchronized during Nostr publishing. For categories, please enter a value that match with Shopstr default categories.
 
 Click the "Publish on Nostr" button. This creates the new products on Shopstr and updates them if they have been modified on the BTCPay side.
 The "Unpublish" button removes the BTCPay products that have been published on Shopstr.
+
+## Version History
+- **1.0.1** - Initial release
+- **1.1.0** - UI improvements, better relay management, better synchronization with Shopstr listings attributes
+ 
+
