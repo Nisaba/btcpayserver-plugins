@@ -20,6 +20,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             {
             // Altcoins
             { "XMR", new CryptoInfo("Monero", CryptoCategory.Altcoin) },
+            { "BTC-LIGHT", new CryptoInfo("Lightning Bitcoin", CryptoCategory.Altcoin) },
             { "BTC-LIQ", new CryptoInfo("Liquid Bitcoin", CryptoCategory.Altcoin) },
             { "BCH", new CryptoInfo("Bitcoin Cash", CryptoCategory.Altcoin) },
             { "LTC", new CryptoInfo("Litecoin", CryptoCategory.Altcoin) },
@@ -62,6 +63,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             { "Tron", "Tron" },
             { "ETH", "Ethereum" },
             { "SOL", "Solana" },
+            { "LIGHT", "Lightning" },
             { "LIQ", "Liquid" },
             { "BSC", "Binance" },
             { "MATIC", "Polygon" },
