@@ -7,7 +7,9 @@
 @model B2PSwapResult
 @inject DisplayFormatter DisplayFormatter
 @inject Safe Safe
-
+@{
+    var isLightningTo = Model.ToNetwork == "Lightning";
+}
 @if (!string.IsNullOrEmpty(Model.ErrorMsg))
 {
     <br /><p><b>Error: </b>@Model.ErrorMsg</p>
@@ -65,8 +67,14 @@
                     </div>
 
                     <div class="form-group mb-3">
-                        <label for="receivingAddress" class="form-label" data-required>Receiving address:</label>
-                        <input type="text" class="form-control font-monospace" id="receivingAddress" placeholder="XMR (Monero)" required>
+                        <label for="receivingAddress" class="form-label" data-required>@(isLightningTo ? "Lightning Invoice" : "Receiving address"):</label>
+                        <input type="text" class="form-control font-monospace" id="receivingAddress" placeholder="@(isLightningTo ? "BOLT11 invoice" : "XMR (Monero)")" required>
+                        @if (isLightningTo)
+                        {
+                            <div id="lightningLegend" class="form-text text-muted small mt-2">
+                                The Lightning invoice must be for the exact amount or amountless.
+                            </div>
+                        }
                         <span class="text-danger" id="receivingAddressError"></span>
                     </div>
 
@@ -102,6 +110,15 @@
     @foreach (var swap in Model.Swaps)
     {
         var providerDescription = swap.Provider.GetDisplayName();
+        
+        var fromFiatFixed = (decimal)swap.FromFiatFixedAmount;
+        var toFiatFixed = (decimal)swap.ToFiatFixedAmount;
+        var fixedPct = fromFiatFixed > 0 ? (toFiatFixed - fromFiatFixed) / fromFiatFixed : 0;
+
+        var fromFiatFloat = (decimal)swap.FromFiatFloatAmount;
+        var toFiatFloat = (decimal)swap.ToFiatFloatAmount;
+        var floatPct = fromFiatFloat > 0 ? (toFiatFloat - fromFiatFloat) / fromFiatFloat : 0;
+
         <div class="list-group list-group-flush">
             <div class="list-group-item bg-tile">
                 <div class="d-flex align-items-center justify-content-between mb-3">
@@ -121,7 +138,10 @@
                             <div class="fw-semibold">@swap.FromFixedAmount.ToString("F8") BTC</div>
                             <div class="text-muted small">@DisplayFormatter.Currency((decimal)swap.FromFiatFixedAmount, Model.FiatCurrency)</div>
                         </div>
-                        <span class="text-muted" style="font-size: 2rem;">→</span>
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="text-muted" style="font-size: 2rem; line-height: 1;">→</span>
+                            <small class="text-danger fw-bold" title="Price variation">@fixedPct.ToString("P2")</small>
+                        </div>
                         <div class="text-end">
                             <div class="fw-semibold">@swap.ToFixedAmount.ToString("F8") @Model.ToCrypto</div>
                             <div class="text-muted small">@DisplayFormatter.Currency((decimal)swap.ToFiatFixedAmount, Model.FiatCurrency)</div>
@@ -139,7 +159,10 @@
                             <div class="fw-semibold">@swap.FromFloatAmount.ToString("F8") BTC</div>
                             <div class="text-muted small">@DisplayFormatter.Currency((decimal)swap.FromFiatFloatAmount, Model.FiatCurrency)</div>
                         </div>
-                        <span class="text-muted" style="font-size: 2rem;">→</span>
+                        <div class="d-flex flex-column align-items-center">
+                            <span class="text-muted" style="font-size: 2rem; line-height: 1;">→</span>
+                            <small class="text-danger fw-bold" title="Price variation">@floatPct.ToString("P2")</small>
+                        </div>
                         <div class="text-end">
                             <div class="fw-semibold">@swap.ToFloatAmount.ToString("F8") @Model.ToCrypto</div>
                             <div class="text-muted small">@DisplayFormatter.Currency((decimal)swap.ToFiatFloatAmount, Model.FiatCurrency)</div>

@@ -114,6 +114,7 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
             };
             model.Swaps = await pluginService.GetSwapsListAsync(swapReq, req.ApiKey);
             model.ToCrypto = swapReq.ToCrypto;
+            model.ToNetwork = swapReq.ToNetwork;
             model.FiatCurrency = swapReq.FiatCurrency;
             model.RateRequest = swapReq;
             model.UserEmail = user?.Email ?? string.Empty;

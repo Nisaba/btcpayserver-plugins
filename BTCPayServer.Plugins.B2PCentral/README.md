@@ -126,5 +126,9 @@ What's new in v 2.0.1 :
 What's new in v 2.0.2 :
 - Fix issue in startup on new  plugin installation
 
+What's new in v 2.1.0 :
+- CCE.Cash and SageSwap added as swap providers
+- Bitcoin Lightning can now be a swap destination
+
 
 

@@ -218,6 +218,15 @@
                 $('#modalToAmount').text(`${swap.ToFloatAmount.toFixed(8)} ${toCrypto}`);
                 $('#modalToFiat').text(`${swap.ToFiatFloatAmount.toFixed(2)} ${fiatCurrency}`);
             }
+
+            const legend = document.getElementById('lightningLegend');
+            if (legend) {
+                if (isFixed) {
+                    legend.innerHTML = 'The Lightning invoice must be for the exact amount or amountless.';
+                } else {
+                    legend.innerHTML = 'The Lightning invoice must be <strong>amountless</strong>.';
+                }
+            }
         },
 
         confirmSwap: function () {

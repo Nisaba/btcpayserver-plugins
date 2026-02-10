@@ -7,6 +7,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
     {
         public string ErrorMsg { get; set; }
         public string ToCrypto { get; set; }
+        public string ToNetwork { get; set; }
         public string FiatCurrency { get; set; }
         public SwapRateRequest RateRequest { get; set; }
 
