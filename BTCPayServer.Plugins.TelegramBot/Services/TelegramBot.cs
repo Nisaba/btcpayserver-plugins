@@ -22,6 +22,11 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
 
         public TelegramBotAppData AppData => appData;
 
+        public void UpdateAppData(TelegramBotAppData newAppData)
+        {
+            appData = newAppData;
+        }
+
         private ITelegramBotClient? _bot;
         private CancellationTokenSource? _cancellationTokenSource;
 

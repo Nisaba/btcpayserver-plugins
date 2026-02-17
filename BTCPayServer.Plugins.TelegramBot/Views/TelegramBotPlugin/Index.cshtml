@@ -51,6 +51,7 @@ else
                 <th>Bot Token</th>
                 <th></th>
                 <th></th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -64,6 +65,7 @@ else
                         <input type="checkbox" class="btcpay-toggle me-3" id="chkBotEnabled@{@app.Id}" checked="@app.IsEnabled" />
                     </td>
                     <td><button id="btSave@{@app.Id}" class="btn btn-secondary" onclick="BtSaveApp('@app.Id')">Save</button></td>
+                    <td><button id="btRefresh@{@app.Id}" class="btn btn-outline-primary" onclick="BtRefreshApp('@app.Id')" title="Reload product data from Point of Sale">⟳ Refresh</button></td>
                 </tr>
             }
         </tbody>
@@ -96,6 +98,26 @@ else
             error: function (xhr, status, error) {
                 alert("Error: " + error + " - " + xhr.responseText);
                 $('#BtSave' + appId).show();
+            }
+        });
+    }
+
+    function BtRefreshApp(appId) {
+        $('#btRefresh' + appId).prop('disabled', true).text('⟳ ...');
+        $.ajax({
+            url: 'TelegramBot/RefreshApp',
+            type: 'POST',
+            data: { appId: appId },
+            headers: {
+                'RequestVerificationToken': antiForgeryToken
+            },
+            success: function(result) {
+                alert("Bot data refreshed successfully");
+                $('#btRefresh' + appId).prop('disabled', false).text('⟳ Refresh');
+            },
+            error: function (xhr, status, error) {
+                alert("Error: " + error + " - " + xhr.responseText);
+                $('#btRefresh' + appId).prop('disabled', false).text('⟳ Refresh');
             }
         });
     }

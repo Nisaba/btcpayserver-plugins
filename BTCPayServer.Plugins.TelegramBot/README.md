@@ -37,6 +37,8 @@ You can personalize your bot's appearance to match your store using BotFather:
 Your bot should now be active. Users can start the bot to view products from your linked Point of Sale.
 When BTCPay restarts, all the active bots will automatically reconnect.
 
+**Note**: If you update products in the linked Point of Sale, please click on Refresh button to update data in the bot.
+
 ### 4. Checkout configuration
 During checkout, Telegram customer can enter email only or its shipping address or nothing... This behaviour is set in the Point of Sales settings:
 
@@ -58,3 +60,8 @@ You will find useful information about the Telegram order in the invoice details
 ## Donations
 If you find this plugin useful, consider supporting its development, making a donation here:
 [https://donate.nisaba-solutions.com/](https://donate.nisaba-solutions.com/)
+
+## Version History
+- **1.0.1** - Initial release
+- **1.0.2** - Fix: add a Refresh button to update products data in the bot when they are updated in the linked Point of Sale
+

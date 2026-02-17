@@ -50,5 +50,39 @@ namespace BTCPayServer.Plugins.TelegramBot.Controllers
             return RedirectToAction("Index", new { storeId = storeId });
         }
 
+        [HttpPost]
+        [Route("RefreshApp")]
+        public async Task<IActionResult> RefreshApp([FromRoute] string storeId, [FromForm] string appId)
+        {
+            try
+            {
+                var result = await pluginService.RefreshBotAppData(storeId, appId);
+                if (result)
+                {
+                    TempData.SetStatusMessageModel(new StatusMessageModel()
+                    {
+                        Message = "Bot data refreshed successfully",
+                        Severity = StatusMessageModel.StatusSeverity.Success
+                    });
+                }
+                else
+                {
+                    TempData.SetStatusMessageModel(new StatusMessageModel()
+                    {
+                        Message = "Bot not found or app not available",
+                        Severity = StatusMessageModel.StatusSeverity.Warning
+                    });
+                }
+            }
+            catch (System.Exception ex)
+            {
+                TempData.SetStatusMessageModel(new StatusMessageModel()
+                {
+                    Message = $"Error refreshing bot data: {ex.Message}",
+                    Severity = StatusMessageModel.StatusSeverity.Error
+                });
+            }
+            return RedirectToAction("Index", new { storeId = storeId });
+        }
     }
 }

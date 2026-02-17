@@ -389,5 +389,34 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 logger.LogError(ex, "TelegramBotPlugin:UpdateInventoryAsync()");
             }
         }
+
+        public async Task<bool> RefreshBotAppData(string storeId, string appId)
+        {
+            try
+            {
+                var botService = telegramBots.FirstOrDefault(b => b.AppData.Id == appId);
+                if (botService == null)
+                    return false;
+
+                var app = (await appService.GetApps("PointOfSale"))
+                    .FirstOrDefault(a => a.Id == appId && a.StoreDataId == storeId);
+
+                if (app == null)
+                    return false;
+
+                var appSettings = app.GetSettings<PointOfSaleSettings>();
+                var updatedAppData = BuildAppData(app, appSettings, botService.AppData.BotToken, botService.AppData.IsEnabled);
+
+                botService.UpdateAppData(updatedAppData);
+
+                logger.LogInformation("TelegramBot AppData refreshed for app {AppId}", appId);
+                return true;
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "TelegramBotPlugin:RefreshBotAppData()");
+                throw;
+            }
+        }
     }
 }

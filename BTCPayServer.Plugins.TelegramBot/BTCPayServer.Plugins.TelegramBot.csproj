@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
 	</PropertyGroup>
@@ -9,7 +9,7 @@
 		<Description>
 			Allows merchants to create a Telegram Bot and synchronize their BTCPay points of sales with it.
 		</Description>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 	</PropertyGroup>
 
 	<!-- Plugin development properties -->
