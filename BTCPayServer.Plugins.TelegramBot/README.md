@@ -32,12 +32,13 @@ You can personalize your bot's appearance to match your store using BotFather:
 5.  You can then activate or deactivate the bot as needed.
 5.  Save the configuration.
 
-<img width="1025" height="338" alt="image" src="https://github.com/user-attachments/assets/14ea54c2-2a13-4470-ae96-5945168b1779" />
+<img width="1126" height="401" alt="image" src="https://github.com/user-attachments/assets/b6c8752d-d075-4d0b-98f8-7bd5a21d5224" />
+
 
 Your bot should now be active. Users can start the bot to view products from your linked Point of Sale.
 When BTCPay restarts, all the active bots will automatically reconnect.
 
-**Note**: If you update products in the linked Point of Sale, please click on Refresh button to update data in the bot.
+**Note**: If you update products in the linked Point of Sale, please click on **Refresh** button to update data in the bot.
 
 ### 4. Checkout configuration
 During checkout, Telegram customer can enter email only or its shipping address or nothing... This behaviour is set in the Point of Sales settings:
