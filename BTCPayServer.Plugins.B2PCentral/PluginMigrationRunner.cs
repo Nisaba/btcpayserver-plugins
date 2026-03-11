@@ -8,21 +8,14 @@ using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.B2PCentral;
 
-public class PluginMigrationRunner : IHostedService
+public class PluginMigrationRunner(
+    ISettingsRepository settingsRepository,
+    B2PCentralPluginDbContextFactory pluginDbContextFactory,
+    B2PCentralPluginService pluginService) : IHostedService
 {
-    private readonly B2PCentralPluginDbContextFactory _pluginDbContextFactory;
-    private readonly B2PCentralPluginService _pluginService;
-    private readonly ISettingsRepository _settingsRepository;
-
-    public PluginMigrationRunner(
-        ISettingsRepository settingsRepository,
-        B2PCentralPluginDbContextFactory pluginDbContextFactory,
-        B2PCentralPluginService pluginService)
-    {
-        _settingsRepository = settingsRepository;
-        _pluginDbContextFactory = pluginDbContextFactory;
-        _pluginService = pluginService;
-    }
+    private readonly B2PCentralPluginDbContextFactory _pluginDbContextFactory = pluginDbContextFactory;
+    private readonly B2PCentralPluginService _pluginService = pluginService;
+    private readonly ISettingsRepository _settingsRepository = settingsRepository;
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {

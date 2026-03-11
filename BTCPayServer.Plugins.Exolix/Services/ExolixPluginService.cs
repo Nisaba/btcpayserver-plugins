@@ -1,26 +1,23 @@
-﻿using Microsoft.Extensions.Logging;
-using BTCPayServer.Client;
+﻿using BTCPayServer.Client.Models;
+using BTCPayServer.Data;
+using BTCPayServer.HostedServices;
+using BTCPayServer.Models.StoreViewModels;
+using BTCPayServer.Payments.Bitcoin;
+using BTCPayServer.Payouts;
+using BTCPayServer.Plugins.Exolix.Model;
+using BTCPayServer.Services.Invoices;
+using BTCPayServer.Services.Stores;
+using BTCPayServer.Services.Wallets;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NBitcoin;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BTCPayServer.Plugins.Exolix.Model;
-using Microsoft.EntityFrameworkCore;
-using BTCPayServer.Lightning;
-using Newtonsoft.Json;
-using System.Threading;
-using BTCPayServer.Services.Stores;
 using System.Net.Http;
-using BTCPayServer.Services.Wallets;
-using BTCPayServer.Services.Invoices;
-using BTCPayServer.Client.Models;
-using BTCPayServer.Data;
-using BTCPayServer.Models.StoreViewModels;
-using BTCPayServer.Payments.Bitcoin;
-using NBitcoin;
-using BTCPayServer.HostedServices;
-using BTCPayServer.Payouts;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.Exolix.Services
 {
@@ -42,7 +39,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
         {
             try
             {
-                using var _context = pluginDbContextFactory.CreateContext();
+                await using var _context = pluginDbContextFactory.CreateContext();
                 var settings = await _context.ExolixSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
@@ -63,7 +60,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
         {
             try
             {
-                using var _context = pluginDbContextFactory.CreateContext();
+                await using var _context = pluginDbContextFactory.CreateContext();
                 var dbSettings = await _context.ExolixSettings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
                 if (dbSettings == null)
                 {
@@ -93,7 +90,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
         {
             try
             {
-                using var _context = pluginDbContextFactory.CreateContext();
+                await using var _context = pluginDbContextFactory.CreateContext();
                 var txs = await _context.ExolixTransactions.Where(a => a.StoreId == storeId).ToListAsync();
                 return txs.Reverse<ExolixTx>().ToList();
             }
@@ -108,7 +105,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
         {
             try
             {
-                using var _context = pluginDbContextFactory.CreateContext();
+                await using var _context = pluginDbContextFactory.CreateContext();
                 var txs = await _context.ExolixMerchantTransactions.Where(a => a.StoreId == storeId).ToListAsync();
                 return txs.Reverse<ExolixMerchantTx>().ToList();
             }
@@ -123,7 +120,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
         {
             try
             {
-                using var _context = pluginDbContextFactory.CreateContext();
+                await using var _context = pluginDbContextFactory.CreateContext();
                 await _context.ExolixTransactions.AddAsync(tx);
                 await _context.SaveChangesAsync();
             }
@@ -138,7 +135,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
         {
             try
             {
-                using var _context = pluginDbContextFactory.CreateContext();
+                await using var _context = pluginDbContextFactory.CreateContext();
                 await _context.ExolixMerchantTransactions.AddAsync(tx);
                 await _context.SaveChangesAsync();
             }

@@ -123,8 +123,6 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
             }
 
             await context.SaveChangesAsync();
-            return;
-
         }
         catch (Exception e)
         {

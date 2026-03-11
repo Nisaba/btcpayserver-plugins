@@ -4,6 +4,7 @@
 @using Newtonsoft.Json
 @using Newtonsoft.Json.Linq
 @inject Safe Safe
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 
 @inject ExolixPluginService pluginService
 @{
@@ -25,6 +26,7 @@
 
     var vueModel = new
     {
+        antiForgeryToken = Antiforgery.GetAndStoreTokens(Context).RequestToken,
         acceptedCryptos = settings.AcceptedCryptos,
         availableCryptos = ExolixSettings.AvailableCryptos.ToDictionary(
             kvp => kvp.Key,

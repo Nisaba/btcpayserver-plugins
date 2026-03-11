@@ -1,14 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿using BTCPayServer.Plugins.Exolix.Model;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using BTCPayServer.Plugins.Exolix.Model;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace BTCPayServer.Plugins.Exolix.Services
 {
@@ -88,10 +85,12 @@ namespace BTCPayServer.Plugins.Exolix.Services
             }
         }
 
-        private string GetNetwork(string crypto)
+        private static string GetNetwork(string crypto) => crypto switch
         {
-            return crypto == "BNB" ? "BSC" : (crypto == "POL" ? "MATIC" : crypto);
-        }
+            "BNB" => "BSC",
+            "POL" => "MATIC",
+            _ => crypto
+        };
 
     }
 }

@@ -95,6 +95,11 @@ const ExolixCheckout = {
                 formData.append('BtcAmount', btcAmount);
                 formData.append('BtcPayInvoiceId', window.exolixData.invoiceId);
 
+                const antiForgeryToken = window.exolixData.antiForgeryToken || document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                if (antiForgeryToken) {
+                    formData.append('__RequestVerificationToken', antiForgeryToken);
+                }
+
                 const response = await fetch(`/plugins/${window.exolixData.storeId}/ExolixSwap`, {
                     method: 'POST',
                     body: formData

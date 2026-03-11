@@ -1,7 +1,6 @@
 ﻿using BTCPayServer.Plugins.Exolix.Model;
 using BTCPayServer.Plugins.Exolix.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
