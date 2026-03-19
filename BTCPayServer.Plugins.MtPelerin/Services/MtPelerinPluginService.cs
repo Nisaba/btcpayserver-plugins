@@ -51,7 +51,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
         {
             try
             {
-                using var context = pluginDbContextFactory.CreateContext();
+                await using var context = pluginDbContextFactory.CreateContext();
                 var settings = await context.MtPelerinSettings.FindAsync(storeId);
                 if (settings == null)
                 {
@@ -71,7 +71,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
         {
             try
             {
-                using var context = pluginDbContextFactory.CreateContext();
+                await using var context = pluginDbContextFactory.CreateContext();
                 var dbSettings = await context.MtPelerinSettings.FindAsync(settings.StoreId);
                 if (dbSettings == null)
                 {
@@ -95,6 +95,23 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 throw;
             }
         }
+
+        public async Task<bool> CheckPayouts(string storeId)
+        {
+            try
+            {
+                await using var btcPayCtx = btcPayDbContextFactory.CreateContext();
+                return await btcPayCtx.Payouts.AnyAsync(p => p.StoreData.Id == storeId && 
+                                                        new[] { PayoutState.AwaitingPayment, PayoutState.AwaitingApproval, PayoutState.InProgress }
+                                                        .Contains(p.State));
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "MtPelerinPlugin:CheckPayouts()");
+                throw;
+            }
+        }
+
         public async Task CreatePayout(string storeId, MtPelerinOperation operation, CancellationToken cancellationToken = default)
         {
             try

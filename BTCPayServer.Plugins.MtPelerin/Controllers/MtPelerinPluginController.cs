@@ -25,7 +25,10 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
                 Settings = await pluginService.GetStoreSettings(storeId),
                 IsPayoutCreated = (TempData[WellKnownTempData.SuccessMessage] ?? "").ToString().Contains("Payout created!")
             };
-           
+            if (!model.IsPayoutCreated)
+            {
+                model.IsPayoutsOK = await pluginService.CheckPayouts(storeId);
+            }
             return View(model);
         }
 

@@ -165,7 +165,7 @@
             <tr>
                 <td>
                     Percent to sale/swap:&nbsp;
-                    <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setMtPelerinValues()" />
+                    <input id="percentToSend" type="number" min="0" max="100" value="95" />
                     <br />
                 </td>
                 <td width="25" />
@@ -183,16 +183,22 @@
             </small></i>
         <br />
 
+        <br />
         @if (Model.IsPayoutCreated)
         {
-            <br />
             <div>
                 <strong>Success!</strong> Your payout has been created.<br />
                 If you have set an automatic payout processor, the payment will be sent automatically to Mt Pelerin.<br/>
                 Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.<br />
                 If an issue arises, please contact hello@mtpelerin.com.
             </div>
-        }
+            } else
+            {
+                <div>
+                    <strong>Be careful !</strong> There is already a pending payout in your store.<br />
+                    Please process it before creating a new one to avoid issues.
+                </div>
+            }
 
         <script type="text/javascript">
         const OnChainBalance = @walletConfig.OnChainBalance;
@@ -205,6 +211,10 @@
         const confirmMtPelerin = document.getElementById('confirmMtPelerin');
         const sendSection = document.getElementById('sendSection');
         var popupMtPelerin;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            percentToSend.addEventListener('input', setMtPelerinValues);
+        });
 
         function setMtPelerinValues() {
             const percent = parseFloat(percentToSend.value) || 0;
