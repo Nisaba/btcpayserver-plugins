@@ -120,7 +120,7 @@
     } else
     {
         var walletConfig = await MtPelerinPluginService.GetBalances(Model.Settings.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
-        var signingInfo = await MtPelerinPluginService.GetSigningAdressInfo(Model.Settings.StoreId); ;
+        var signingInfo = await MtPelerinPluginService.GetSigningAdressInfo(Model.Settings.StoreId, Context.RequestAborted);
 
         <table class="table table-sm mt-0 mx-0">
             <tr>
@@ -305,10 +305,10 @@
             })
             .then(response => {
                 if (response.ok) {
-                    throw new Error('Network response was not ok');
-                } else {
                     if (isOnChain)
                         popupMtPelerin.close();
+                } else {
+                    throw new Error('Network response was not ok');
                 }
                 window.location.reload();
             })

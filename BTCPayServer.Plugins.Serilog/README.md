@@ -41,4 +41,8 @@ What's new in v 1.2.2 :
 What's new in v 1.2.3 :
 - Small fixes
 
+What's new in v 1.3.1 :
+- Migration to .NET 10 for BTCPay release v2.3.6 and above
+
+
 If you like my work, you can send me with a few sats here: donate@btcpay2.nisaba.solutions. Thank you !

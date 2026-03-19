@@ -52,7 +52,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
             try
             {
                 using var context = pluginDbContextFactory.CreateContext();
-                var settings = await context.MtPelerinSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
+                var settings = await context.MtPelerinSettings.FindAsync(storeId);
                 if (settings == null)
                 {
                     settings = new MtPelerinSettings { StoreId = storeId, Lang = "en", Phone = string.Empty, UseBridgeApp = false };
@@ -72,7 +72,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
             try
             {
                 using var context = pluginDbContextFactory.CreateContext();
-                var dbSettings = await context.MtPelerinSettings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
+                var dbSettings = await context.MtPelerinSettings.FindAsync(settings.StoreId);
                 if (dbSettings == null)
                 {
                     context.MtPelerinSettings.Add(settings);
@@ -160,7 +160,6 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                     case ClaimRequest.ClaimResult.NotStarted:
                         throw new Exception("Pull payment has not started yet");
                 }
-                ;
             }
             catch (Exception e)
             {
@@ -169,7 +168,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
             }
         }
 
-        public async Task<MtPelerinSigningInfo> GetSigningAdressInfo(string storeId)
+        public async Task<MtPelerinSigningInfo> GetSigningAdressInfo(string storeId, CancellationToken cancellationToken = default)
         {
             var signInfo = new MtPelerinSigningInfo
             {
@@ -191,9 +190,10 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 if (btcNetwork == null)
                     return signInfo;
 
-                using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
+                using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                cts.CancelAfter(TimeSpan.FromSeconds(3));
                 var wallet = walletProvider.GetWallet(btcNetwork);
-                var utxos = await wallet.GetUnspentCoins(derivationScheme.AccountDerivation);
+                var utxos = await wallet.GetUnspentCoins(derivationScheme.AccountDerivation, cancellation: cts.Token);
                 if (utxos.Length == 0)
                     return signInfo;
 
@@ -203,7 +203,8 @@ namespace BTCPayServer.Plugins.MtPelerin.Services
                 var explorer = explorerClientProvider.GetExplorerClient(btcNetwork);
                 var masterKeyString = await explorer.GetMetadataAsync<string>(
                     derivationScheme.AccountDerivation,
-                    WellknownMetadataKeys.MasterHDKey);
+                    WellknownMetadataKeys.MasterHDKey,
+                    cts.Token);
 
                 if (!string.IsNullOrEmpty(masterKeyString) && utxo.KeyPath != null)
                 {

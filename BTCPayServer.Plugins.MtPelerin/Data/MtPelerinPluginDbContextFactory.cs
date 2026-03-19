@@ -18,7 +18,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<MtPelerinP
         // https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers?tabs=dotnet-core-cli
         builder.UseNpgsql("User ID=postgres;Host=127.0.0.1;Port=39372;Database=designtimebtcpay");
 
-        return new MtPelerinPluginDbContext(builder.Options, true);
+        return new MtPelerinPluginDbContext();
     }
 }
 
@@ -32,6 +32,6 @@ public class MtPelerinPluginDbContextFactory : BaseDbContextFactory<MtPelerinPlu
     {
         var builder = new DbContextOptionsBuilder<MtPelerinPluginDbContext>();
         ConfigureBuilder(builder);
-        return new MtPelerinPluginDbContext(builder.Options);
+        return new MtPelerinPluginDbContext();
     }
 }
