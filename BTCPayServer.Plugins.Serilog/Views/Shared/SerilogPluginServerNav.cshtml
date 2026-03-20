@@ -5,7 +5,7 @@
 @using BTCPayServer.Client
 
 <li class="nav-item" permission="@Policies.CanModifyServerSettings">
-    <a asp-controller="UIPlugin" asp-action="Index" class="nav-link @ViewData.IsActivePage(PluginNavPages.Index)">
+    <a layout-menu-item="@PluginNavPages.Index" asp-controller="UIPlugin" asp-action="Index" class="nav-link">
         <img src="/Resources/img/Serilog.png" />&nbsp;
         <span>Serilog Server Notifications&nbsp</span>
     </a>

@@ -1,7 +1,5 @@
-﻿using BTCPayServer.Abstractions.Contracts;
-using BTCPayServer.Plugins.Exolix.Services;
+﻿using BTCPayServer.Plugins.Exolix.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using System.Threading;
 using System.Threading.Tasks;
 

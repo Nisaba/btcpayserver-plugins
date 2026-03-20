@@ -7,33 +7,25 @@ using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.MtPelerin;
 
-public class PluginMigrationRunner : IHostedService
-{
-    private readonly MtPelerinPluginDbContextFactory _pluginDbContextFactory;
-    private readonly ISettingsRepository _settingsRepository;
-
-    public PluginMigrationRunner(
+public class PluginMigrationRunner(
         ISettingsRepository settingsRepository,
-        MtPelerinPluginDbContextFactory pluginDbContextFactory)
-    {
-        _settingsRepository = settingsRepository;
-        _pluginDbContextFactory = pluginDbContextFactory;
-    }
+        MtPelerinPluginDbContextFactory pluginDbContextFactory) : IHostedService
+{
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         try
         {
-            var settings = await _settingsRepository.GetSettingAsync<PluginDataMigrationHistory>() ??
+            var settings = await settingsRepository.GetSettingAsync<PluginDataMigrationHistory>() ??
                        new PluginDataMigrationHistory();
-            await using var ctx = _pluginDbContextFactory.CreateContext();
+            await using var ctx = pluginDbContextFactory.CreateContext();
             await ctx.Database.MigrateAsync(cancellationToken);
 
             // settings migrations
             if (!settings.UpdatedSomething)
             {
                 settings.UpdatedSomething = true;
-                await _settingsRepository.UpdateSetting(settings);
+                await settingsRepository.UpdateSetting(settings);
             }
         } catch { }
     }

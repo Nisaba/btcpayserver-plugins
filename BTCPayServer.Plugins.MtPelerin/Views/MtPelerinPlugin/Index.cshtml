@@ -120,7 +120,7 @@
     } else
     {
         var walletConfig = await MtPelerinPluginService.GetBalances(Model.Settings.StoreId, $"{Context.Request.Scheme}://{Context.Request.Host}");
-        var signingInfo = await MtPelerinPluginService.GetSigningAdressInfo(Model.Settings.StoreId); ;
+        var signingInfo = await MtPelerinPluginService.GetSigningAdressInfo(Model.Settings.StoreId, Context.RequestAborted);
 
         <table class="table table-sm mt-0 mx-0">
             <tr>
@@ -165,7 +165,7 @@
             <tr>
                 <td>
                     Percent to sale/swap:&nbsp;
-                    <input id="percentToSend" type="number" min="0" max="100" value="95" onchange="setMtPelerinValues()" />
+                    <input id="percentToSend" type="number" min="0" max="100" value="95" />
                     <br />
                 </td>
                 <td width="25" />
@@ -183,16 +183,22 @@
             </small></i>
         <br />
 
+        <br />
         @if (Model.IsPayoutCreated)
         {
-            <br />
             <div>
                 <strong>Success!</strong> Your payout has been created.<br />
                 If you have set an automatic payout processor, the payment will be sent automatically to Mt Pelerin.<br/>
                 Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment">click here</a> to validate the payout.<br />
                 If an issue arises, please contact hello@mtpelerin.com.
             </div>
-        }
+            } else
+            {
+                <div style="color:darkred">
+                    <strong>Be careful !</strong> There is already a pending payout in your store.<br />
+                    Please process it before creating a new one to avoid issue.
+                </div>
+            }
 
         <script type="text/javascript">
         const OnChainBalance = @walletConfig.OnChainBalance;
@@ -205,6 +211,10 @@
         const confirmMtPelerin = document.getElementById('confirmMtPelerin');
         const sendSection = document.getElementById('sendSection');
         var popupMtPelerin;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            percentToSend.addEventListener('input', setMtPelerinValues);
+        });
 
         function setMtPelerinValues() {
             const percent = parseFloat(percentToSend.value) || 0;
@@ -305,10 +315,10 @@
             })
             .then(response => {
                 if (response.ok) {
-                    throw new Error('Network response was not ok');
-                } else {
                     if (isOnChain)
                         popupMtPelerin.close();
+                } else {
+                    throw new Error('Network response was not ok');
                 }
                 window.location.reload();
             })

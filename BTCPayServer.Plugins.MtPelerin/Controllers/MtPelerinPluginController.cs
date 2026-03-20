@@ -5,7 +5,6 @@ using BTCPayServer.Plugins.MtPelerin.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.MtPelerin.Controllers
@@ -26,7 +25,10 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
                 Settings = await pluginService.GetStoreSettings(storeId),
                 IsPayoutCreated = (TempData[WellKnownTempData.SuccessMessage] ?? "").ToString().Contains("Payout created!")
             };
-           
+            if (!model.IsPayoutCreated)
+            {
+                model.IsPayoutsOK = await pluginService.CheckPayouts(storeId);
+            }
             return View(model);
         }
 
@@ -43,7 +45,7 @@ namespace BTCPayServer.Plugins.MtPelerin.Controllers
                 try
                 {
                     await pluginService.UpdateSettings(model.Settings);
-                    TempData[WellKnownTempData.SuccessMessage] = "Settings successfuly saved";
+                    TempData[WellKnownTempData.SuccessMessage] = "Settings successfully saved";
                 }
                 catch (Exception ex)
                 {
