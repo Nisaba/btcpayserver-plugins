@@ -42,5 +42,8 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.P2P
 
         [Description("Mostro")]
         Mostro = 11,
+
+        [Description("Bitania")]
+        Bitania = 12,
     }
 }
