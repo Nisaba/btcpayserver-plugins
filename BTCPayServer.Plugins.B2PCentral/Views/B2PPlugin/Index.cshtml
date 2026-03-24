@@ -152,6 +152,7 @@
 
                     function OnChainSearchClick() {
                         var tbl = [];
+                        if (document.querySelector('#chkBitania').checked) tbl.push(@((short)ProvidersEnum.Bitania));
                         if (document.querySelector('#chkHodl').checked) tbl.push(@((short)ProvidersEnum.HodlHodl));
                         if (document.querySelector('#chkNoo').checked) tbl.push(@((short)ProvidersEnum.NoOnes));
                         if (document.querySelector('#chkLocalSw').checked) tbl.push(@((short)ProvidersEnum.LocalCoinSwap));
@@ -170,8 +171,13 @@
                 <b>Select providers:</b><br/>
                 <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
                     <div style="display: flex; align-items: center; min-width: 150px;">
+                        <input id="chkBitania" type="checkbox" class="form-check-input me-2" checked />
+                        <img src="/Resources/img/Bitania.webp" style="width: 28px; height: 28px; margin-right: 8px;" />
+                        <label for="chkBitania" class="form-check-label" style="cursor: pointer;">Bitania</label>
+                    </div>
+                    <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkHodl" type="checkbox" class="form-check-input me-2" checked />
-                        <img src="/Resources/img/HodlHodl.webp" style="width: 28px; height: 28px; margin-right: 8px;"/>
+                        <img src="/Resources/img/HodlHodl.webp" style="width: 28px; height: 28px; margin-right: 8px;" />
                         <label for="chkHodl" class="form-check-label" style="cursor: pointer;">HodlHodl</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">

@@ -63,10 +63,14 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
         MAJESTIC_BANK = 18,
 
         [Description("CCE.Cash")]
-        CCECash = 19,
+        CCE_CASH = 19,
 
         [Description("SageSwap")]
-        SageSwap = 20,
+        SAGE_SWAP = 20,
+
+        [Description("Bitania")]
+        BITANIA = 21,
+
     }
 
     public static class SwapProviders
@@ -94,8 +98,9 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.EXOLIX,
             SwapProvidersEnum.EASY_BIT,
             SwapProvidersEnum.PEGASUS_SWAP,
-            SwapProvidersEnum.CCECash,
-            SwapProvidersEnum.SageSwap
+            SwapProvidersEnum.CCE_CASH,
+            SwapProvidersEnum.SAGE_SWAP,
+            SwapProvidersEnum.BITANIA
         ];
 
         public static readonly SwapProvidersEnum[] KYCProviders = [
