@@ -69,7 +69,9 @@ Here you will find the list of swaps you have executed from your BTC balance.
 - **1.3.1** - Add EUR stablecoins (Select them in the Exolix configuration page so that they are active at checkout), fix in copy buttons in checkout, small improvements
 - **1.3.2** - Fix crash on BTCPay v.2.3.0
 - **1.3.3** - Fix: At checkout, display a message to select Bitcoin payment first before selecting Altcoins, if the user has selected another payment method (ie Lightning, or Monero / Litecoin for those run a node) just before. This ensures the correct BTC amount and address are retrieved for the swap.
-- **1.3.4** - Fix crash on BTCPay v.2.3.6, migration to .NET 10
+- **1.3.4** - Fix issue in checkout for BTCPay 2.3.6
+- **1.3.5** - Fix crash on BTCPay v.2.3.7, migration to .NET 10
+
 
   
 
