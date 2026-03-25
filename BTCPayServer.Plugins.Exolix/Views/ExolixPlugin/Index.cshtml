@@ -1,4 +1,5 @@
 @using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Abstractions.Models
 @using BTCPayServer.Plugins.Exolix.Views
 @using BTCPayServer.Plugins.Exolix.Model
 @using BTCPayServer.Client
@@ -9,7 +10,8 @@
 
 @model BTCPayServer.Plugins.Exolix.Model.ExolixModel
 @{
-    ViewData.SetActivePage(PluginNavPages.Index, "Exolix plugin");
+    ViewData.SetLayoutModel(new LayoutModel(nameof(PluginNavPages.Index), "Exolix plugin")
+    { ActiveCategory = nameof(PluginNavPages) });
 }
 
 <table>
