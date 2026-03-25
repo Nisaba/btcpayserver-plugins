@@ -156,7 +156,7 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                 if (createdSwap != null && createdSwap.Success)
                 {
                     var sProvider = req.Provider.GetDisplayName();
-                    var t = await pluginService.CreatePayout(storeId, sProvider, createdSwap, req);
+                    var (pullPaymentId, payoutId) = await pluginService.CreatePayout(storeId, sProvider, createdSwap, req);
                     var dbSwap = new B2PStoreSwap
                     {
                         StoreId = storeId,
@@ -169,8 +169,8 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                         ToAmount = req.ToAmount,
                         ToCrypto = swap.ToCrypto,
                         ToNetwork = swap.ToNetwork,
-                        BTCPayPullPaymentId = t.Item1,
-                        BTCPayPayoutId = t.Item2
+                        BTCPayPullPaymentId = pullPaymentId,
+                        BTCPayPayoutId = payoutId
                     };
                     await pluginService.AddSwapInDb(dbSwap);
                     TempData[WellKnownTempData.SuccessMessage] = $"Payout created! {sProvider} Swap ID: {createdSwap.SwapId}";

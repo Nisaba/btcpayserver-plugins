@@ -1,5 +1,4 @@
-﻿using Fido2NetLib;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Reflection;
 
 namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps

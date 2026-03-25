@@ -130,7 +130,8 @@ What's new in v 2.1.0 :
 - CCE.Cash and SageSwap added as Swap providers
 - Bitcoin Lightning can now be a Swap destination
 
-What's new in v 2.1.1 :
+What's new in v 2.2.0 :
+- Migration to .NET 10 for BTCPay release v2.3.7 and above
 - Bitania added as P2P and Swap provider
 
 

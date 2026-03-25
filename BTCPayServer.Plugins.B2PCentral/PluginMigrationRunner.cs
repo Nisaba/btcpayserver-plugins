@@ -13,26 +13,22 @@ public class PluginMigrationRunner(
     B2PCentralPluginDbContextFactory pluginDbContextFactory,
     B2PCentralPluginService pluginService) : IHostedService
 {
-    private readonly B2PCentralPluginDbContextFactory _pluginDbContextFactory = pluginDbContextFactory;
-    private readonly B2PCentralPluginService _pluginService = pluginService;
-    private readonly ISettingsRepository _settingsRepository = settingsRepository;
-
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var settings = await _settingsRepository.GetSettingAsync<PluginDataMigrationHistory>() ??
+        var settings = await settingsRepository.GetSettingAsync<PluginDataMigrationHistory>() ??
                        new PluginDataMigrationHistory();
-        await using var ctx = _pluginDbContextFactory.CreateContext();
+        await using var ctx = pluginDbContextFactory.CreateContext();
         await ctx.Database.MigrateAsync(cancellationToken);
 
         // settings migrations
         if (!settings.UpdatedSomething)
         {
             settings.UpdatedSomething = true;
-            await _settingsRepository.UpdateSetting(settings);
+            await settingsRepository.UpdateSetting(settings);
         }
 
         // test record
-        // await _pluginService.AddTestDataRecord();
+        // await pluginService.AddTestDataRecord();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

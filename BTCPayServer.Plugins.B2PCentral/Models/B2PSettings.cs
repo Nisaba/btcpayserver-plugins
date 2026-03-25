@@ -23,7 +23,7 @@ public class B2PSettings
     {
         get
         {
-            return string.IsNullOrEmpty(ProvidersString) ? new  List<ProvidersEnum>() : ProvidersString.Split(",").ToList().Select(s => (ProvidersEnum)Enum.Parse(typeof(ProvidersEnum), s)).ToList();
+            return string.IsNullOrEmpty(ProvidersString) ? [] : ProvidersString.Split(',').Select(Enum.Parse<ProvidersEnum>).ToList();
         }
         set
         {

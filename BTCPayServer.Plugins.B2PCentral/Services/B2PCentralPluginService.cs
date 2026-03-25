@@ -17,14 +17,12 @@ using BTCPayServer.Services.Invoices;
 using BTCPayServer.Services.Stores;
 using BTCPayServer.Services.Wallets;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NBitcoin;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -75,7 +73,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
     {
         try
         {
-            using var context = pluginDbContextFactory.CreateContext();
+            await using var context = pluginDbContextFactory.CreateContext();
             var settings = await context.B2PSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
             if (settings == null)
             {
@@ -95,9 +93,11 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
     {
         try
         {
-            using var context = pluginDbContextFactory.CreateContext();
-            var txs = await context.Swaps.Where(a => a.StoreId == storeId).ToListAsync();
-            return txs.Reverse<B2PStoreSwap>().ToList();
+            await using var context = pluginDbContextFactory.CreateContext();
+            return await context.Swaps
+                .Where(a => a.StoreId == storeId)
+                .OrderByDescending(a => a.DateT)
+                .ToListAsync();
         }
         catch (Exception e)
         {
@@ -110,7 +110,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
     {
         try
         {
-            using var context = pluginDbContextFactory.CreateContext();
+            await using var context = pluginDbContextFactory.CreateContext();
             var dbSettings = await context.B2PSettings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
             if (dbSettings == null)
             {
@@ -185,7 +185,10 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                             cnfg.OffChainBalance += Convert.ToDecimal(totalOnchain) / 100000000;
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "B2PCentral:GetBalances() - Failed to get Lightning balance");
+                    }
                 }
 
                 if (cnfg.OnChainBalance > 0 || cnfg.OffChainBalance > 0) {
@@ -235,20 +238,14 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
             };
             webRequest.Headers.Add("B2P-API-KEY", key);
 
-            string sRep;
-            using (var rep = await httpClient.SendAsync(webRequest))
-            {
-                rep.EnsureSuccessStatusCode();
-                using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
-                {
-                    sRep = await rdr.ReadToEndAsync();
-                }
-            }
+            using var rep = await httpClient.SendAsync(webRequest);
+            rep.EnsureSuccessStatusCode();
+            var sRep = await rep.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<List<B2POffer>>(sRep);
 
         }
         catch (Exception ex) {
-            logger.LogError(ex.Message, "B2PCentral:GetOffersListAsync()");
+            logger.LogError(ex, "B2PCentral:GetOffersListAsync()");
             throw;
         }
     }
@@ -265,21 +262,15 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
             };
             webRequest.Headers.Add("B2P-API-KEY", key);
 
-            string sRep;
-            using (var rep = await httpClient.SendAsync(webRequest))
-            {
-                rep.EnsureSuccessStatusCode();
-                using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
-                {
-                    sRep = await rdr.ReadToEndAsync();
-                }
-            }
+            using var rep = await httpClient.SendAsync(webRequest);
+            rep.EnsureSuccessStatusCode();
+            var sRep = await rep.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<B2PSwapResponse>(sRep).Swaps;
 
         }
         catch (Exception ex)
         {
-            logger.LogError(ex.Message, "B2PCentral:GetSwapsListAsync()");
+            logger.LogError(ex, "B2PCentral:GetSwapsListAsync()");
             throw;
         }
     }
@@ -294,25 +285,20 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                 Content = new StringContent(reqJson, Encoding.UTF8, "application/json"),
             };
             webRequest.Headers.Add("B2P-API-KEY", key);
-            string sRep;
-            using (var rep = await httpClient.SendAsync(webRequest))
-            {
-                rep.EnsureSuccessStatusCode();
-                using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
-                {
-                    sRep = await rdr.ReadToEndAsync();
-                }
-            }
+
+            using var rep = await httpClient.SendAsync(webRequest);
+            rep.EnsureSuccessStatusCode();
+            var sRep = await rep.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<SwapCreationResponse>(sRep);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex.Message, "B2PCentral:CreateSwapAsync()");
+            logger.LogError(ex, "B2PCentral:CreateSwapAsync()");
             throw;
         }
     }
 
-    public async Task<Tuple<string, string>> CreatePayout(string storeId, string provider, SwapCreationResponse swap, SwapCreationRequestJS req, CancellationToken cancellationToken = default)
+    public async Task<(string PullPaymentId, string PayoutId)> CreatePayout(string storeId, string provider, SwapCreationResponse swap, SwapCreationRequestJS req, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -374,7 +360,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                 case ClaimRequest.ClaimResult.NotStarted:
                     throw new Exception("Pull payment has not started yet");
             }
-            return new Tuple<string, string>(ppId, result.PayoutData.Id);
+            return (ppId, result.PayoutData.Id);
 
         }
         catch (Exception e)
@@ -404,7 +390,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
     {
         try
         {
-            using var context = pluginDbContextFactory.CreateContext();
+            await using var context = pluginDbContextFactory.CreateContext();
             context.Swaps.Add(swap);
             await context.SaveChangesAsync();
         }

@@ -1,7 +1,5 @@
-﻿using BTCPayServer.Plugins.B2PCentral.Models.Swaps;
-using Microsoft.EntityFrameworkCore.Infrastructure;
+﻿using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using System;
 
 namespace BTCPayServer.Plugins.B2PCentral.Migrations
 {
