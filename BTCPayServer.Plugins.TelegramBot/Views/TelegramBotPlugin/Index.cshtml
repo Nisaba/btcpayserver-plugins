@@ -1,10 +1,11 @@
 ﻿@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Abstractions.Models
 @using BTCPayServer.Plugins.TelegramBot.Models
 @using BTCPayServer.Plugins.TelegramBot.Views
 
 @model TelegramBotViewModel
 @{
-    ViewData.SetActivePage(PluginNavPages.Index, "Telegram Shopping Bot plugin");
+    ViewData.SetLayoutModel(new LayoutModel(nameof(PluginNavPages.Index), "Telegram Shopping Bot plugin"));
     bool bApp;
 }
 

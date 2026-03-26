@@ -1,5 +1,4 @@
-﻿using BTCPayServer.Data;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace BTCPayServer.Plugins.TelegramBot.Models
 {

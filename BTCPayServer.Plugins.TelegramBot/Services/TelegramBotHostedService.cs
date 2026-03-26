@@ -1,5 +1,4 @@
-﻿using BTCPayServer.Plugins.TelegramBot.Models;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System.Threading;
 using System;
@@ -56,15 +55,18 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                                 };
                                 if (success.HasValue)
                                 {
-                                    var bot = _service.telegramBots.Where(a => a.AppData.Id == appId).FirstOrDefault();
-                                    var chatId = invoice.Metadata.GetAdditionalData<long>("chatId");
-                                    if (success.Value)
+                                    var bot = _service.telegramBots.FirstOrDefault(a => a.AppData.Id == appId);
+                                    if (bot != null)
                                     {
-                                        await bot.SendPaymentSuccess(chatId);
-                                    }
-                                    else
-                                    {
-                                        await bot.SendPaymentFailure(chatId);
+                                        var chatId = invoice.Metadata.GetAdditionalData<long>("chatId");
+                                        if (success.Value)
+                                        {
+                                            await bot.SendPaymentSuccess(chatId);
+                                        }
+                                        else
+                                        {
+                                            await bot.SendPaymentFailure(chatId);
+                                        }
                                     }
                                 }
                             }

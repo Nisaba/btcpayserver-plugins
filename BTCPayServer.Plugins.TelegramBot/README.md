@@ -65,4 +65,5 @@ If you find this plugin useful, consider supporting its development, making a do
 ## Version History
 - **1.0.1** - Initial release
 - **1.0.2** - Fix: add a Refresh button to update products data in the bot when they are updated in the linked Point of Sale
+- **1.1.0** - Migration to .NET 10, fix french labels
 

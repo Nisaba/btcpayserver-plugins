@@ -11,6 +11,13 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             await telegramBotService.LoadAndStartBots();
         }
 
-        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            foreach (var bot in telegramBotService.telegramBots)
+            {
+                bot.StopBot();
+            }
+            return Task.CompletedTask;
+        }
     }
 }

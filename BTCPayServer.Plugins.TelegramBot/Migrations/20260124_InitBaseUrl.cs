@@ -1,10 +1,8 @@
 using BTCPayServer.Plugins.TelegramBot.Data;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using System;
-using System.Collections.Generic;
 
-namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
+namespace BTCPayServer.Plugins.TelegramBot.Migrations
 {
     [DbContext(typeof(TelegramBotDbContext))]
     [Migration("20260124_InitBaseUrl")]

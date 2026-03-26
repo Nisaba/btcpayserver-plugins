@@ -3,7 +3,6 @@ using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Plugins.TelegramBot.Data;
 using BTCPayServer.Plugins.TelegramBot.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace BTCPayServer.Plugins.TelegramBot;
 
@@ -11,7 +10,7 @@ public class Plugin : BaseBTCPayServerPlugin
 {
     public override IBTCPayServerPlugin.PluginDependency[] Dependencies { get; } =
     {
-        new() { Identifier = nameof(BTCPayServer), Condition = ">=2.0.1" },
+        new() { Identifier = nameof(BTCPayServer), Condition = ">=2.3.7" },
     };
 
     public override void Execute(IServiceCollection services)
@@ -22,8 +21,6 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddSingleton<TelegramBotPluginService>()
                 .AddHostedService<AutoStartService>()
                 .AddHostedService<TelegramBotHostedService>();
-        ;
-
     }
 
 }

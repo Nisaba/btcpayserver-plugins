@@ -5,14 +5,12 @@ using BTCPayServer.Plugins.TelegramBot.Data;
 using BTCPayServer.Plugins.TelegramBot.Models;
 using BTCPayServer.Security.Greenfield;
 using BTCPayServer.Services.Apps;
-using BTCPayServer.Services.Invoices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
@@ -26,7 +24,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                                           APIKeyRepository apiKeyRepository)
     {
         private readonly ILogger<TelegramBotPluginService> logger = loggerFactory.CreateLogger<TelegramBotPluginService>();
-        public List<TelegramBot> telegramBots = new();
+        public ConcurrentBag<TelegramBot> telegramBots = new();
 
         private TelegramBotConfig? serverConfig = null;
 
@@ -52,47 +50,45 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             try
             {
                 var bUpdate = false;
-                using (var context = dbContextFactory.CreateContext())
+                using var context = dbContextFactory.CreateContext();
+                var config = await context.Config.FirstOrDefaultAsync();
+                if (config == null)
                 {
-                    var config = await context.Config.FirstOrDefaultAsync();
-                    if (config == null)
+                    var keyBytes = new byte[20];
+                    RandomNumberGenerator.Fill(keyBytes);
+                    var apiKey = Convert.ToHexString(keyBytes).ToLowerInvariant();
+
+                    var apiKeyData = new APIKeyData
                     {
-                        var keyBytes = new byte[20];
-                        RandomNumberGenerator.Fill(keyBytes);
-                        var apiKey = Convert.ToHexString(keyBytes).ToLowerInvariant();
+                        Id = apiKey,
+                        Type = APIKeyType.Permanent,
+                        Label = "Telegram Bot Plugin",
+                        UserId = userId
+                    };
 
-                        var apiKeyData = new APIKeyData
-                        {
-                            Id = apiKey,
-                            Type = APIKeyType.Permanent,
-                            Label = "Telegram Bot Plugin",
-                            UserId = userId
-                        };
-
-                        apiKeyData.SetBlob(new APIKeyBlob
-                        {
-                            Permissions = new[] { Permission.Create(Policies.CanCreateInvoice).ToString() }
-                        });
-
-                        await apiKeyRepository.CreateKey(apiKeyData);
-
-                        config = new TelegramBotConfig
-                        { 
-                            BaseUrl = baseUrl,
-                            ApiKey = apiKey
-                        };
-                        context.Config.Add(config);
-                        bUpdate = true;
-                    }
-                    else if (config.BaseUrl != baseUrl)
+                    apiKeyData.SetBlob(new APIKeyBlob
                     {
-                        config.BaseUrl = baseUrl;
-                        context.Config.Update(config);
-                        bUpdate = true;
-                    }
-                    if (bUpdate)
-                        await context.SaveChangesAsync();
+                        Permissions = new[] { Permission.Create(Policies.CanCreateInvoice).ToString() }
+                    });
+
+                    await apiKeyRepository.CreateKey(apiKeyData);
+
+                    config = new TelegramBotConfig
+                    { 
+                        BaseUrl = baseUrl,
+                        ApiKey = apiKey
+                    };
+                    context.Config.Add(config);
+                    bUpdate = true;
                 }
+                else if (config.BaseUrl != baseUrl)
+                {
+                    config.BaseUrl = baseUrl;
+                    context.Config.Update(config);
+                    bUpdate = true;
+                }
+                if (bUpdate)
+                    await context.SaveChangesAsync();
             }
             catch (Exception e)
             {
@@ -101,18 +97,16 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
             }
         }
 
-        public TelegramBotConfig GetConfig()
+        public async Task<TelegramBotConfig> GetConfigAsync()
         {
             if (serverConfig != null)
                 return serverConfig;
 
             try
             {
-                using (var context = dbContextFactory.CreateContext())
-                {
-                    serverConfig = context.Config.FirstOrDefault();
-                    return serverConfig;
-                }
+                using var context = dbContextFactory.CreateContext();
+                serverConfig = await context.Config.FirstOrDefaultAsync();
+                return serverConfig;
             }
             catch (Exception e)
             {
@@ -133,34 +127,32 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 var filteredApps = new List<TelegramBotAppData>();
                 var invoices = new List<TelegramBotInvoices>();
 
-                using (var context = dbContextFactory.CreateContext())
+                using var context = dbContextFactory.CreateContext();
+                var lstStoreSettings = await context.Settings
+                    .Where(a => a.StoreId == storeId)
+                    .ToListAsync();
+
+                foreach (var app in storeApps)
                 {
-                    var lstStoreSettings = await context.Settings
-                        .Where(a => a.StoreId == storeId)
-                        .ToListAsync();
-
-                    foreach (var app in storeApps)
+                    var appSettings = app.GetSettings<PointOfSaleSettings>();
+                    if (appSettings.DefaultView != PointOfSale.PosViewType.Light)
                     {
-                        var appSettings = app.GetSettings<PointOfSaleSettings>();
-                        if (appSettings.DefaultView != PointOfSale.PosViewType.Light)
+                        var storeAppSettings = lstStoreSettings.FirstOrDefault(a => a.AppId == app.Id);
+                        if (storeAppSettings == null)
                         {
-                            var storeAppSettings = lstStoreSettings.FirstOrDefault(a => a.AppId == app.Id);
-                            if (storeAppSettings == null)
+                            storeAppSettings = new TelegramBotSettings
                             {
-                                storeAppSettings = new TelegramBotSettings
-                                {
-                                    StoreId = storeId,
-                                    AppId = app.Id,
-                                    BotToken = string.Empty,
-                                    IsEnabled = false
-                                };
-                            }
-                            filteredApps.Add(BuildAppData(app, appSettings, storeAppSettings.BotToken, storeAppSettings.IsEnabled));
+                                StoreId = storeId,
+                                AppId = app.Id,
+                                BotToken = string.Empty,
+                                IsEnabled = false
+                            };
                         }
+                        filteredApps.Add(BuildAppData(app, appSettings, storeAppSettings.BotToken, storeAppSettings.IsEnabled));
                     }
-
-                    invoices = await context.TelegramInvoices.Where(a => a.StoreId == storeId).ToListAsync();
                 }
+
+                invoices = await context.TelegramInvoices.Where(a => a.StoreId == storeId).ToListAsync();
 
                 return new TelegramBotViewModel()
                 {
@@ -185,48 +177,46 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 bool bStop = false;
                 var botService = telegramBots.FirstOrDefault(b => b.AppData.Id == appId);
 
-                using (var context = dbContextFactory.CreateContext())
+                using var context = dbContextFactory.CreateContext();
+                var dbSettings = await context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId && a.AppId == appId);
+                if (dbSettings == null)
                 {
-                    var dbSettings = await context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId && a.AppId == appId);
-                    if (dbSettings == null)
+                    context.Settings.Add(new TelegramBotSettings
                     {
-                        context.Settings.Add(new TelegramBotSettings
-                        {
-                            StoreId = storeId,
-                            AppId = appId,
-                            BotToken = botToken.Trim(),
-                            IsEnabled = isEnabled
-                        });
+                        StoreId = storeId,
+                        AppId = appId,
+                        BotToken = botToken.Trim(),
+                        IsEnabled = isEnabled
+                    });
 
-                        bStart = isEnabled;
-                        if (botService == null)
-                        {
-                            var telegramBotLogger = loggerFactory.CreateLogger<TelegramBot>();
-                            var app = (await appService.GetApps("PointOfSale"))
-                                .FirstOrDefault(a => a.Id == appId && a.StoreDataId == storeId);
-                            var appSettings = app.GetSettings<PointOfSaleSettings>();
-
-                            var appData = BuildAppData(app, appSettings, botToken, isEnabled);
-                            botService = new TelegramBot(appData, this, telegramBotLogger);
-                            telegramBots.Add(botService);
-                        }
-                    }
-                    else
+                    bStart = isEnabled;
+                    if (botService == null)
                     {
-                        if (dbSettings.IsEnabled != isEnabled)
-                        {
-                            if (isEnabled)
-                                bStart = true;
-                            else
-                                bStop = true;
-                        }
+                        var telegramBotLogger = loggerFactory.CreateLogger<TelegramBot>();
+                        var app = (await appService.GetApps("PointOfSale"))
+                            .FirstOrDefault(a => a.Id == appId && a.StoreDataId == storeId);
+                        var appSettings = app.GetSettings<PointOfSaleSettings>();
 
-                        dbSettings.BotToken = botToken.Trim();
-                        dbSettings.IsEnabled = isEnabled;
-                        context.Settings.Update(dbSettings);
+                        var appData = BuildAppData(app, appSettings, botToken, isEnabled);
+                        botService = new TelegramBot(appData, this, telegramBotLogger);
+                        telegramBots.Add(botService);
                     }
-                    await context.SaveChangesAsync();
                 }
+                else
+                {
+                    if (dbSettings.IsEnabled != isEnabled)
+                    {
+                        if (isEnabled)
+                            bStart = true;
+                        else
+                            bStop = true;
+                    }
+
+                    dbSettings.BotToken = botToken.Trim();
+                    dbSettings.IsEnabled = isEnabled;
+                    context.Settings.Update(dbSettings);
+                }
+                await context.SaveChangesAsync();
                 if (bStart && botService != null)
                 {
                     _ = Task.Run(() => botService.StartBot(CancellationToken.None));
@@ -247,25 +237,23 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
         {
             try
             {
-                using (var context = dbContextFactory.CreateContext())
+                using var context = dbContextFactory.CreateContext();
+                var settingsList = await context.Settings.ToListAsync();
+                foreach (var settings in settingsList)
                 {
-                    var settingsList = await context.Settings.ToListAsync();
-                    foreach (var settings in settingsList)
+                    var app = (await appService.GetApps("PointOfSale"))
+                        .FirstOrDefault(a => a.Id == settings.AppId && a.StoreDataId == settings.StoreId);
+                    if (app != null)
                     {
-                        var app = (await appService.GetApps("PointOfSale"))
-                            .FirstOrDefault(a => a.Id == settings.AppId && a.StoreDataId == settings.StoreId);
-                        if (app != null)
-                        {
-                            var appSettings = app.GetSettings<PointOfSaleSettings>();
-                            var appData = BuildAppData(app, appSettings, settings.BotToken, settings.IsEnabled);
+                        var appSettings = app.GetSettings<PointOfSaleSettings>();
+                        var appData = BuildAppData(app, appSettings, settings.BotToken, settings.IsEnabled);
 
-                            var telegramBotLogger = loggerFactory.CreateLogger<TelegramBot>();
-                            var botService = new TelegramBot(appData, this, telegramBotLogger);
-                            telegramBots.Add(botService);
+                        var telegramBotLogger = loggerFactory.CreateLogger<TelegramBot>();
+                        var botService = new TelegramBot(appData, this, telegramBotLogger);
+                        telegramBots.Add(botService);
 
-                            if (settings.IsEnabled)
-                                _ = Task.Run(() => botService.StartBot(CancellationToken.None));
-                        }
+                        if (settings.IsEnabled)
+                            _ = Task.Run(() => botService.StartBot(CancellationToken.None));
                     }
                 }
             }
@@ -345,25 +333,23 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     Receipt = new InvoiceDataBase.ReceiptOptions() { Enabled = true }
                 };
 
-                var config = GetConfig();
+                var config = await GetConfigAsync();
                 var btcpayUri = new Uri(config.BaseUrl);
                 var client = new BTCPayServerClient(btcpayUri, config.ApiKey);
                 var invoice = await client.CreateInvoice(storeId, invoiceReq);
 
-                using (var context = dbContextFactory.CreateContext())
+                using var context = dbContextFactory.CreateContext();
+                var telegramInvoice = new TelegramBotInvoices
                 {
-                    var telegramInvoice = new TelegramBotInvoices
-                    {
-                        BTCPayInvoiceId = invoice.Id,
-                        StoreId = storeId,
-                        AppName = appName,
-                        Amount = amount,
-                        Currency = currency,
-                        DateT = DateTime.UtcNow
-                    };
-                    context.TelegramInvoices.Add(telegramInvoice);
-                    await context.SaveChangesAsync();
-                }
+                    BTCPayInvoiceId = invoice.Id,
+                    StoreId = storeId,
+                    AppName = appName,
+                    Amount = amount,
+                    Currency = currency,
+                    DateT = DateTime.UtcNow
+                };
+                context.TelegramInvoices.Add(telegramInvoice);
+                await context.SaveChangesAsync();
 
                 return invoice.CheckoutLink;
             }

@@ -1,10 +1,8 @@
 ﻿using BTCPayServer.Client.Models;
 using BTCPayServer.Plugins.TelegramBot.Models;
-using BTCPayServer.Services.Apps;
-using Fido2NetLib;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -30,7 +28,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
         private ITelegramBotClient? _bot;
         private CancellationTokenSource? _cancellationTokenSource;
 
-        private readonly Dictionary<long, UserSession> _userSessions = new();
+        private readonly ConcurrentDictionary<long, UserSession> _userSessions = new();
 
         public void StartBot(CancellationToken cancellationToken)
         {
@@ -396,8 +394,8 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 if (!item.Inventory.HasValue || item.Inventory > 0)
                 {
                     buttons.Add([
-                        InlineKeyboardButton.WithCallbackData("➕ Ajouter (1)", $"quick_add_{item.Id}"),
-                    InlineKeyboardButton.WithCallbackData("🔢 Quantité", $"add_{item.Id}")
+                        InlineKeyboardButton.WithCallbackData("➕ Add (1)", $"quick_add_{item.Id}"),
+                    InlineKeyboardButton.WithCallbackData("🔢 Quantity", $"add_{item.Id}")
                     ]);
                 }
 
@@ -414,9 +412,9 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
 
                     if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                     {
-                        imageUrl = pluginService.GetConfig().BaseUrl.TrimEnd('/') + imageUrl;
+                        imageUrl = (await pluginService.GetConfigAsync()).BaseUrl.TrimEnd('/') + imageUrl;
                     }
-                    if (!imageUrl.ToLower().Contains("localhost"))
+                    if (!imageUrl.Contains("localhost", StringComparison.OrdinalIgnoreCase))
                     {
                         await bot.SendPhoto(chatId, InputFile.FromUri(imageUrl), caption: caption, parseMode: ParseMode.Markdown, replyMarkup: keyboard, cancellationToken: token);
                         return;
@@ -708,9 +706,9 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
 
         private UserSession GetOrCreateSession(long chatId, User? telegramUser = null)
         {
-            if (!_userSessions.TryGetValue(chatId, out var session))
+            return _userSessions.GetOrAdd(chatId, _ =>
             {
-                session = new UserSession();
+                var session = new UserSession();
                 if (telegramUser != null)
                 {
                     var username = !string.IsNullOrEmpty(telegramUser.Username)
@@ -718,9 +716,8 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                         : $"{telegramUser.FirstName} {telegramUser.LastName}".Trim();
                     session.TelegramUser = username;
                 }
-                _userSessions[chatId] = session;
-            }
-            return session;
+                return session;
+            });
         }
         private static string EscapeMarkdown(string? text)
         {
@@ -734,15 +731,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
 
         private static bool IsValidEmail(string email)
         {
-            try
-            {
-                var addr = new System.Net.Mail.MailAddress(email);
-                return addr.Address == email;
-            }
-            catch
-            {
-                return false;
-            }
+            return System.Net.Mail.MailAddress.TryCreate(email, out var addr) && addr.Address == email;
         }
     }
 
