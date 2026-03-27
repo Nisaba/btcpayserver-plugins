@@ -58,6 +58,7 @@ You should now see the payment option in your Ecwid store checkout page. You can
 
 <br/>
 ## Changelog
-- v 1.0.3 : Fix crash on BTCPay 2.3.0, small improvments
 - v 1.0.2 : Small fixes
+- v 1.0.3 : Fix crash on BTCPay 2.3.0, small improvments
+- v 1.1.0 : Migration to .NET 10
 

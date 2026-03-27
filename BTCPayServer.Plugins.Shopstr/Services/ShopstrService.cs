@@ -1,10 +1,8 @@
-﻿using Amazon.Auth.AccessControlPolicy;
-using BTCPayServer.Client.Models;
+﻿using BTCPayServer.Client.Models;
 using BTCPayServer.Plugins.Shopstr.Models;
 using BTCPayServer.Plugins.Shopstr.Models.External;
 using BTCPayServer.Plugins.Shopstr.Models.Nostr;
 using BTCPayServer.Plugins.Shopstr.Models.Shopstr;
-using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using NBitcoin.Secp256k1;
 using Newtonsoft.Json;

@@ -34,7 +34,7 @@ namespace BTCPayServer.Plugins.Shopstr.Models.Nostr
                    Restrictions == app.Restrictions &&
                    Qty == appItem.Inventory &&
                    Price == appItem.Price &&
-                   Image.Contains(appItem.Image.Substring(1)) &&
+                   Image.Contains(appItem.Image?.Substring(1) ?? string.Empty) &&
                    Status != appItem.Disabled;
         }
 

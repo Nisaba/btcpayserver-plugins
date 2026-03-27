@@ -1,6 +1,5 @@
 ﻿using BTCPayServer.Abstractions.Contracts;
 using BTCPayServer.Plugins.Shopstr.Data;
-using BTCPayServer.Plugins.Shopstr.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using System.Threading;

@@ -1,3 +1,4 @@
+using BTCPayServer.Plugins.Ecwid.Data;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 

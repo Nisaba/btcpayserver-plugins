@@ -3,9 +3,8 @@ using BTCPayServer.Plugins.Shopstr.Models;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using System;
-using System.Collections.Generic;
 
-namespace BTCPayServer.Plugins.LnOnchainSwaps.Migrations
+namespace BTCPayServer.Plugins.Shopstr.Migrations
 {
     [DbContext(typeof(ShopstrDbContext))]
     [Migration("20260127_UpdateSettings")]

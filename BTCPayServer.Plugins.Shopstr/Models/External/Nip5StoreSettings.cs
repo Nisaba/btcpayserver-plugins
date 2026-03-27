@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using BTCPayServer;
 using System.ComponentModel.DataAnnotations;
 
 namespace BTCPayServer.Plugins.Shopstr.Models.External

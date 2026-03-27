@@ -1,6 +1,5 @@
 using BTCPayServer.Abstractions.Constants;
 using BTCPayServer.Client;
-using BTCPayServer.Plugins.Ecwid.Data;
 using BTCPayServer.Plugins.Ecwid.Model;
 using BTCPayServer.Plugins.Ecwid.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -39,7 +38,7 @@ public class EcwidPluginController(EcwidPluginService ecwidService) : Controller
                 {
                     case "Save":
                         await ecwidService.UpdateSettings(model.Settings);
-                        TempData[WellKnownTempData.SuccessMessage] = "Settings successfuly saved";
+                        TempData[WellKnownTempData.SuccessMessage] = "Settings successfully saved";
                         break;
                 }
             }

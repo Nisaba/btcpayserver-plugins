@@ -18,27 +18,10 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using static Dapper.SqlMapper;
 
 namespace BTCPayServer.Plugins.Peach.Services
 {
-    public class PeachPluginService
-    {
-        private readonly ILogger<PeachPluginService> _logger;
-        private readonly StoreRepository _storeRepository;
-        private readonly PeachPluginDbContext _context;
-        private readonly BTCPayNetworkProvider _networkProvider;
-        private readonly WalletHistogramService _walletHistogramService;
-        private readonly BTCPayWalletProvider _walletProvider;
-        private readonly PaymentMethodHandlerDictionary _handlers;
-        private readonly HttpClient _httpClient2;
-        private readonly PullPaymentHostedService _pullPaymentService;
-        private readonly PayoutMethodHandlerDictionary _payoutHandlers;
-        private readonly PullPaymentHostedService _pullPaymentHostedService;
-        private readonly ExplorerClientProvider _explorerClientProvider;
-        private readonly ApplicationDbContextFactory _btcPayDbContextFactory;
-
-        public PeachPluginService(PeachPluginDbContextFactory pluginDbContextFactory,
+    public class PeachPluginService(PeachPluginDbContextFactory pluginDbContextFactory,
                                       StoreRepository storeRepository,
                                       BTCPayNetworkProvider networkProvider,
                                       BTCPayWalletProvider walletProvider,
@@ -51,27 +34,14 @@ namespace BTCPayServer.Plugins.Peach.Services
                                       PullPaymentHostedService pullPaymentHostedService,
                                       ExplorerClientProvider explorerClientProvider,
                                       ApplicationDbContextFactory btcPayDbContextFactory)
-        {
-            _logger = logger;
-            _context = pluginDbContextFactory.CreateContext();
-            _networkProvider = networkProvider;
-            _storeRepository = storeRepository;
-            _walletHistogramService = walletHistogramService;
-            _walletProvider = walletProvider;
-            _handlers = handlers;
-            _httpClient2 = httpClient2;
-            _pullPaymentService = pullPaymentService;
-            _payoutHandlers = payoutHandlers;
-            _pullPaymentHostedService = pullPaymentHostedService;
-            _explorerClientProvider = explorerClientProvider;
-            _btcPayDbContextFactory = btcPayDbContextFactory;
-        }
+    {
 
         public async Task<PeachSettings> GetStoreSettings(string storeId)
         {
             try
             {
-                var settings = await _context.PeachSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
+                await using var context = pluginDbContextFactory.CreateContext();
+                var settings = await context.PeachSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
                 if (settings == null)
                 {
                     settings = new PeachSettings { StoreId = storeId, IsRegistered = false, PrivateKey = string.Empty, PublicKey = string.Empty };
@@ -81,7 +51,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "PeachPlugin:GetStoreSettings()");
+                logger.LogError(e, "PeachPlugin:GetStoreSettings()");
                 throw;
             }
         }
@@ -90,26 +60,27 @@ namespace BTCPayServer.Plugins.Peach.Services
         {
             try
             {
-                var dbSettings = await _context.PeachSettings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
+                await using var context = pluginDbContextFactory.CreateContext();
+                var dbSettings = await context.PeachSettings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
                 if (dbSettings == null)
                 {
-                    _context.PeachSettings.Add(settings);
+                    context.PeachSettings.Add(settings);
                 }
                 else
                 {
                     dbSettings.PublicKey = settings.PublicKey;
                     dbSettings.PrivateKey = settings.PrivateKey;
                     dbSettings.IsRegistered = settings.IsRegistered;
-                    _context.PeachSettings.Update(dbSettings);
+                    context.PeachSettings.Update(dbSettings);
                 }
 
-                await _context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                 return;
 
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "PeachPlugin:UpdateSettings()");
+                logger.LogError(e, "PeachPlugin:UpdateSettings()");
                 throw;
             }
         }
@@ -118,7 +89,9 @@ namespace BTCPayServer.Plugins.Peach.Services
         {
             try
             {
-                var meansOfPayments = await _context.MeansOfPayments
+                await using var context = pluginDbContextFactory.CreateContext();
+
+                var meansOfPayments = await context.MeansOfPayments
                     .Where(m => m.StoreId == storeId)
                     .ToListAsync();
                 if (meansOfPayments == null)
@@ -129,7 +102,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "PeachPlugin:GetMeanOfPayments()");
+                logger.LogError(e, "PeachPlugin:GetMeanOfPayments()");
                 throw;
             }
         }
@@ -138,7 +111,9 @@ namespace BTCPayServer.Plugins.Peach.Services
         {
             try
             {
-                var meansOfPayments = await _context.MeansOfPayments
+                await using var context = pluginDbContextFactory.CreateContext();
+
+                var meansOfPayments = await context.MeansOfPayments
                     .Where(m => m.StoreId == storeId)
                     .Select(m => m.MoP)
                     .ToListAsync();
@@ -150,7 +125,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "PeachPlugin:GetMeanOfPayments()");
+                logger.LogError(e, "PeachPlugin:GetMeanOfPayments()");
                 throw;
             }
         }
@@ -159,16 +134,18 @@ namespace BTCPayServer.Plugins.Peach.Services
         {
             try
             {
-                _context.MeansOfPayments.RemoveRange (_context.MeansOfPayments.Where(a => a.StoreId == StoreId));
-                await _context.MeansOfPayments.AddRangeAsync(means);
+                await using var context = pluginDbContextFactory.CreateContext();
 
-                await _context.SaveChangesAsync();
+                context.MeansOfPayments.RemoveRange (context.MeansOfPayments.Where(a => a.StoreId == StoreId));
+                await context.MeansOfPayments.AddRangeAsync(means);
+
+                await context.SaveChangesAsync();
                 return;
 
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "PeachPlugin:UpdateMeansOfPayments()");
+                logger.LogError(e, "PeachPlugin:UpdateMeansOfPayments()");
                 throw;
             }
         }
@@ -177,11 +154,11 @@ namespace BTCPayServer.Plugins.Peach.Services
             StoreWalletConfig cnfg = new StoreWalletConfig();
             try
             {
-                var store = await _storeRepository.FindStore(storeId);
+                var store = await storeRepository.FindStore(storeId);
                 var blob = store.GetStoreBlob();
 
                 cnfg.FiatCurrency = blob.DefaultCurrency;
-                if (_networkProvider.DefaultNetwork.IsBTC)
+                if (networkProvider.DefaultNetwork.IsBTC)
                 {
                     getPaymentMethods(store, blob, out var derivationSchemes);
 
@@ -190,7 +167,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                     if (cnfg.OnChainEnabled)
                     {
                         var walletId = new WalletId(store.Id, "BTC");
-                        var data = await _walletHistogramService.GetHistogram(store, walletId, HistogramType.Week);
+                        var data = await walletHistogramService.GetHistogram(store, walletId, HistogramType.Week);
                         if (data != null)
                         {
                             cnfg.OnChainBalance = data.Balance;
@@ -198,11 +175,11 @@ namespace BTCPayServer.Plugins.Peach.Services
                         else
                         {
                             using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
-                            var wallet = _walletProvider.GetWallet(_networkProvider.DefaultNetwork);
-                            var derivation = store.GetDerivationSchemeSettings(_handlers, walletId.CryptoCode);
+                            var wallet = walletProvider.GetWallet(networkProvider.DefaultNetwork);
+                            var derivation = store.GetDerivationSchemeSettings(handlers, walletId.CryptoCode);
                             if (derivation is not null)
                             {
-                                var network = _handlers.GetBitcoinHandler(walletId.CryptoCode).Network;
+                                var network = handlers.GetBitcoinHandler(walletId.CryptoCode).Network;
                                 var balance = await wallet.GetBalance(derivation.AccountDerivation, cts.Token);
                                 cnfg.OnChainBalance = balance.Available.GetValue(network);
                             }
@@ -211,12 +188,12 @@ namespace BTCPayServer.Plugins.Peach.Services
 
                     if (cnfg.OnChainBalance > 0)
                     {
-                        if (_httpClient2.BaseAddress == null)
+                        if (httpClient2.BaseAddress == null)
                         {
-                            _httpClient2.BaseAddress = new Uri($"{BaseUrl}/api/");
+                            httpClient2.BaseAddress = new Uri($"{BaseUrl}/api/");
                         }
                         string sRep;
-                        using (var rep = await _httpClient2.GetAsync($"rates?storeId={storeId}&currencyPairs=BTC_{cnfg.FiatCurrency}"))
+                        using (var rep = await httpClient2.GetAsync($"rates?storeId={storeId}&currencyPairs=BTC_{cnfg.FiatCurrency}"))
                         {
                             rep.EnsureSuccessStatusCode();
                             sRep = await rep.Content.ReadAsStringAsync();
@@ -236,7 +213,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "PeachPlugin:GetBalances()");
+                logger.LogError(e, "PeachPlugin:GetBalances()");
                 //            throw;
             }
             return cnfg;
@@ -249,12 +226,12 @@ namespace BTCPayServer.Plugins.Peach.Services
             var excludeFilters = storeBlob.GetExcludedPaymentMethods();
             var derivationByCryptoCode =
                 store
-                    .GetPaymentMethodConfigs<DerivationSchemeSettings>(_handlers)
-                    .ToDictionary(c => ((IHasNetwork)_handlers[c.Key]).Network.CryptoCode, c => c.Value);
+                    .GetPaymentMethodConfigs<DerivationSchemeSettings>(handlers)
+                    .ToDictionary(c => ((IHasNetwork)handlers[c.Key]).Network.CryptoCode, c => c.Value);
 
             derivationSchemes = new List<StoreDerivationScheme>();
 
-            foreach (var handler in _handlers)
+            foreach (var handler in handlers)
             {
                 if (handler is BitcoinLikePaymentHandler { Network: var network })
                 {
@@ -280,19 +257,19 @@ namespace BTCPayServer.Plugins.Peach.Services
             string sAddress = string.Empty;
             try
             {
-                var store = await _storeRepository.FindStore(storeId);
+                var store = await storeRepository.FindStore(storeId);
 
                 var walletId = new WalletId(store.Id, "BTC");
-                var derivationScheme = store.GetDerivationSchemeSettings(_handlers, walletId.CryptoCode);
+                var derivationScheme = store.GetDerivationSchemeSettings(handlers, walletId.CryptoCode);
                 if (derivationScheme == null)
                     return sAddress;
 
-                var btcNetwork = _networkProvider.DefaultNetwork as BTCPayNetwork;
+                var btcNetwork = networkProvider.DefaultNetwork as BTCPayNetwork;
                 if (btcNetwork == null)
                     return sAddress;
 
                 using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
-                var wallet = _walletProvider.GetWallet(btcNetwork);
+                var wallet = walletProvider.GetWallet(btcNetwork);
                 var utxos = await wallet.GetUnspentCoins(derivationScheme.AccountDerivation);
                 if (utxos.Length == 0)
                     return sAddress;
@@ -302,7 +279,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "PeachPlugin:GetWalletBtcAddress()");
+                logger.LogError(e, "PeachPlugin:GetWalletBtcAddress()");
             }
             return sAddress;
         }
@@ -323,14 +300,14 @@ namespace BTCPayServer.Plugins.Peach.Services
                     PayoutMethods = new[] { payoutMethodId.ToString() }
                 };
 
-                var store = await _storeRepository.FindStore(storeId);
-                var ppId = await _pullPaymentService.CreatePullPayment(store, ppRequest);
+                var store = await storeRepository.FindStore(storeId);
+                var ppId = await pullPaymentService.CreatePullPayment(store, ppRequest);
 
-                await using var btcPayCtx = _btcPayDbContextFactory.CreateContext();
+                await using var btcPayCtx = btcPayDbContextFactory.CreateContext();
                 var pp = await btcPayCtx.PullPayments.FindAsync(ppId);
                 var blob = pp.GetBlob();
 
-                var payoutHandler = _payoutHandlers.TryGet(payoutMethodId);
+                var payoutHandler = payoutHandlers.TryGet(payoutMethodId);
                 if (payoutHandler == null)
                     throw new Exception($"No payout handler found for {payoutMethodId}");
 
@@ -342,7 +319,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 if (peachDestination == null)
                     throw new Exception($"Destination parsing failed: {error ?? "Unknown error"}");
 
-                var result = await _pullPaymentHostedService.Claim(new ClaimRequest
+                var result = await pullPaymentHostedService.Claim(new ClaimRequest
                 {
                     Destination = peachDestination,
                     PullPaymentId = ppId,
@@ -368,7 +345,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "PeachPlugin:CreatePayout()");
+                logger.LogError(e, "PeachPlugin:CreatePayout()");
                 throw;
             }
         }

@@ -10,7 +10,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.Shopstr.Services
@@ -70,10 +69,8 @@ namespace BTCPayServer.Plugins.Shopstr.Services
         {
             try
             {
-                using (var context = dbContextFactory.CreateContext())
-                {
-                    return await context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId && a.AppId == appId);
-                }
+                await using var context = dbContextFactory.CreateContext();
+                return await context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId && a.AppId == appId);
             }
             catch (Exception e)
             {
@@ -86,25 +83,23 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             {
                 try
                 {
-                    using (var context = dbContextFactory.CreateContext())
-                    {
-                        var dbSettings = await context.Settings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
-                        if (dbSettings == null)
-                        {
-                            context.Settings.Add( settings);
-                        }
-                        else
-                        {
-                            dbSettings.Location = settings.Location;
-                            dbSettings.FlashSales = settings.FlashSales;
-                            dbSettings.Condition = settings.Condition;
-                            dbSettings.ValidDateT = settings.ValidDateT;
-                            dbSettings.Restrictions = settings.Restrictions;
-                            context.Settings.Update(dbSettings);
-                        }
+                await using var context = dbContextFactory.CreateContext();
+                var dbSettings = await context.Settings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
+                if (dbSettings == null)
+                {
+                    context.Settings.Add( settings);
+                }
+                else
+                {
+                    dbSettings.Location = settings.Location;
+                    dbSettings.FlashSales = settings.FlashSales;
+                    dbSettings.Condition = settings.Condition;
+                    dbSettings.ValidDateT = settings.ValidDateT;
+                    dbSettings.Restrictions = settings.Restrictions;
+                    context.Settings.Update(dbSettings);
+                }
 
-                        await context.SaveChangesAsync();
-                    }
+                await context.SaveChangesAsync();
                 }
                 catch (Exception e)
                 {
@@ -128,10 +123,10 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                     StoreDataId = app.StoreDataId,
                     CurrencyCode = appSettings.Currency,
                     Location = shopstrSettings?.Location ?? string.Empty,
-                    FlashSales = shopstrSettings.FlashSales,
-                    Condition = shopstrSettings.Condition,
-                    ValidDateT = shopstrSettings.ValidDateT,
-                    Restrictions = shopstrSettings.Restrictions,
+                    FlashSales = shopstrSettings?.FlashSales ?? false,
+                    Condition = shopstrSettings?.Condition ?? ConditionEnum.None,
+                    ValidDateT = shopstrSettings?.ValidDateT,
+                    Restrictions = shopstrSettings?.Restrictions ?? string.Empty,
                     ShopItems = AppService.Parse(appSettings.Template).ToList()
                 };
             }

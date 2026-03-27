@@ -99,8 +99,10 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             try
             {
                 using var _context = lnOnchainSwapsDbContextFactory.CreateContext();
-                var txs = await _context.BoltzSwaps.Where(a => a.StoreId == storeId).ToListAsync();
-                return txs.Reverse<BoltzSwap>().ToList();
+                return await _context.BoltzSwaps
+                    .Where(a => a.StoreId == storeId)
+                    .OrderByDescending(a => a.DateT)
+                    .ToListAsync();
             }
             catch (Exception e)
             {
@@ -109,7 +111,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
         }
 
-        private async Task<Tuple<string, string>> CreateInvoice(StoreData store, string rootUrl, decimal amount, string network)
+        private async Task<(string InvoiceId, string Destination)> CreateInvoice(StoreData store, string rootUrl, decimal amount, string network)
         {
             try
             {
@@ -133,7 +135,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 var invoice = await invoiceController.CreateInvoiceCoreRaw(req, store, rootUrl);
                 var invDest = invoice.GetPaymentPrompts()
                     .FirstOrDefault(prompt => prompt.PaymentMethodId == paymentMethodId).Destination;
-                return Tuple.Create(invoice.Id, invDest);
+                return (invoice.Id, invDest);
             }
             catch (Exception e)
             {
@@ -170,7 +172,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 }
 
                 using var _context = lnOnchainSwapsDbContextFactory.CreateContext();
-                var settings = _context.Settings.First(a => a.StoreId == storeId);
+                var settings = await _context.Settings.FirstAsync(a => a.StoreId == storeId);
                 var nbSwaps = await _context.BoltzSwaps.CountAsync(a => a.StoreId == storeId);
                 var refundPubKey = GetRefundPublicKeyForSwap(settings.RefundMnemonic, nbSwaps);
 
@@ -216,7 +218,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 }
 
                 using var _context = lnOnchainSwapsDbContextFactory.CreateContext();
-                var settings = _context.Settings.First(a => a.StoreId == storeId);
+                var settings = await _context.Settings.FirstAsync(a => a.StoreId == storeId);
                 var nbSwaps = await _context.BoltzSwaps.CountAsync(a => a.StoreId == storeId);
                 var claimPubKey = GetRefundPublicKeyForSwap(settings.RefundMnemonic, nbSwaps);
 
@@ -410,7 +412,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                         }
                         dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
                         string rate = JsonRep[0].rate;
-                        cnfg.Rate = decimal.Parse(rate);
+                        cnfg.Rate = decimal.Parse(rate, CultureInfo.InvariantCulture);
 
                         cnfg.OffChainFiatBalance = cnfg.Rate * cnfg.OffChainBalance;
                         cnfg.OnChainFiatBalance = cnfg.Rate * cnfg.OnChainBalance;
@@ -536,7 +538,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 return 0;
             }
 
-            decimal amount = decimal.Parse(amountString);
+            decimal amount = decimal.Parse(amountString, CultureInfo.InvariantCulture);
             if (dataPart.Length > amountString.Length)
             {
                 char multiplier = dataPart[amountString.Length];

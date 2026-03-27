@@ -5,11 +5,10 @@ using NBitcoin;
 using NBitcoin.Crypto;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Org.BouncyCastle.Ocsp;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using System.Dynamic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -21,22 +20,10 @@ using Network = NBitcoin.Network;
 
 namespace BTCPayServer.Plugins.Peach.Services
 {
-    public class PeachService
+    public class PeachService(ILogger<PeachService> logger, HttpClient httpClient, IMemoryCache cache)
     {
         public static string BaseUrl => "https://api.peachbitcoin.com/v1/";
         public string Referal => "PRF4BC";
-
-        private readonly ILogger<PeachService> _logger;
-        private readonly HttpClient _httpClient;
-        private readonly IMemoryCache _cache;
-
-        public PeachService(ILogger<PeachService> logger, HttpClient httpClient, IMemoryCache cache)
-        {
-            _logger = logger;
-            _httpClient = httpClient;
-            _httpClient.BaseAddress = new Uri(BaseUrl);
-            _cache = cache;
-        }
 
         public async Task<string> GetToken(PeachSettings peachSettings)
         {
@@ -44,7 +31,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 return string.Empty;
 
             var cacheKey = $"Token-{peachSettings.StoreId}-{peachSettings.Pwd}";
-            return await _cache.GetOrCreateAsync<string>(cacheKey,
+            return await cache.GetOrCreateAsync<string>(cacheKey,
                 async entry =>
                 {
                     entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
@@ -74,7 +61,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 {
                     Content = new StringContent(peachJson, Encoding.UTF8, "application/json"),
                 };
-                using (var rep = await _httpClient.SendAsync(webRequest))
+                using (var rep = await httpClient.SendAsync(webRequest))
                 {
                     using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
                     {
@@ -99,7 +86,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             catch (Exception ex)
             {
                 var sError = $"{ex.Message} - {sRep}";
-                _logger.LogError($"PeachPlugin.GetToken(): {sError}");
+                logger.LogError($"PeachPlugin.GetToken(): {sError}");
             }
             return sToken;
 
@@ -108,7 +95,7 @@ namespace BTCPayServer.Plugins.Peach.Services
         public async Task<List<PeachBid>> GetBidsListAsync(PeachRequest req, List<string> lstPaymentMethods)
         {
             var cacheKey = $"{req.CurrencyCode}-{req.BtcAmount.ToString()}";
-            var Bids = await _cache.GetOrCreateAsync<List<PeachBid>>(cacheKey,
+            var Bids = await cache.GetOrCreateAsync<List<PeachBid>>(cacheKey,
                 async entry =>
                 {
                     entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
@@ -124,7 +111,7 @@ namespace BTCPayServer.Plugins.Peach.Services
             try
             {
 
-                float vBtcAmount = Convert.ToSingle(req.BtcAmount) * 100000000;
+                float vBtcAmount = Convert.ToSingle(req.BtcAmount, CultureInfo.InvariantCulture) * 100000000;
                 dynamic peachRequest = new ExpandoObject();
                 peachRequest.type = "bid";
                 peachRequest.amount = vBtcAmount;
@@ -137,7 +124,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 };
 
 
-                using (var rep = await _httpClient.SendAsync(webRequest))
+                using (var rep = await httpClient.SendAsync(webRequest))
                 {
                     using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
                     {
@@ -147,7 +134,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                 }
 
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
-                var vRate = Convert.ToSingle(req.Rate) / 100000000;
+                var vRate = Convert.ToSingle(req.Rate, CultureInfo.InvariantCulture) / 100000000;
                 foreach (dynamic PeachTrade in JsonRep.offers)
                 {
                     //if (PeachTrade.prices[req.CurrencyCode] != null)
@@ -156,12 +143,12 @@ namespace BTCPayServer.Plugins.Peach.Services
                         float vMin, vMax;
                         if (PeachTrade.amount is Newtonsoft.Json.Linq.JArray)
                         {
-                            vMin = Convert.ToSingle(PeachTrade.amount[0]);
-                            vMax = Convert.ToSingle(PeachTrade.amount[1]);
+                            vMin = Convert.ToSingle(PeachTrade.amount[0], CultureInfo.InvariantCulture);
+                            vMax = Convert.ToSingle(PeachTrade.amount[1], CultureInfo.InvariantCulture);
                         }
                         else
                         {
-                            vMin = vMax = Convert.ToSingle(PeachTrade.amount);
+                            vMin = vMax = Convert.ToSingle(PeachTrade.amount, CultureInfo.InvariantCulture);
                         }
                         //                 if (vMin <= vBtcAmount && vBtcAmount <= vMax)
                         //                 {
@@ -189,25 +176,14 @@ namespace BTCPayServer.Plugins.Peach.Services
                             MinFiatAmount = vMin * vRate,
                             MaxFiatAmount = vMax * vRate
                         };
-                        if (ofr.PaymentMethods != null && ofr.PaymentMethods.Count > 0)
-                        {
-                            bool hasCommonMethod = false;
-                            foreach (var method in ofr.PaymentMethods)
-                            {
-                                if (lstPaymentMethods.Contains(method))
-                                {
-                                    hasCommonMethod = true;
-                                    break;
-                                }
-                            }
-                            if (hasCommonMethod) Bids.Add(ofr);
-                        }
+                        if (ofr.PaymentMethods?.Any(m => lstPaymentMethods.Contains(m)) == true)
+                            Bids.Add(ofr);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"PeachPlugin.GetBids(): {ex.Message} - {sRep}");
+                logger.LogError($"PeachPlugin.GetBids(): {ex.Message} - {sRep}");
             }
 
             return Bids;
@@ -229,8 +205,8 @@ namespace BTCPayServer.Plugins.Peach.Services
 
                 dynamic peachRequest = new ExpandoObject();
                 peachRequest.type = "ask";
-                peachRequest.amount = Convert.ToUInt64(Convert.ToSingle(req.Amount) * 100000000);
-                peachRequest.premium = Convert.ToInt16(req.Premium);
+                peachRequest.amount = Convert.ToUInt64(Convert.ToSingle(req.Amount, CultureInfo.InvariantCulture) * 100000000);
+                peachRequest.premium = Convert.ToInt16(req.Premium, CultureInfo.InvariantCulture);
                 peachRequest.meansOfPayment = new Dictionary<string, List<string>> { [req.CurrencyCode] = req.MeansOfPayment.Select(p => p.MoP).ToList() };
                 peachRequest.paymentData = dicPaymentData;
 #if DEBUG
@@ -248,7 +224,7 @@ namespace BTCPayServer.Plugins.Peach.Services
               //  webRequest.Headers.TryAddWithoutValidation("Authorization", req.PeachToken);
                 webRequest.Headers.Add("Authorization", $"Bearer {HttpUtility.HtmlDecode(req.PeachToken)}");
 
-                using (var rep = await _httpClient.SendAsync(webRequest))
+                using (var rep = await httpClient.SendAsync(webRequest))
                 {
                     using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
                     {
@@ -258,12 +234,12 @@ namespace BTCPayServer.Plugins.Peach.Services
                 }
                 var jObj = JObject.Parse(sRep);
                 string id = jObj["id"]?.ToString();
-                _logger.LogInformation($"Peach Offer created: {id}");
+                logger.LogInformation($"Peach Offer created: {id}");
                 return id;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"PeachPlugin.PostSellOffer(): {ex.Message} - {sRep} - {req.PeachToken}");
+                logger.LogError($"PeachPlugin.PostSellOffer(): {ex.Message} - {sRep} - {req.PeachToken}");
                 throw;
             }
         }
@@ -284,7 +260,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                  webRequest.Headers.Add("Accept", "application/json");
                  // webRequest.Headers.Add("User-Agent", "Mozilla/5.0");
                  webRequest.Headers.Add("Authorization", $"Bearer {HttpUtility.HtmlDecode(token)}");
-                using (var rep = await _httpClient.SendAsync(webRequest))
+                using (var rep = await httpClient.SendAsync(webRequest))
                  {
                      using (var rdr = new StreamReader(await rep.Content.ReadAsStreamAsync()))
                      {
@@ -294,7 +270,7 @@ namespace BTCPayServer.Plugins.Peach.Services
                  }
                 var jObj = JObject.Parse(sRep);
                 string escrow = jObj["escrow"]?.ToString();
-                _logger.LogInformation($"Peach Escrow created");
+                logger.LogInformation($"Peach Escrow created");
 #if DEBUG
                 return "bcrt1qpzfyktpawhcy66ctqpujdhfxsm8atjqzezq9p4";
 #else
@@ -303,7 +279,7 @@ namespace BTCPayServer.Plugins.Peach.Services
              }
              catch (Exception ex)
              {
-                 _logger.LogError($"PeachPlugin.CreateEscrow(): {ex.Message} - {sRep}");
+                 logger.LogError($"PeachPlugin.CreateEscrow(): {ex.Message} - {sRep}");
                  throw;
              }
 

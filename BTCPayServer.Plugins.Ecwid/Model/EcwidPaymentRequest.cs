@@ -1,6 +1,6 @@
 ﻿namespace BTCPayServer.Plugins.Ecwid.Model
 {
-    public struct EcwidPaymentRequest
+    public record EcwidPaymentRequest
     {
         public string ClientSecret { get; set; }
         public string EncryptedData { get; set; }

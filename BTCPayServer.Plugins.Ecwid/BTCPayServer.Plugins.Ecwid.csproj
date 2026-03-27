@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
   <!-- Plugin specific properties -->
   <PropertyGroup>
     <Product>Ecwid plugin</Product>
     <Description>This plugin allows you to interface your BTCPay store with your Ecwid store</Description>
-    <Version>1.0.3</Version>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <!-- Plugin development properties -->
@@ -31,13 +31,13 @@
   already referenced by BTCPay Server Core project -->
 
   <ItemGroup Condition="$(Configuration) != 'Release'">
-    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.10.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.10.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+	  <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="5.3.0" />
+	  <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
+	  <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
   </ItemGroup>
 
 

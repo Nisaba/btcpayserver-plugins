@@ -1,5 +1,4 @@
-﻿using BTCPayServer.Abstractions.Contracts;
-using BTCPayServer.Plugins.Ecwid.Model;
+﻿using BTCPayServer.Plugins.Ecwid.Model;
 using BTCPayServer.Plugins.Ecwid.Services;
 using BTCPayServer.Services;
 using BTCPayServer.Services.Stores;

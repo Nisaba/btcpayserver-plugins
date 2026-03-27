@@ -10,20 +10,10 @@ using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
 {
-    public class BoltzHttpService
+    public class BoltzHttpService(ILogger<BoltzHttpService> logger, HttpClient httpClient)
     {
-        private const string BaseUrl = "https://api.boltz.exchange/v2/";
+        public const string BaseUrl = "https://api.boltz.exchange/v2/";
         private const string Referral = "nisaba";
-
-        private readonly HttpClient _httpClient;
-        private readonly ILogger<BoltzHttpService> _logger;
-
-        public BoltzHttpService(ILogger<BoltzHttpService> logger, HttpClient httpClient)
-        {
-            _logger = logger;
-            _httpClient = httpClient;
-            _httpClient.BaseAddress = new Uri(BaseUrl);
-        }
 
         public async Task<BoltzSwap> CreateOnChainToLnSwapAsync(string lnInvoice, string pubKey, string preImageHash)
         {
@@ -45,14 +35,14 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 {
                     Content = new StringContent(swapJson, Encoding.UTF8, "application/json"),
                 };
-                using (var rep = await _httpClient.SendAsync(webRequest))
+                using (var rep = await httpClient.SendAsync(webRequest))
                 {
                     sRep = await rep.Content.ReadAsStringAsync();
                     rep.EnsureSuccessStatusCode();
                 }
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
 
-                _logger.LogInformation($"Boltzswap created: {JsonRep.id}");
+                logger.LogInformation($"Boltzswap created: {JsonRep.id}");
                 return new BoltzSwap
                 {
                     DateT = DateTime.UtcNow,
@@ -68,7 +58,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"LnOnchainSwapsPlugin.CreateOnChainToLnSwap(): {ex.Message} - {sRep}");
+                logger.LogError($"LnOnchainSwapsPlugin.CreateOnChainToLnSwap(): {ex.Message} - {sRep}");
                 if (string.IsNullOrEmpty(sRep))
                 {
                     throw;
@@ -106,14 +96,14 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
                 {
                     Content = new StringContent(swapJson, Encoding.UTF8, "application/json"),
                 };
-                using (var rep = await _httpClient.SendAsync(webRequest))
+                using (var rep = await httpClient.SendAsync(webRequest))
                 {
                     sRep = await rep.Content.ReadAsStringAsync();
                     rep.EnsureSuccessStatusCode();
                 }
                 dynamic JsonRep = JsonConvert.DeserializeObject<dynamic>(sRep);
 
-                _logger.LogInformation($"Boltzswap created: {JsonRep.id}");
+                logger.LogInformation($"Boltzswap created: {JsonRep.id}");
                 return new BoltzSwap
                 {
                     DateT = DateTime.UtcNow,
@@ -128,7 +118,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"LnOnchainSwapsPlugin.CreateLnToOnChainSwap(): {ex.Message} - {sRep}");
+                logger.LogError($"LnOnchainSwapsPlugin.CreateLnToOnChainSwap(): {ex.Message} - {sRep}");
                 if (string.IsNullOrEmpty(sRep))
                 {
                     throw;
@@ -147,7 +137,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             string sRep = "";
             try
             {
-                using (var rep = await _httpClient.GetAsync($"swap/{swapId}"))
+                using (var rep = await httpClient.GetAsync($"swap/{swapId}"))
                 {
                     sRep = await rep.Content.ReadAsStringAsync();
                     rep.EnsureSuccessStatusCode();
@@ -157,7 +147,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"LnOnchainSwapsPlugin.GetSwapStatus(): {ex.Message} - {sRep}");
+                logger.LogError($"LnOnchainSwapsPlugin.GetSwapStatus(): {ex.Message} - {sRep}");
                 if (string.IsNullOrEmpty(sRep))
                 {
                     throw;

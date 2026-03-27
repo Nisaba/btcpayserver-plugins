@@ -1,7 +1,7 @@
 using BTCPayServer.Plugins.Ecwid.Model;
 using Microsoft.EntityFrameworkCore;
 
-namespace BTCPayServer.Plugins.Ecwid;
+namespace BTCPayServer.Plugins.Ecwid.Data;
 
 public class EcwidPluginDbContext : DbContext
 {

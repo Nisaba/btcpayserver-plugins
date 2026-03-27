@@ -5,7 +5,6 @@ using BTCPayServer.Plugins.Peach.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.Peach.Controllers

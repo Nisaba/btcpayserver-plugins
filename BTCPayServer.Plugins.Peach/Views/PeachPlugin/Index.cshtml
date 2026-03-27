@@ -1,4 +1,5 @@
 ﻿@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Abstractions.Models
 @using BTCPayServer.Plugins.Peach.Views
 @using BTCPayServer.Client
 @using BTCPayServer.Plugins.Peach.Model
@@ -10,7 +11,7 @@
 
 @model BTCPayServer.Plugins.Peach.Model.PeachViewModel
 @{
-    ViewData.SetActivePage(PluginNavPages.Index, "Peach plugin");
+    ViewData.SetLayoutModel(new LayoutModel(nameof(PluginNavPages.Index), "Peach plugin"));
     var IsConfigured = Model.Settings.isConfigured;
 }
 

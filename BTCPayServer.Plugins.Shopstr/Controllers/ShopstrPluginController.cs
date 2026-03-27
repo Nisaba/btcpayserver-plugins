@@ -1,6 +1,4 @@
 ﻿using BTCPayServer.Abstractions.Constants;
-using BTCPayServer.Abstractions.Extensions;
-using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Client;
 using BTCPayServer.Plugins.Shopstr.Models;
 using BTCPayServer.Plugins.Shopstr.Services;
@@ -92,7 +90,7 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
                 var app = await pluginService.GetStoreApp(appId);
                 if (!app.ShopItems.Any())
                 {
-                    return Ok(); ;
+                    return Ok();
                 }
 
                 var nostrSettings = await pluginService.GetNostrSettings(storeId);

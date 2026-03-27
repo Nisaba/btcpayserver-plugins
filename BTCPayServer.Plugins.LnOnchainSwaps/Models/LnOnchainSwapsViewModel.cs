@@ -4,7 +4,7 @@ namespace BTCPayServer.Plugins.LnOnchainSwaps.Models
 {
     public class LnOnchainSwapsViewModel
     {
-        public string StoreId;
+        public string StoreId { get; set; }
         public List<BoltzSwap> Swaps { get; set; }
 
         public StoreWalletConfig WalletConfig { get; set; }

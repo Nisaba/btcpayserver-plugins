@@ -5,15 +5,11 @@ using BTCPayServer.Plugins.LnOnchainSwaps.Models;
 using BTCPayServer.Plugins.LnOnchainSwaps.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NBitcoin;
-using Newtonsoft.Json;
-using Org.BouncyCastle.Utilities.Collections;
 using System;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace BTCPayServer.PluginsLnOnchainSwaps.Controllers
+namespace BTCPayServer.Plugins.LnOnchainSwaps.Controllers
 {
     [Route("~/plugins/{storeId}/LnOnchainSwaps")]
     [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]

@@ -2,14 +2,15 @@
 using BTCPayServer.Client.Models;
 using BTCPayServer.Plugins.Ecwid.Data;
 using BTCPayServer.Plugins.Ecwid.Model;
-using BTCPayServer.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -17,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.Ecwid.Services
 {
-    public class EcwidPluginService(EcwidPluginDbContextFactory pluginDbContextFactory, ILogger<EcwidPluginService> logger)
+    public class EcwidPluginService(EcwidPluginDbContextFactory pluginDbContextFactory, ILogger<EcwidPluginService> logger, HttpClient httpClient)
     {
         public async Task<EcwidSettings> GetStoreSettings(string storeId)
         {
@@ -56,8 +57,6 @@ namespace BTCPayServer.Plugins.Ecwid.Services
                 }
 
                 await _context.SaveChangesAsync();
-                return;
-
             }
             catch (Exception e)
             {
@@ -111,19 +110,17 @@ namespace BTCPayServer.Plugins.Ecwid.Services
         {
             try
             {
-                using HttpClient client = new HttpClient();
-                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {model.Token}");
-
                 var data = new { paymentStatus = model.PaymentStatus };
                 string jsonData = JsonSerializer.Serialize(data);
                 HttpContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
                 var url = $"https://app.ecwid.com/api/v3/{model.StoreId}/orders/{model.TransactionId}";
-                using (var rep = await client.PutAsync(url, content))
-                {
-                    rep.EnsureSuccessStatusCode();
-                    await rep.Content.ReadAsStringAsync();
-                }
+                var request = new HttpRequestMessage(HttpMethod.Put, url);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", model.Token);
+                request.Content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+                using var rep = await httpClient.SendAsync(request);
+                rep.EnsureSuccessStatusCode();
+                await rep.Content.ReadAsStringAsync();
 
             } catch (Exception e)
             {
@@ -164,30 +161,21 @@ namespace BTCPayServer.Plugins.Ecwid.Services
             byte[] payload = new byte[decoded.Length - 16];
             Array.Copy(decoded, 16, payload, 0, payload.Length);
 
-            using (Aes aes = Aes.Create())
-            {
-                aes.Key = Encoding.UTF8.GetBytes(key);
-                aes.IV = iv;
-                aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.PKCS7;
+            using Aes aes = Aes.Create();
+            aes.Key = Encoding.UTF8.GetBytes(key);
+            aes.IV = iv;
+            aes.Mode = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7;
 
-                using (ICryptoTransform decryptor = aes.CreateDecryptor())
-                {
-                    //byte[] decryptedBytes = decryptor.TransformFinalBlock(payload, 0, payload.Length);
-                    //return Encoding.UTF8.GetString(decryptedBytes);
+            using ICryptoTransform decryptor = aes.CreateDecryptor();
+            //byte[] decryptedBytes = decryptor.TransformFinalBlock(payload, 0, payload.Length);
+            //return Encoding.UTF8.GetString(decryptedBytes);
 
-                    using (MemoryStream msDecrypt = new MemoryStream(payload))
-                    {
-                        using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
-                        {
-                            using (StreamReader srDecrypt = new StreamReader(csDecrypt))
-                            {
-                                return srDecrypt.ReadToEnd();
-                            }
-                        }
-                    }
-                }
-            }
+            using MemoryStream msDecrypt = new MemoryStream(payload);
+            using CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
+            using StreamReader srDecrypt = new StreamReader(csDecrypt);
+
+            return srDecrypt.ReadToEnd();
         }
 
     }
