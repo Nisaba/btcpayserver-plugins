@@ -53,9 +53,10 @@ public class ExolixSettings
             { "BNB", new CryptoInfo("Binance Coin", CryptoCategory.Altcoin) },
             { "ADA", new CryptoInfo("Cardano", CryptoCategory.Altcoin) },
             { "SOL", new CryptoInfo("Solana", CryptoCategory.Altcoin) },
+            { "TON", new CryptoInfo("Toncoin", CryptoCategory.Altcoin) },
             
             // Stablecoins USD
-            { "DAI", new CryptoInfo("DAI", CryptoCategory.StablecoinUSD) },
+            { "DAI-ETH", new CryptoInfo("DAI (Ethereum)", CryptoCategory.StablecoinUSD) },
             { "USDT-ETH", new CryptoInfo("USDT Tether (Ethereum)", CryptoCategory.StablecoinUSD) },
             { "USDT-TRX", new CryptoInfo("USDT Tether (Tron)", CryptoCategory.StablecoinUSD) },
             { "USDT-BSC", new CryptoInfo("USDT Tether (Binance)", CryptoCategory.StablecoinUSD) },

@@ -7,9 +7,15 @@
 }
 
 <a href="#Exolix" class="btcpay-pill m-0 payment-method" :class="{ active: pmId === 'Exolix' }"
-    v-on:click.prevent="pmId === 'BTC-CHAIN' ? changePaymentMethod('Exolix') : alert('Please select the Bitcoin payment method first before choosing Altcoins.')">
+       v-on:click.prevent="pmId.includes('BTC-') ? changePaymentMethod('Exolix') : alert('Please select the Bitcoin or Lightning payment method first before choosing Altcoins.')">
     <div style="text-align: center;">
         <span style="display: block;">Altcoins</span>
     </div>
 </a>
 
+<details style="background: #111; color: #0f0; margin-top: 20px; text-align: left; padding: 15px; border-radius: 5px; max-width: 100%; box-sizing: border-box;">
+    <summary style="cursor: pointer; font-weight: bold;">🔍 Voir les données Vue (Débogage)</summary>
+    <div style="max-height: 400px; overflow-y: auto; overflow-x: hidden; margin-top: 10px;">
+        <pre style="white-space: pre-wrap; word-wrap: break-word; word-break: break-all; font-size: 11px; margin: 0; width: 100%;">{{ $data }}</pre>
+    </div>
+</details>

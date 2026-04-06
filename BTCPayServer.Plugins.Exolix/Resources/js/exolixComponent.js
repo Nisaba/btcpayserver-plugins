@@ -89,10 +89,16 @@ const ExolixCheckout = {
                 if (btcAmount > 3) {
                     btcAmount /= 100000000;
                 }
+                var isLightning = this.model.invoiceBitcoinUrl.includes('lightning:');
+                var sAddress = this.model.address;
+                if (isLightning && !sAddress.includes("lnbc")) {
+                    sAddress = this.model.invoiceBitcoinUrl.split('lightning:')[1];
+                }
                 const formData = new FormData();
                 formData.append('CryptoFrom', this.selectedCrypto);
-                formData.append('BtcAddress', this.model.address);
+                formData.append('BtcAddress', sAddress);
                 formData.append('BtcAmount', btcAmount);
+                formData.append('BtcNetwork', isLightning ? "LIGHTNING" : "BTC");
                 formData.append('BtcPayInvoiceId', window.exolixData.invoiceId);
 
                 const antiForgeryToken = window.exolixData.antiForgeryToken || document.querySelector('input[name="__RequestVerificationToken"]')?.value;
@@ -148,7 +154,7 @@ const ExolixCheckout = {
             }
         },
         getCryptoIcon(cryptoCode) {
-            return `/Resources/ico/${cryptoCode.substring(0,4)}.webp`;
+            return `/Resources/ico/${cryptoCode.substring(0, 4).replace("-", "")}.webp`;
         },
         validateManualAmount() {
             const amount = this.asNumber(this.manualAmount);

@@ -8,12 +8,13 @@
 
 @inject ExolixPluginService pluginService
 @{
-    var storeId = ((JObject)JObject.Parse(JsonConvert.SerializeObject(Model)))["StoreId"].Value<string>();
+    var jsonModel = (JObject)JObject.Parse(JsonConvert.SerializeObject(Model));
+    var storeId = jsonModel["StoreId"].Value<string>();
     var settings = await pluginService.GetStoreSettings(storeId);
-
     if (settings?.Enabled is not true || settings.AcceptedCryptos.Count == 0) return;
-    var invoiceId = ((JObject)JObject.Parse(JsonConvert.SerializeObject(Model)))["InvoiceId"].Value<string>();
 
+    var pmId = jsonModel["PaymentMethodId"].Value<string>();
+    var invoiceId = jsonModel["InvoiceId"].Value<string>();
     var groupedCryptos = settings.AcceptedCryptos
         .Where(crypto => ExolixSettings.AvailableCryptos.ContainsKey(crypto))
         .Select(crypto => new

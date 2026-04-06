@@ -35,7 +35,7 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                     FromNetwork = sNetworkFrom,
                     FromAmount = 0,
                     ToCrypto = "BTC",
-                    ToNetwork = "BTC",
+                    ToNetwork = req.BtcNetwork,
                     ToAmount = req.BtcAmount,
                     ToAddress = req.BtcAddress,
                 };

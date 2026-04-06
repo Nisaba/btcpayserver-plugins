@@ -5,6 +5,7 @@
         public string CryptoFrom { get; set; }
         public string BtcAddress { get; set; }
         public float BtcAmount { get; set; }
+        public string BtcNetwork { get; set; }
         public string BtcPayInvoiceId { get; set; }
     }
 }
