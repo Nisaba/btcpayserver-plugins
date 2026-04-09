@@ -29,8 +29,11 @@ During checkout, the customer must click on "Altcoins" and then choose their cry
 
 ## Using Lightning at Checkout
 Now, during checkout, a Lightning swap will be made if available, instead of an onchain swap. This will ensure a much faster payment for your customers, and a better user experience.
+
 The plugin will automatically detect if the invoice is payable via Lightning. If not, the plugin will fall back to the onchain swap as before.
+
 It works better with "Unify on-chain and lightning payment URL/QR code" option activated in the  store settings.
+
 If not, Lightning swap will be activated only if the user cliks on "Lightning" before clicking on "Altcoins". Otherwise, onchain mode is selected for the swap.
 
 
