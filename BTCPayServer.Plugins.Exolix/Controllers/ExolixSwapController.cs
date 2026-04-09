@@ -11,6 +11,7 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
     {
 
         [HttpPost]
+        [IgnoreAntiforgeryToken]
         public async Task<SwapCreationResponse> Index([FromRoute] string storeId, [FromForm] SwapRequest req)
         {
             var rep = new SwapCreationResponse();

@@ -92,7 +92,7 @@ const ExolixCheckout = {
                 var isLightning = this.model.invoiceBitcoinUrl.includes('lightning');
                 var sAddress = this.model.address;
                 if (isLightning && !sAddress.includes("lnbc")) {
-                    sAddress = this.model.invoiceBitcoinUrl.split('lightning')[1].replace(':', '').replace('=', '');
+                    sAddress = this.model.invoiceBitcoinUrl.split('lightning')[1].remove(':').remove('=');
                 }
                 const formData = new FormData();
                 formData.append('CryptoFrom', this.selectedCrypto);
@@ -101,10 +101,10 @@ const ExolixCheckout = {
                 formData.append('BtcNetwork', isLightning ? "LIGHTNING" : "BTC");
                 formData.append('BtcPayInvoiceId', window.exolixData.invoiceId);
 
-                const antiForgeryToken = window.exolixData.antiForgeryToken || document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+              /*  const antiForgeryToken = window.exolixData.antiForgeryToken || document.querySelector('input[name="__RequestVerificationToken"]')?.value;
                 if (antiForgeryToken) {
                     formData.append('__RequestVerificationToken', antiForgeryToken);
-                }
+                }*/
 
                 const response = await fetch(`/plugins/${window.exolixData.storeId}/ExolixSwap`, {
                     method: 'POST',
