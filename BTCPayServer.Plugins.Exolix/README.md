@@ -71,7 +71,7 @@ Here you will find the list of swaps you have executed from your BTC balance.
 - **1.3.3** - Fix: At checkout, display a message to select Bitcoin payment first before selecting Altcoins, if the user has selected another payment method (ie Lightning, or Monero / Litecoin for those run a node) just before. This ensures the correct BTC amount and address are retrieved for the swap.
 - **1.3.4** - Fix issue in checkout for BTCPay 2.3.6
 - **1.3.5** - Fix crash on BTCPay v.2.3.7, migration to .NET 10
-
+- **1.4.1** - Lightning available at checkout (see above), fix a JSON.parse issue at checkout in some cases, add TonCoin at checkout. Fix a display issue for DAI at checkout (Select them in the Exolix configuration page so that they are active at checkout)
 
   
 
