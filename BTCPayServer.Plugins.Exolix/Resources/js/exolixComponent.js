@@ -89,10 +89,10 @@ const ExolixCheckout = {
                 if (btcAmount > 3) {
                     btcAmount /= 100000000;
                 }
-                var isLightning = this.model.invoiceBitcoinUrl.includes('lightning:');
+                var isLightning = this.model.invoiceBitcoinUrl.includes('lightning');
                 var sAddress = this.model.address;
                 if (isLightning && !sAddress.includes("lnbc")) {
-                    sAddress = this.model.invoiceBitcoinUrl.split('lightning:')[1];
+                    sAddress = this.model.invoiceBitcoinUrl.split('lightning')[1].replace(':', '').replace('=', '');
                 }
                 const formData = new FormData();
                 formData.append('CryptoFrom', this.selectedCrypto);
