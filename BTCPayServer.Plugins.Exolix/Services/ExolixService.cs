@@ -35,7 +35,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
                     ["coinFrom"] = req.FromCrypto,
                     ["networkFrom"] = GetNetwork(req.FromNetwork),
                     ["coinTo"] = req.ToCrypto,
-                    ["networkTo"] = GetNetwork(req.ToNetwork),
+                    ["networkTo"] = GetNetwork(req.ToNetwork) ?? "BTC",
                     ["amount"] = req.FromAmount,
                     ["withdrawalAddress"] = req.ToAddress,
                     ["rateType"] = "fixed"
