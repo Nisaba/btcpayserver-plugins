@@ -28,7 +28,8 @@ During checkout, the customer must click on "Altcoins" and then choose their cry
 
 
 ## Using Lightning at Checkout
-Now, during checkout, a Lightning swap will be made if available, instead of an onchain swap. This will ensure a much faster payment for your customers, and a better user experience.
+Now, during checkout, a Lightning swap will can made if available, instead of an onchain swap. This will ensure a much faster payment for your customers, and a better user experience.
+Please note that this is only possible if the invoice is payable via Lightning, and if the "Activate Lightning swap at checkout" option is activated in the plugin settings. If these conditions are not met, the plugin will fall back to the onchain swap as before.
 
 The plugin will automatically detect if the invoice is payable via Lightning. If not, the plugin will fall back to the onchain swap as before.
 
@@ -86,6 +87,7 @@ Here you will find the list of swaps you have executed from your BTC balance.
 - **1.4.2** - Fix at checkout
 - **1.4.3** - If LNURL is used, then the plugin will use onchain swap instead of lightning swap, since LNURL is not supported by Exolix.
 - **1.4.4** - Fix a potential issue due to the browser cache
+- **1.4.5** - Add a new parameter in the plugin settings to activate Lightning swap at checkout (default: disabled).
   
 
 

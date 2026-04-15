@@ -8,13 +8,12 @@
 
 @inject ExolixPluginService pluginService
 @{
-    var jsonModel = (JObject)JObject.Parse(JsonConvert.SerializeObject(Model));
-    var storeId = jsonModel["StoreId"].Value<string>();
+    var storeId = (string)((dynamic)Model).StoreId;
     var settings = await pluginService.GetStoreSettings(storeId);
     if (settings?.Enabled is not true || settings.AcceptedCryptos.Count == 0) return;
 
-    var pmId = jsonModel["PaymentMethodId"].Value<string>();
-    var invoiceId = jsonModel["InvoiceId"].Value<string>();
+    var pmId = (string)((dynamic)Model).PaymentMethodId;
+    var invoiceId = (string)((dynamic)Model).InvoiceId;
     var groupedCryptos = settings.AcceptedCryptos
         .Where(crypto => ExolixSettings.AvailableCryptos.ContainsKey(crypto))
         .Select(crypto => new
@@ -34,7 +33,8 @@
             kvp => kvp.Value.Name
         ),
         invoiceId = invoiceId,
-        storeId = storeId
+        storeId = storeId,
+        AllowLightning = settings.AllowLightning ? 1 : 0,
     };
 }
 

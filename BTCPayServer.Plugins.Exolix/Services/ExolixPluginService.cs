@@ -44,7 +44,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 if (settings == null)
                 {
                     settings = new ExolixSettings { StoreId = storeId, Enabled = false, AcceptedCryptos = new List<string>(), 
-                                                    IsEmailToCustomer = false, AllowRefundAddress = false };
+                                                    IsEmailToCustomer = false, AllowRefundAddress = false, AllowLightning = false };
                 }
                 return settings;
 
@@ -72,6 +72,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
                     dbSettings.AcceptedCryptos = new List<string>(settings.AcceptedCryptos ?? new List<string>());
                     dbSettings.IsEmailToCustomer = settings.IsEmailToCustomer;
                     dbSettings.AllowRefundAddress = settings.AllowRefundAddress;
+                    dbSettings.AllowLightning = settings.AllowLightning;
                     _context.ExolixSettings.Update(dbSettings);
                 }
 

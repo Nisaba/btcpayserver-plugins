@@ -22,6 +22,9 @@ public class ExolixSettings
     [Display(Name = "Allow customer to specify a refund address if the swap fails")]
     public bool AllowRefundAddress { get; set; }
 
+    [Display(Name = "Allow Lightning Network swaps if available")]
+    public bool AllowLightning { get; set; }
+
     [NotMapped]
     public bool isConfigured
     {

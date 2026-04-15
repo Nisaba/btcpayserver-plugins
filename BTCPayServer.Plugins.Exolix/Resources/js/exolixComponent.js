@@ -91,13 +91,17 @@ const ExolixCheckout = {
                 }
 
                 const sInvoiceBitcoinUrl = this.model.invoiceBitcoinUrl || '';
-                let isLightning = sInvoiceBitcoinUrl.includes('lnbc');
                 let sAddress = this.model.address;
 
-                if (isLightning && !sAddress.includes("lnbc")) {
-                    const lightningPart = sInvoiceBitcoinUrl.split('lightning')[1];
-                    if (lightningPart) {
-                        sAddress = lightningPart.replace(':', '').replace('=', '');
+                let isLightning = false;
+                if (window.exolixData.AllowLightning == 1) {
+                    isLightning = sInvoiceBitcoinUrl.includes('lnbc');
+
+                    if (isLightning && !sAddress.includes("lnbc")) {
+                        const lightningPart = sInvoiceBitcoinUrl.split('lightning')[1];
+                        if (lightningPart) {
+                            sAddress = lightningPart.replace(':', '').replace('=', '');
+                        }
                     }
                 }
                 const formData = new FormData();

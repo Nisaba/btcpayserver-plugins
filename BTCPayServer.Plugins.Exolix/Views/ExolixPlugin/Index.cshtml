@@ -85,6 +85,13 @@
                 </div> -->
 
                 <div class="form-group">
+                    <div class="d-flex align-items-center">
+                        <input asp-for="@Model.Settings.AllowLightning" type="checkbox" class="btcpay-toggle me-3" />
+                        <label asp-for="@Model.Settings.AllowLightning" class="form-check-label"></label>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label class="form-label" asp-for="@Model.Settings.AcceptedCryptos">
                         Accepted Cryptos (press Control to select multi values):
                     </label>
