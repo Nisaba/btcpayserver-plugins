@@ -50,11 +50,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Remove="Resources\img\Exolix.svg" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <ProjectReference Include="..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
+	  <ProjectReference Include="..\..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
 	</ItemGroup>
 
 </Project>

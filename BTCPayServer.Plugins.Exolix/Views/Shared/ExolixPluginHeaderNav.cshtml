@@ -9,10 +9,22 @@
 }
 @if (!string.IsNullOrEmpty(storeId))
 {
-<li class="nav-item">
-    <a asp-controller="ExolixPlugin" asp-action="Index" asp-route-storeId="@storeId" class="nav-link @ViewData.IsActivePage(PluginNavPages.Index)">
-        <img src="/Resources/img/Exolix.svg" width="24" height="24" class="icon"/>&nbsp;
-        <span>Exolix</span>
-    </a>
-</li>
+    <li class="nav-item">
+        <a asp-controller="ExolixPlugin" asp-action="Index" asp-route-storeId="@storeId" class="nav-link @ViewData.IsActivePage(PluginNavPages.Index)">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="24"
+                 height="24"
+                 viewBox="0 0 96 75"
+                 preserveAspectRatio="xMidYMid meet">
+                <g transform="translate(0,75) scale(0.1,-0.1)"
+                       fill="currentColor" stroke="none">
+                    <path d="M253 718 c14 -18 97 -131 185 -251 l161 -217 39 52 c112 154 312 437
+                    312 442 0 3 -162 6 -361 6 l-360 0 24 -32z" />
+                    <path d="M177 252 l-176 -247 356 -3 c196 -1 358 0 361 2 4 5 -344 482 -357
+                    491 -4 2 -87 -107 -184 -243z" />
+                </g>
+            </svg>
+            <span>Exolix</span>
+        </a>
+    </li>
 }

@@ -1,0 +1,26 @@
+@using BTCPayServer.Abstractions.Contracts
+@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Plugins.Satora.Views
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+
+@inject IScopeProvider ScopeProvider
+@{
+    var storeId = ScopeProvider.GetCurrentStoreId();
+}
+@if (!string.IsNullOrEmpty(storeId))
+{
+    <li class="nav-item">
+        <a asp-controller="SatoraPlugin" asp-action="Index" asp-route-storeId="@storeId" class="nav-link @ViewData.IsActivePage(PluginNavPages.Index)">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="16"
+                 height="16"
+                 viewBox="222 24 22 22"
+                 preserveAspectRatio="xMidYMid meet">
+                <g transform="translate(-2, -79)">
+                    <path d="M235.045 125.182C232.045 125.182 229.47 124.121 227.318 122C225.197 119.848 224.136 117.273 224.136 114.273C224.136 111.303 225.197 108.758 227.318 106.636C229.47 104.515 232.045 103.455 235.045 103.455C237.955 103.455 240.5 104.515 242.682 106.636C244.864 108.758 245.955 111.303 245.955 114.273C245.955 116.273 245.439 118.106 244.409 119.773C243.409 121.409 242.091 122.727 240.455 123.727C238.818 124.697 237.015 125.182 235.045 125.182Z" fill="currentColor" />
+                </g>
+            </svg>
+            <span>&nbsp; Satora</span>
+        </a>
+    </li>
+}
