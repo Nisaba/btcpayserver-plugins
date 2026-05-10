@@ -2,6 +2,7 @@
 using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Plugins.Exolix.Services;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace BTCPayServer.Plugins.Exolix;
 
@@ -19,8 +20,12 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddUIExtension("checkout-payment", "CheckoutV2/CheckoutPaymentExtension")
                 .AddSingleton<ExolixPluginDbContextFactory>()
                 .AddHostedService<PluginMigrationRunner>()
-                .AddSingleton<ExolixService>()
-                .AddSingleton<ExolixPluginService>();
+                .AddSingleton<ExolixPluginService>()
+                .AddHttpClient<ExolixService>(client =>
+                {
+                    client.BaseAddress = new Uri(ExolixService.BaseUrl);
+                    client.DefaultRequestHeaders.Add("Authorization", "Bearer " + ExolixService.APIKey);
+                });
 
 
     }

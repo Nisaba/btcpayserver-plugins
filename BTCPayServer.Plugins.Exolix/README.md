@@ -88,6 +88,7 @@ Here you will find the list of swaps you have executed from your BTC balance.
 - **1.4.3** - If LNURL is used, then the plugin will use onchain swap instead of lightning swap, since LNURL is not supported by Exolix.
 - **1.4.4** - Fix a potential issue due to the browser cache
 - **1.4.5** - Add a new parameter in the plugin settings to activate Lightning swap at checkout (default: disabled).
+- **1.4.6** - New icon for dark mode, add ZCash at checkout (Select it in the Exolix configuration page so that it is active at checkout), fix the link to the transaction json view in the customers swap list, small improvements
   
 
 

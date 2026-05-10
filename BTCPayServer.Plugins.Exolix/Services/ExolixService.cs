@@ -9,21 +9,10 @@ using System.Threading.Tasks;
 
 namespace BTCPayServer.Plugins.Exolix.Services
 {
-    public class ExolixService
+    public class ExolixService(ILogger<ExolixService> logger, HttpClient httpClient)
     {
-        private readonly string BaseUrl = "https://exolix.com/api/v2/";
-        private readonly string APIKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVsbGlwc2UtMjFAbmlzYWJhLXNvbHV0aW9ucy5jb20iLCJzdWIiOjQxOTY0LCJpYXQiOjE3NDc1MjIxNjksImV4cCI6MTkwNTMxMDE2OX0.thq7I9--XW7DoPlSg9lGCqaU804h_fYk3EUOkMGSEag";
-
-        private readonly HttpClient _httpClient;
-        private readonly ILogger<ExolixService> _logger;
-
-        public ExolixService(ILogger<ExolixService> logger, HttpClient httpClient)
-        {
-            _logger = logger;
-            _httpClient = httpClient;
-            _httpClient.BaseAddress = new Uri(BaseUrl);
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {APIKey}");
-        }
+        public const string BaseUrl = "https://exolix.com/api/v2/";
+        public const string APIKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVsbGlwc2UtMjFAbmlzYWJhLXNvbHV0aW9ucy5jb20iLCJzdWIiOjQxOTY0LCJpYXQiOjE3NDc1MjIxNjksImV4cCI6MTkwNTMxMDE2OX0.thq7I9--XW7DoPlSg9lGCqaU804h_fYk3EUOkMGSEag";
 
         public async Task<SwapCreationResponse> CreateSwapAsync(SwapCreationRequest req)
         {
@@ -53,7 +42,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 {
                     Content = new StringContent(createJson, Encoding.UTF8, "application/json"),
                 };
-                using (var rep = await _httpClient.SendAsync(webRequest))
+                using (var rep = await httpClient.SendAsync(webRequest))
                 {
                     sRep = await rep.Content.ReadAsStringAsync();
                     rep.EnsureSuccessStatusCode();
@@ -67,12 +56,12 @@ namespace BTCPayServer.Plugins.Exolix.Services
                     FromAmount = Convert.ToSingle(JsonRep.amount),
                     ToAmount = Convert.ToSingle(JsonRep.amountTo)
                 };
-                _logger.LogInformation($"Exolix Swap Created : {swap.SwapId} {req.FromCrypto} {req.ToCrypto}");
+                logger.LogInformation($"Exolix Swap Created : {swap.SwapId} {req.FromCrypto} {req.ToCrypto}");
                 return swap;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"ExolixPlugin.CreateSwap(): {ex.Message} - {sRep} - {req.FromCrypto} {req.ToCrypto}");
+                logger.LogError($"ExolixPlugin.CreateSwap(): {ex.Message} - {sRep} - {req.FromCrypto} {req.ToCrypto}");
                 if (string.IsNullOrEmpty(sRep))
                 {
                     throw;
@@ -84,6 +73,24 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 }
             }
         }
+
+        public async Task<string> GetSwapInfoAsync(string id)
+        {
+            string sRep = "";
+            try
+            {
+                var response = await httpClient.GetAsync($"{BaseUrl}transactions/{id}");
+                sRep = await response.Content.ReadAsStringAsync();
+                response.EnsureSuccessStatusCode();
+                return sRep;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"ExolixPlugin.GetSwapInfo(): {ex.Message} - {sRep} - {id}");
+                throw;
+            }
+        }
+
 
         private static string GetNetwork(string crypto) => crypto switch
         {

@@ -207,7 +207,7 @@
                             <strong>Success!</strong> Exolix swap and the BTCPay payout have been created.<br />
                             If you have set an automatic payout processor, the payment will be sent automatically to Exolix.<br />
                             Otherwise, <a href="/stores/@Model.Settings.StoreId/payouts?payoutState=AwaitingPayment" target="btcp">click here</a> to validate the payout under BTCPay.<br />
-                            <a href="https://exolix.com/api/v2/transactions/@TempData["SwapId"]?.ToString()" target="exo">Check status transaction</a> to follow it. If an issue arises, contact support@exolix.com with the Swap id: @TempData["SwapId"]?.ToString()
+                            <a asp-controller="ExolixPlugin" asp-action="SwapInfo" asp-route-storeId="@Model.Settings.StoreId" asp-route-swapId='@TempData["SwapId"]?.ToString()' target="exo">Check status transaction</a> to follow it. If an issue arises, contact support@exolix.com with the Swap id: @TempData["SwapId"]?.ToString()
                         </div>
                     } else
                     {
@@ -366,7 +366,7 @@
                                         <a asp-controller="UIInvoice" asp-action="Invoice" asp-route-invoiceId="@item.BTCPayInvoiceId" class="text-break">@item.BTCPayInvoiceId</a>
                                     </td>
                                     <td>
-                                        <a href="https://exolix.com/api/v2/transactions/@item.TxID" target="_blank">View JSON</a>
+                                        <a asp-controller="ExolixPlugin" asp-action="SwapInfo" asp-route-storeId="@Model.Settings.StoreId" asp-route-swapId="@item.TxID" target="_blank">View JSON</a>
                                     </td>
                                 </tr>
                             }
@@ -460,7 +460,7 @@
                                         <a asp-controller="UIPullPayment" asp-action="ViewPullPayment" asp-route-pullPaymentId="@item.BTCPayPullPaymentId" class="text-break">@item.BTCPayPullPaymentId</a>
                                     </td>
                                     <td>
-                                        <a href="https://exolix.com/api/v2/transactions/@item.TxID" target="_blank">View JSON</a>
+                                        <a asp-controller="ExolixPlugin" asp-action="SwapInfo" asp-route-storeId="@Model.Settings.StoreId" asp-route-swapId="@item.TxID" target="_blank">View JSON</a>
                                     </td>
                                 </tr>
                             }

@@ -57,6 +57,7 @@ public class ExolixSettings
             { "ADA", new CryptoInfo("Cardano", CryptoCategory.Altcoin) },
             { "SOL", new CryptoInfo("Solana", CryptoCategory.Altcoin) },
             { "TON", new CryptoInfo("Toncoin", CryptoCategory.Altcoin) },
+            { "ZEC", new CryptoInfo("ZCash", CryptoCategory.Altcoin) },
             
             // Stablecoins USD
             { "DAI-ETH", new CryptoInfo("DAI (Ethereum)", CryptoCategory.StablecoinUSD) },
