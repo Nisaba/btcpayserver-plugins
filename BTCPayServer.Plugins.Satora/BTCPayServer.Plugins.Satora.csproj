@@ -45,11 +45,6 @@
 
 
   <ItemGroup>
-    <Folder Include="Resources\img\" />
-  </ItemGroup>
-
-
-  <ItemGroup>
     <ProjectReference Include="..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
   </ItemGroup>
 
