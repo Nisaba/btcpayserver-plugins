@@ -54,7 +54,6 @@ namespace BTCPayServer.Plugins.Satora.Models
         public static readonly IReadOnlyDictionary<Stablecoins, List<Blockchains>> AvailableCryptos = new ReadOnlyDictionary<Stablecoins, List<Blockchains>>(
             new Dictionary<Stablecoins, List<Blockchains>>
             {
-                { Stablecoins.BTC, new List<Blockchains> { Blockchains.Lnk } },
                 { Stablecoins.EURC, new List<Blockchains> { Blockchains.Ethereum } },
                 { Stablecoins.tBTC, new List<Blockchains> { Blockchains.Ethereum, Blockchains.Arbitrum } },
                 { Stablecoins.USAT, new List<Blockchains> { Blockchains.Ethereum } },

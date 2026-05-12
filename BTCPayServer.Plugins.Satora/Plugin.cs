@@ -18,8 +18,8 @@ public class Plugin : BaseBTCPayServerPlugin
     public override void Execute(IServiceCollection services)
     {
         services.AddUIExtension("header-nav", "SatoraPluginHeaderNav")
-                .AddUIExtension("checkout-payment-method", "CheckoutV2/CheckoutPaymentMethodExtension")
-                .AddUIExtension("checkout-payment", "CheckoutV2/CheckoutPaymentExtension")
+                .AddUIExtension("checkout-payment-method", "CheckoutV2/CheckoutSatoraPaymentMethodExtension")
+                .AddUIExtension("checkout-payment", "CheckoutV2/CheckoutSatoraPaymentExtension")
                 .AddSingleton<SatoraPluginDbContextFactory>()
                 .AddHostedService<PluginMigrationRunner>()
                 .AddSingleton<SatoraService>()
