@@ -46,7 +46,6 @@
                     </select>
                 </div>
 
-                <!-- Optionnel: Indiquer la blockchain sélectionnée par défaut si c'est la seule disponible -->
                 <div v-if="selectedStablecoin && availableCryptos[selectedStablecoin] && availableCryptos[selectedStablecoin].length === 1" class="mb-3">
                     <small class="text-muted">
                         <i class="fa fa-info-circle"></i> Blockchain {{ availableCryptos[selectedStablecoin][0] }} selected.

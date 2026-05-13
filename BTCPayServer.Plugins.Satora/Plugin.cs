@@ -11,7 +11,7 @@ public class Plugin : BaseBTCPayServerPlugin
     public override IBTCPayServerPlugin.PluginDependency[] Dependencies { get; } =
     {
         new() { Identifier = nameof(BTCPayServer), Condition = ">=2.3.7" },
-        new() { Identifier = "BTCPayServer.Plugins.ArkPayServer", Condition = ">=2.1.0" }
+  //      new() { Identifier = "BTCPayServer.Plugins.ArkPayServer", Condition = ">=2.1.0" }
 
     };
 
