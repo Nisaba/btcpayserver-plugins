@@ -20,7 +20,8 @@ namespace BTCPayServer.Plugins.Satora.Controllers
                 await pluginService.AddStoreTransaction(new SatoraTx
                 {
                     StoreId = storeId,
-                    Stablecoin = req.CryptoFrom + "-" + req.NetworkFrom,
+                    Blockchain = req.NetworkFrom.ToString(),
+                    Stablecoin = req.CryptoFrom.ToString(),
                     DateT = DateTime.UtcNow,
                     BTCAmount = req.BtcAmount,
                     TxID = rep.SwapId,

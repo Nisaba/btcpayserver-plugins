@@ -22,6 +22,10 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddUIExtension("checkout-payment", "CheckoutV2/CheckoutSatoraPaymentExtension")
                 .AddSingleton<SatoraPluginDbContextFactory>()
                 .AddHostedService<PluginMigrationRunner>()
+                .AddSingleton(sp =>
+                {
+                    return new Lendaswap.Sdk.Client("https://api.lendaswap.com");
+                })
                 .AddSingleton<SatoraService>()
                 .AddSingleton<SatoraPluginService>();
 

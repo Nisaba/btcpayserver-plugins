@@ -14,6 +14,13 @@ jobs:
       - name: Checkout plugins
         uses: actions/checkout@v4
 
+      - name: Checkout btcpayserver
+        uses: actions/checkout@v4
+        with:
+          repository: btcpayserver/btcpayserver
+          path: ../btcpayserver
+          ref: master
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:

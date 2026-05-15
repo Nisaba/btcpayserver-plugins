@@ -86,6 +86,7 @@
                         <th class="text-nowrap">Swap Id</th>
                         <th class="text-nowrap">Date</th>
                         <th class="text-nowrap">Stablecoin</th>
+                        <th class="text-nowrap">Blockchain</th>
                         <th class="text-nowrap">Amount (BTC)</th>
                         <th class="text-nowrap">Invoice</th>
                     </tr>
@@ -101,6 +102,11 @@
                             <td class="align-center">
                                 <div class="badge badge-expired">
                                     @item.Stablecoin
+                                </div>
+                            </td>
+                            <td class="align-center">
+                                <div class="badge badge-expired">
+                                    @item.Blockchain
                                 </div>
                             </td>
                             <td class="align-right">@item.BTCAmount</td>

@@ -1,7 +1,5 @@
-﻿
-using BTCPayServer.Plugins.Satora.Models;
+﻿using BTCPayServer.Plugins.Satora.Models;
 using Lendaswap.Sdk;
-using Newtonsoft.Json;
 using System.Globalization;
 using uniffi.lendaswap_sdk_ffi;
 
@@ -43,7 +41,8 @@ namespace BTCPayServer.Plugins.Satora.Services
                     // Fallback
                     _ => new TokenId.Other($"{req.CryptoFrom}-{req.NetworkFrom}")
                 };
-                QuoteAmount quoteAmount = new QuoteAmount.Target((ulong)req.BtcAmount * 100000000);
+
+                QuoteAmount quoteAmount = new QuoteAmount.Target((ulong)(req.BtcAmount * 100000000));
 
                 ChainId chainTo = req.BtcNetwork switch
                 {
@@ -54,11 +53,24 @@ namespace BTCPayServer.Plugins.Satora.Services
                 };
 
                 Quote quote = await client.GetQuoteAsync(chainFrom, tokenFrom, chainTo, new TokenId.Btc(), quoteAmount);
+                int decimals = req.CryptoFrom switch
+                {
+                    Stablecoins.EURC => 6,
+                    Stablecoins.USDC => 6,
+                    Stablecoins.USDT => 6,
+                    Stablecoins.USDT0 => 6,
+                    Stablecoins.WBTC => 8,
+                    _ => 18 
+                };
+
+                var rawAmount = double.Parse(quote.SourceAmount, CultureInfo.InvariantCulture);
+                var divisor = Math.Pow(10, decimals);
+
                 var swap = new SwapResponse
                 {
                     SwapId = "SATORA#" + Random.Shared.Next(100000, 999999).ToString(),
                     FromAddress = "FromAddressPlaceholder",
-                    FromAmount = float.Parse(quote.SourceAmount, CultureInfo.InvariantCulture),
+                    FromAmount = (float)(rawAmount / divisor),
                     Success = true,
                     StatusMessage = "Swap created successfully"
                 };

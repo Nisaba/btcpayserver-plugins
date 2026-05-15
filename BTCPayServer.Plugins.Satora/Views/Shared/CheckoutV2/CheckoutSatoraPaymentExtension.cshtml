@@ -52,6 +52,31 @@
                     </small>
                 </div>
 
+                <div v-if="isLoadingSwap" class="mb-3 text-muted">
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Generating swap details...
+                </div>
+
+                <div v-if="swapError" class="mb-3 text-danger">
+                    <i class="fa fa-exclamation-triangle"></i> {{ swapError }}
+                </div>
+
+                <div v-if="swapResult && swapResult.success && !isLoadingSwap" class="mb-3 p-3 border rounded bg-light">
+                    <h6 class="mb-2">Swap Summary</h6>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Amount to pay:</span>
+                        <strong>{{ swapResult.fromAmount }} {{ selectedStablecoin }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Network:</span>
+                        <span>{{ selectedBlockchain }}</span>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">Address:</small><br />
+                        <span class="text-break" style="font-family: monospace;">{{ swapResult.fromAddress }}</span>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
