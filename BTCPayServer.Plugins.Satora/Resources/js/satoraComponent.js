@@ -52,7 +52,6 @@
     methods: {
         payInWallet() {
             if (!this.qrCodeData) return;
-            // Ouvre l'URL du wallet à partir de l'URI générée pour le QR code
             window.open(this.qrCodeData, '_blank', 'noopener,noreferrer');
         },
         async checkStatus() {
