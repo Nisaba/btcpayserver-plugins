@@ -7,7 +7,7 @@
 }
 
 <a href="#Satora" class="btcpay-pill m-0 payment-method" :class="{ active: pmId === 'Satora' }"
-       v-on:click.prevent="pmId.includes('BTC-') || pm.Id === 'ARKADE' ? changePaymentMethod('Satora') : alert('Please select the Bitcoin or Lightning payment method first before choosing Stablecoins.')">
+       v-on:click.prevent="pmId.includes('BTC-') || pmId === 'ARKADE' ? changePaymentMethod('Satora') : alert('Please select the Bitcoin or Lightning payment method first before choosing Stablecoins.')">
     <div style="text-align: center;">
         <span style="display: block;">Stablecoins</span>
     </div>

@@ -1,6 +1,5 @@
 ﻿using BTCPayServer.Plugins.Satora.Models;
 using Lendaswap.Sdk;
-using System.Buffers.Text;
 using System.Globalization;
 using uniffi.lendaswap_sdk_ffi;
 
