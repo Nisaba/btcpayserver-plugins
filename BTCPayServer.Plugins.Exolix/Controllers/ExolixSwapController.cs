@@ -61,5 +61,12 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
 
             return rep;
         }
+
+        [HttpGet("{id}")]
+        public async Task<string> GetSwapInfo([FromRoute] string id)
+        {
+            return await exolixService.GetSwapInfoAsync(id);
+        }
+
     }
 }

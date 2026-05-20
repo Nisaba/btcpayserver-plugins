@@ -142,7 +142,7 @@ const ExolixCheckout = {
 
             this.checkingStatus = true;
             try {
-                const response = await fetch(`https://exolix.com/api/v2/transactions/${this.swapData.swapId}`, {
+                const response = await fetch(`/plugins/${window.exolixData.storeId}/ExolixSwap/${this.swapData.swapId}`, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json'
