@@ -37,5 +37,11 @@ namespace BTCPayServer.Plugins.Satora.Controllers
 
             return rep;
         }
+
+        [HttpGet("{id}")]
+        public async Task<string> GetSwapInfo([FromRoute] string id)
+        {
+            return await satoraService.GetSwapInfoAsync(id);
+        }
     }
 }

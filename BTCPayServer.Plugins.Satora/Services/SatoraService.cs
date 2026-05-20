@@ -1,5 +1,6 @@
 ﻿using BTCPayServer.Plugins.Satora.Models;
 using Lendaswap.Sdk;
+using System.Buffers.Text;
 using System.Globalization;
 using uniffi.lendaswap_sdk_ffi;
 
@@ -52,6 +53,15 @@ namespace BTCPayServer.Plugins.Satora.Services
                     _ => new ChainId.Other(req.BtcNetwork)
                 };
 
+                Address addressTo = req.BtcNetwork switch
+                {
+                    "BTC" => new Address.Bitcoin(req.BtcDestination),
+                    "LIGHTNING" => new Address.Lightning(req.BtcDestination),
+                    "ARKADE" => new Address.Arkade(req.BtcDestination),
+                    _ => new Address()
+                };
+
+                SwapDetails apiSwap = await client.CreateSwapAsync(chainFrom, tokenFrom, chainTo, new TokenId.Btc(), quoteAmount, addressTo, false);
                 Quote quote = await client.GetQuoteAsync(chainFrom, tokenFrom, chainTo, new TokenId.Btc(), quoteAmount);
                 int decimals = req.CryptoFrom switch
                 {
@@ -63,13 +73,13 @@ namespace BTCPayServer.Plugins.Satora.Services
                     _ => 18 
                 };
 
-                var rawAmount = double.Parse(quote.SourceAmount, CultureInfo.InvariantCulture);
+                var rawAmount = double.Parse(apiSwap.ReceiveAmount, CultureInfo.InvariantCulture);
                 var divisor = Math.Pow(10, decimals);
 
                 var swap = new SwapResponse
                 {
-                    SwapId = "SATORA#" + Random.Shared.Next(100000, 999999).ToString(),
-                    FromAddress = "FromAddressPlaceholder",
+                    SwapId = apiSwap.Id,
+                    FromAddress = apiSwap.ReceiveAddress,
                     FromAmount = (float)(rawAmount / divisor),
                     Success = true,
                     StatusMessage = "Swap created successfully"
@@ -83,6 +93,21 @@ namespace BTCPayServer.Plugins.Satora.Services
                  throw;
             }
 
+        }
+
+        public async Task<string> GetSwapInfoAsync(string id)
+        {
+            string sRep = "";
+            try
+            {
+                var swap = await client.GetSwapAsync(id);
+                return swap.Status.ToString();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"SatoraPlugin.GetSwapInfo(): {ex.Message} - {sRep} - {id}");
+                throw;
+            }
         }
     }
 }

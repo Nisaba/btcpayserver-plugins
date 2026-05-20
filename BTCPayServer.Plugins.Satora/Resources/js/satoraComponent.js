@@ -15,8 +15,21 @@
             swapError: "",
             swapResult: null,
             lastSwapKey: "",
-            swapAbortController: null
+            swapAbortController: null,
+            checkingStatus: false,
+            swapStatus: null,
+            qrOptions: {
+                margin: 0,
+                type: 'svg',
+                color: { dark: '#000', light: '#fff' }
+            }
         };
+    },
+    computed: {
+        qrCodeData() {
+            if (!this.swapResult || !this.swapResult.success) return null;
+            return `${this.swapResult.fromAddress}?amount=${this.swapResult.fromAmount}`;
+        }
     },
     watch: {
         selectedStablecoin(newVal) {
@@ -37,6 +50,37 @@
         }
     },
     methods: {
+        payInWallet() {
+            if (!this.qrCodeData) return;
+            // Ouvre l'URL du wallet à partir de l'URI générée pour le QR code
+            window.open(this.qrCodeData, '_blank', 'noopener,noreferrer');
+        },
+        async checkStatus() {
+            if (!this.swapResult || !this.swapResult.swapId) return;
+
+            this.checkingStatus = true;
+            this.swapStatus = null;
+
+            try {
+                const response = await fetch(`${this.getSwapUrl()}/${this.swapResult.swapId}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch status');
+                }
+
+                const result = await response.json();
+                this.swapStatus = result.status || 'Unknown';
+
+            } catch (error) {
+                console.error('Status check failed:', error);
+                this.swapStatus = 'Failed to check status';
+            } finally {
+                this.checkingStatus = false;
+            }
+        },
         normalizeBlockchain(blockchain) {
             return (blockchain || "").replace(/ /g, "_");
         },
