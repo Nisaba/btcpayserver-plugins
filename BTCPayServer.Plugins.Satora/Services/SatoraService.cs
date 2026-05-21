@@ -1,11 +1,10 @@
 ﻿using BTCPayServer.Plugins.Satora.Models;
-using Satora.Sdk;
 using System.Globalization;
 using uniffi.satora_sdk_ffi;
 
 namespace BTCPayServer.Plugins.Satora.Services
 {
-    public class SatoraService(ILogger<SatoraService> logger, SatoraClient client)
+    public class SatoraService(ILogger<SatoraService> logger, global::Satora.Sdk.Client client)
     {
        public async Task<SwapResponse> CreateSwapAsync(SwapRequest req)
        {
@@ -60,7 +59,14 @@ namespace BTCPayServer.Plugins.Satora.Services
                     _ => new Address()
                 };
 
-                var apiSwap = client.CreateSwap(chainFrom, tokenFrom, chainTo, new TokenId.Btc(), quoteAmount, addressTo, false);
+                var apiSwap = await client.CreateSwapAsync(chainFrom, tokenFrom, chainTo, new TokenId.Btc(), quoteAmount, addressTo, true);
+                
+                string? sDepositAddress = apiSwap.Funding switch
+                {
+                    SwapFunding.Gasless gasless => gasless.depositAddress,
+                    _ => null
+                } ?? throw new Exception("Failed to retrieve deposit address");
+
                 int decimals = req.CryptoFrom switch
                 {
                     Stablecoins.EURC => 6,
@@ -70,14 +76,14 @@ namespace BTCPayServer.Plugins.Satora.Services
                     Stablecoins.WBTC => 8,
                     _ => 18 
                 };
-
-                var rawAmount = double.Parse(apiSwap.receiveAmount, CultureInfo.InvariantCulture);
                 var divisor = Math.Pow(10, decimals);
+
+                var rawAmount = double.Parse(apiSwap.DepositAmount, CultureInfo.InvariantCulture);
 
                 var swap = new SwapResponse
                 {
-                    SwapId = apiSwap.id,
-                    FromAddress = apiSwap.receiveAddress,
+                    SwapId = apiSwap.Id,
+                    FromAddress = sDepositAddress,
                     FromAmount = (float)(rawAmount / divisor),
                     Success = true,
                     StatusMessage = "Swap created successfully"
@@ -98,8 +104,8 @@ namespace BTCPayServer.Plugins.Satora.Services
             string sRep = "";
             try
             {
-                var swap = client.GetSwap(id);
-                return swap.status.ToString();
+                var swap = await client.GetSwapAsync(id);
+                return swap.Status.ToString();
             }
             catch (Exception ex)
             {

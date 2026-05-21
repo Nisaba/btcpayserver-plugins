@@ -27,7 +27,7 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddSingleton(sp =>
                 {
                     var mnemonic = new Mnemonic(Wordlist.English, WordCount.Twelve);
-                    return SatoraClient.NewSigning("https://api.lendaswap.com", mnemonic.ToString());
+                    return new global::Satora.Sdk.Client("https://api.lendaswap.com", mnemonic.ToString());
                 })
                 .AddSingleton<SatoraService>()
                 .AddSingleton<SatoraPluginService>();
