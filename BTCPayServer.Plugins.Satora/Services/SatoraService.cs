@@ -1,11 +1,11 @@
 ﻿using BTCPayServer.Plugins.Satora.Models;
-using Lendaswap.Sdk;
+using Satora.Sdk;
 using System.Globalization;
-using uniffi.lendaswap_sdk_ffi;
+using uniffi.satora_sdk_ffi;
 
 namespace BTCPayServer.Plugins.Satora.Services
 {
-    public class SatoraService(ILogger<SatoraService> logger, Lendaswap.Sdk.Client client)
+    public class SatoraService(ILogger<SatoraService> logger, SatoraClient client)
     {
        public async Task<SwapResponse> CreateSwapAsync(SwapRequest req)
        {
@@ -60,8 +60,7 @@ namespace BTCPayServer.Plugins.Satora.Services
                     _ => new Address()
                 };
 
-                SwapDetails apiSwap = await client.CreateSwapAsync(chainFrom, tokenFrom, chainTo, new TokenId.Btc(), quoteAmount, addressTo, false);
-                Quote quote = await client.GetQuoteAsync(chainFrom, tokenFrom, chainTo, new TokenId.Btc(), quoteAmount);
+                var apiSwap = client.CreateSwap(chainFrom, tokenFrom, chainTo, new TokenId.Btc(), quoteAmount, addressTo, false);
                 int decimals = req.CryptoFrom switch
                 {
                     Stablecoins.EURC => 6,
@@ -72,13 +71,13 @@ namespace BTCPayServer.Plugins.Satora.Services
                     _ => 18 
                 };
 
-                var rawAmount = double.Parse(apiSwap.ReceiveAmount, CultureInfo.InvariantCulture);
+                var rawAmount = double.Parse(apiSwap.receiveAmount, CultureInfo.InvariantCulture);
                 var divisor = Math.Pow(10, decimals);
 
                 var swap = new SwapResponse
                 {
-                    SwapId = apiSwap.Id,
-                    FromAddress = apiSwap.ReceiveAddress,
+                    SwapId = apiSwap.id,
+                    FromAddress = apiSwap.receiveAddress,
                     FromAmount = (float)(rawAmount / divisor),
                     Success = true,
                     StatusMessage = "Swap created successfully"
@@ -99,8 +98,8 @@ namespace BTCPayServer.Plugins.Satora.Services
             string sRep = "";
             try
             {
-                var swap = await client.GetSwapAsync(id);
-                return swap.Status.ToString();
+                var swap = client.GetSwap(id);
+                return swap.status.ToString();
             }
             catch (Exception ex)
             {

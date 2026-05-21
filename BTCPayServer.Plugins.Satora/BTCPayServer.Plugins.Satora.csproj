@@ -10,7 +10,7 @@
   <PropertyGroup>
     <Product>Satora</Product>
     <Description>Allows your customers to pay in Stablecoins with Satora in a seamless and non custodial way. Please read our documentation for updates history</Description>
-    <Version>0.0.3</Version>
+    <Version>0.0.4</Version>
   </PropertyGroup>
 
   <!-- Plugin development properties -->
@@ -32,7 +32,6 @@
   </ItemDefinitionGroup>
 
   <ItemGroup Condition="$(Configuration) != 'Release'">
-    <PackageReference Include="Lendaswap.Sdk" Version="0.0.1-ci.20260520.6.sha-185c1b4" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
       <PrivateAssets>all</PrivateAssets>
@@ -42,11 +41,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
+    <ProjectReference Include="..\..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Satora.Sdk" Version="0.0.1-ci.20260521.11.sha-e3edbe7" />
   </ItemGroup>
 
 </Project>
