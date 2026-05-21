@@ -2,6 +2,7 @@ using BTCPayServer.Abstractions.Contracts;
 using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Plugins.Satora.Data;
 using BTCPayServer.Plugins.Satora.Services;
+using NBitcoin;
 using uniffi.satora_sdk_ffi;
 
 
@@ -25,7 +26,8 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddHostedService<PluginMigrationRunner>()
                 .AddSingleton(sp =>
                 {
-                    return new SatoraClient("https://api.lendaswap.com");
+                    var mnemonic = new Mnemonic(Wordlist.English, WordCount.Twelve);
+                    return SatoraClient.NewSigning("https://api.lendaswap.com", mnemonic.ToString());
                 })
                 .AddSingleton<SatoraService>()
                 .AddSingleton<SatoraPluginService>();
