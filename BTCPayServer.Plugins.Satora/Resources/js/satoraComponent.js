@@ -6,6 +6,9 @@
             required: true
         }
     },
+    components: {
+        qrcode: VueQrcode
+    },
     data() {
         return {
             availableCryptos: window.satoraData ? window.satoraData.availableCryptos : {},
@@ -69,9 +72,7 @@
                 if (!response.ok) {
                     throw new Error('Failed to fetch status');
                 }
-
-                const result = await response.json();
-                this.swapStatus = result.status || 'Unknown';
+                this.swapStatus = await response || 'Unknown';
 
             } catch (error) {
                 console.error('Status check failed:', error);
@@ -144,33 +145,11 @@
                     throw new Error(`HTTP ${response.status}`);
                 }
 
-                const result = await response.json();
+                this.swapResult = await response.json();
 
-                const success = result.success ?? result.Success;
-                const fromAddress = result.fromAddress ?? result.FromAddress ?? "";
-                const fromAmount = result.fromAmount ?? result.FromAmount ?? null;
-                const swapId = result.swapId ?? result.SwapId ?? "";
-                const statusMessage = result.statusMessage ?? result.StatusMessage ?? "";
-
-                if (!success) {
+                if (!swapResult.success) {
                     throw new Error(statusMessage || "Swap creation failed.");
                 }
-
-                this.swapResult = {
-                    success: true,
-                    swapId,
-                    statusMessage,
-                    fromAddress,
-                    fromAmount
-                };
-
-                if (fromAddress) {
-                    this.model.address = fromAddress;
-                }
-                if (fromAmount !== null && fromAmount !== undefined) {
-                    this.model.due = fromAmount.toString();
-                }
-
                 this.lastSwapKey = swapKey;
             } catch (err) {
                 if (err.name === "AbortError") {

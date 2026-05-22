@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BTCPayServer.Plugins.Satora.Services
 {
-    public class SatoraPluginService(SatoraPluginDbContextFactory pluginDbContextFactory, ILogger<SatoraPluginService> logger)
+    public class SatoraPluginService(SatoraPluginDbContextFactory pluginDbContextFactory, ILogger<SatoraPluginService> logger, SatoraService satoraService)
     {
 
         public async Task<SatoraSettings> GetStoreSettings(string storeId)
@@ -98,6 +98,30 @@ namespace BTCPayServer.Plugins.Satora.Services
             catch (Exception e)
             {
                 logger.LogError(e, "SatoraPlugin:AddStoreTransaction()");
+                throw;
+            }
+        }
+
+
+        public async Task<string> DoGetSwapStatus(string swapId)
+        {
+            try
+            {
+                var status = await satoraService.GetSwapInfoAsync(swapId);
+
+                using var _context = pluginDbContextFactory.CreateContext();
+                var dbSwap = await _context.SatoraTransactions.FirstOrDefaultAsync(s => s.TxID == swapId);
+                if (dbSwap.Status != status)
+                {
+                    dbSwap.Status = status;
+                    _context.SatoraTransactions.Update(dbSwap);
+                    await _context.SaveChangesAsync();
+                }
+                return status;
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "SatoraPlugin:DoGetSwapStatus()");
                 throw;
             }
         }

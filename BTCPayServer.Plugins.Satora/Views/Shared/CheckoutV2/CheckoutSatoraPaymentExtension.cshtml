@@ -31,6 +31,18 @@
         position: relative;
         margin: 0 auto;
     }
+
+    .qr-container .qr-icon {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 70px;
+        height: 70px;
+        padding: 5px;
+        border-radius: 50%;
+        background: white;
+    }
 </style>
 
 <script src="~/vendor/vue-qrcode/vue-qrcode.min.js" asp-append-version="true"></script>
@@ -104,7 +116,7 @@
                     </div>
 
                     <div class="mt-2 text-center text-muted">
-                        <small>Network: {{ selectedBlockchain }}</small>
+                        <small>Network: <b>{{ selectedBlockchain }}</b></small>
                     </div>
 
                     <button class="btn btn-primary w-100 mt-2" v-on:click="payInWallet" :disabled="!swapResult">
@@ -116,7 +128,7 @@
                     <div class="form-text mt-2">
                         This service is provided by <a href="https://satora.io" target="_blank">Satora</a>.<br />
                         Bitcoins will be sent to the merchant as soon as your {{ selectedStablecoin }} transaction is confirmed. Please wait.<br />
-                        If needed, contact Satora support and/or your merchant with the Swap id: {{ swapResult.swapId }}
+                        If needed, contact support@satora.io and/or your merchant with the Swap id: {{ swapResult.swapId }}
                     </div>
                     
                     <div class="mt-2 text-center">

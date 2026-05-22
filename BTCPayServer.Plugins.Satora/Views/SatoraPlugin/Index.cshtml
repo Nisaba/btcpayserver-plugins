@@ -96,9 +96,15 @@
                     {
                         <tr class="mass-action-row item">
                             <td class="text-break align-middle invoiceId-col">
-                                <a href="https://Satora.com/transaction/@item.TxID" target="_blank" class="invoice-details-link">@item.TxID</a>
+                                <div class="badge badge-settled">@item.TxID</div>
                             </td>
-                            <td>@item.DateT</td>
+                            <td align="center">
+                                <div class="badge badge-expired" id="status-@item.TxID">@item.Status</div><br />
+                                <a href="#" onclick="GetSwapStatus('@item.TxID');return false;">
+                                    <vc:icon symbol="actions-refresh" class="icon-refresh" />
+                                </a>
+                            </td>
+                            <td>@item.DateT.ToString("g")</td>
                             <td class="align-center">
                                 <div class="badge badge-expired">
                                     @item.Stablecoin
@@ -113,14 +119,33 @@
                             <td class="text-break align-middle invoiceId-col">
                                 <a asp-controller="UIInvoice" asp-action="Invoice" asp-route-invoiceId="@item.BTCPayInvoiceId" class="text-break">@item.BTCPayInvoiceId</a>
                             </td>
-                            <td>
-                                <a href="https://Satora.com/api/v2/transactions/@item.TxID" target="_blank">View JSON</a>
-                            </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
+        <script>
+            function GetSwapStatus(swapId) {
+                $('#status-' + swapId).hide();
+                $.ajax({
+                    url: 'Satora/GetSwapStatus',
+                    type: 'GET',
+                    data: { swapId: swapId },
+                    success: function (data) {
+                        if (data) {
+                            $('#status-' + swapId).text(data);
+                        } else {
+                            console.log('No status returned for swap ID:', swapId);
+                        }
+                        $('#status-' + swapId).show();
+                    },
+                    error: function (dataError) {
+                        console.log('Error fetching swap status:', dataError);
+                        $('#status-' + swapId).show();
+                    }
+                });
+            }
+        </script>
         <nav aria-label="Page navigation" class="mt-3">
             <ul class="pagination justify-content-center">
                 <li class="page-item @(page == 1 ? "disabled" : "")">

@@ -42,5 +42,22 @@ namespace BTCPayServer.Plugins.Satora.Controllers
             return RedirectToAction("Index");
         }
 
+
+        [HttpGet]
+        [Route("GetSwapStatus")]
+        public async Task<ActionResult> GetSwapStatus(string swapId)
+        {
+            try
+            {
+                var status = await pluginService.DoGetSwapStatus(swapId);
+                return Ok(status);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
     }
 }
