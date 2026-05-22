@@ -31,7 +31,12 @@
     computed: {
         qrCodeData() {
             if (!this.swapResult || !this.swapResult.success) return null;
-            return `${this.swapResult.fromAddress}?amount=${this.swapResult.fromAmount}`;
+
+            const network = this.selectedBlockchain
+                ? this.selectedBlockchain.toLowerCase().replace(/\s+/g, '')
+                : 'crypto';
+            const asset = this.selectedStablecoin ? this.selectedStablecoin : '';
+            return `${network}:${this.swapResult.fromAddress}?amount=${this.swapResult.fromAmount}&asset=${asset}`;
         }
     },
     watch: {
@@ -72,7 +77,7 @@
                 if (!response.ok) {
                     throw new Error('Failed to fetch status');
                 }
-                this.swapStatus = await response || 'Unknown';
+                this.swapStatus = await response.text() || 'Unknown';
 
             } catch (error) {
                 console.error('Status check failed:', error);
