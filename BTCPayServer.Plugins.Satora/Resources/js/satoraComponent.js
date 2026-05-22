@@ -145,11 +145,25 @@
                     throw new Error(`HTTP ${response.status}`);
                 }
 
-                this.swapResult = await response.json();
+                const result = await response.json();
 
-                if (!swapResult.success) {
+                const success = result.success ?? result.Success;
+                const fromAddress = result.fromAddress ?? result.FromAddress ?? "";
+                const fromAmount = result.fromAmount ?? result.FromAmount ?? null;
+                const swapId = result.swapId ?? result.SwapId ?? "";
+                const statusMessage = result.statusMessage ?? result.StatusMessage ?? "";
+
+                if (!success) {
                     throw new Error(statusMessage || "Swap creation failed.");
                 }
+
+                this.swapResult = {
+                    success: true,
+                    swapId,
+                    statusMessage,
+                    fromAddress,
+                    fromAmount
+                };
                 this.lastSwapKey = swapKey;
             } catch (err) {
                 if (err.name === "AbortError") {
