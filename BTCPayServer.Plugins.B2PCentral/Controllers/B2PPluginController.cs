@@ -78,6 +78,8 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                 Amount = (uint)req.Amount,
                 CurrencyCode = req.CurrencyCode,
                 IsBuy = false,
+                IsLightningSelected = req.IsLightning ? true : false,
+                IsOnChainSelected = req.IsLightning ? false : true,
                 Providers = req.Providers
             };
             model.Offers = await pluginService.GetOffersListAsync(ofrReq, req.ApiKey);

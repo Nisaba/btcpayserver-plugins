@@ -161,7 +161,7 @@
                         if (tbl.length == 0) return;
 
                         const data = {
-                            Rate: @walletConfig.Rate, ApiKey: '@Model.Settings.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
+                    Rate: @walletConfig.Rate, ApiKey: '@Model.Settings.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency', IsLightning: false,
                             Amount: document.getElementById('lblOnChainSale').textContent, Providers: tbl
                         };
                         B2PCore.getPartial(data, "#container-B2pOnChain", "#btOnChainSearch", "GetPartialB2PResult");
@@ -252,13 +252,14 @@
 
                     function LightningSearchClick() {
                         var tbl = [];
+                        if (document.querySelector('#chkHodlLN').checked) tbl.push(@((short)ProvidersEnum.HodlHodlLN));
                         if (document.querySelector('#chkLNp2p').checked) tbl.push(@((short)ProvidersEnum.LNp2pBot));
                         if (document.querySelector('#chkRbs').checked) tbl.push(@((short)ProvidersEnum.RoboSats));
                         if (document.querySelector('#chkMst').checked) tbl.push(@((short)ProvidersEnum.Mostro));
                         if (tbl.length == 0) return;
 
                         const data = {
-                            Rate: @walletConfig.Rate, ApiKey: '@Model.Settings.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency',
+                            Rate: @walletConfig.Rate, ApiKey: '@Model.Settings.ApiKey', CurrencyCode: '@walletConfig.FiatCurrency', IsLightning: true,
                             Amount: document.getElementById('lblLightningToSale').textContent, Providers: tbl
                         };
                         B2PCore.getPartial(data, "#container-B2pLightning", "#btLightningSearch", "GetPartialB2PResult");
@@ -266,6 +267,11 @@
                 </script>
 
                 <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; min-width: 150px;">
+                        <input id="chkHodlLN" type="checkbox" class="form-check-input me-2" checked />
+                        <img src="/Resources/img/HodlHodl.webp" style="width: 28px; height: 28px; margin-right: 8px;" />
+                        <label for="chkHodlLN" class="form-check-label" style="cursor: pointer;">HodlHodl</label>
+                    </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkLNp2p" type="checkbox" class="form-check-input me-2" checked />
                         <img src="/Resources/img/LNp2pBot.webp" style="width: 28px; height: 28px; margin-right: 8px;"/>

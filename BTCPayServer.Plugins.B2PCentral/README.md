@@ -134,4 +134,10 @@ What's new in v 2.2.0 :
 - Migration to .NET 10 for BTCPay release v2.3.7 and above
 - Bitania added as P2P and Swap provider
 
+What's new in v 2.2.1 :
+- HodlHodl is now also available for Lightning bitcoin offers
+- New icon for dark mode
+
+
+
 

@@ -6,6 +6,7 @@
         public string ApiKey { get; set; }
         public string CurrencyCode { get; set; }
         public decimal Amount { get; set; }
+        public bool IsLightning { get; set; }
         public ProvidersEnum[] Providers { get; set; }
 
 

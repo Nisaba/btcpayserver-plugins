@@ -45,5 +45,8 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.P2P
 
         [Description("Bitania")]
         Bitania = 12,
+
+        [Description("HodlHodlLN")]
+        HodlHodlLN = 13,
     }
 }

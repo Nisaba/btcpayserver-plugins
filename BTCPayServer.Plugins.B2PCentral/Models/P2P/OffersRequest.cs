@@ -20,6 +20,10 @@
         /// </summary>
         public bool IsBuy {get; set;}
 
+        public bool? IsOnChainSelected { get; set; }
+
+        public bool? IsLightningSelected { get; set; }
+
         /// <summary>
         /// Array of Providers used for research
         /// </summary>
