@@ -97,11 +97,11 @@
         },
         resolveBtcNetwork() {
             const paymentMethodId = (this.model.paymentMethodId || "").toUpperCase();
-            if (paymentMethodId.includes("LIGHTNING") || paymentMethodId.includes("LN")) {
-                return "LIGHTNING";
-            }
             if (paymentMethodId.includes("ARKADE")) {
                 return "ARKADE";
+            }
+            if (paymentMethodId.includes("LIGHTNING") || paymentMethodId.includes("LN")) {
+                return "LIGHTNING";
             }
             return "BTC";
         },

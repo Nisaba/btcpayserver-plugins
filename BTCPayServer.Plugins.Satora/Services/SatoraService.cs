@@ -27,7 +27,7 @@ namespace BTCPayServer.Plugins.Satora.Services
 
                     // USDT
                     (Stablecoins.USDT, Blockchains.Polygon) => new TokenId.UsdtPolygon(),
-                    (Stablecoins.USDT, _) => new TokenId.UsdtEthereum(),
+                    (Stablecoins.USDT, Blockchains.Ethereum) => new TokenId.UsdtEthereum(),
 
                     // USDT0
                     (Stablecoins.USDT0, Blockchains.Arbitrum) => new TokenId.Usdt0Arbitrum(),
