@@ -1,6 +1,7 @@
 using BTCPayServer.Plugins.Satora.Data;
 using BTCPayServer.Plugins.Satora.Models;
 using Microsoft.EntityFrameworkCore;
+using uniffi.satora_sdk_ffi;
 
 namespace BTCPayServer.Plugins.Satora.Services
 {
@@ -45,11 +46,14 @@ namespace BTCPayServer.Plugins.Satora.Services
                     };
                 }
 
-                var txs = await _context.SatoraTransactions.Where(a => a.StoreId == storeId).ToListAsync();
+                var txs = await _context.SatoraTransactions
+                    .Where(a => a.StoreId == storeId)
+                    .OrderByDescending(a => a.DateT)
+                    .ToListAsync();
 
                 return new SatoraModel {
                     Settings = settings,
-                    Transactions = txs.Reverse<SatoraTx>().ToList()
+                    Transactions = txs
                 };
 
             }
@@ -122,6 +126,142 @@ namespace BTCPayServer.Plugins.Satora.Services
             catch (Exception e)
             {
                 logger.LogError(e, "SatoraPlugin:DoGetSwapStatus()");
+                throw;
+            }
+        }
+
+        // Build the swap details view model — local DB row plus a fresh
+        // pull from the Satora backend. Both lookups are best-effort: the
+        // page is useful even when one fails, so errors are returned in
+        // the model rather than thrown.
+        public async Task<SwapDetailsModel> GetSwapDetailsAsync(string storeId, string swapId)
+        {
+            var model = new SwapDetailsModel { StoreId = storeId };
+
+            await using var _context = pluginDbContextFactory.CreateContext();
+            model.LocalTx = await _context.SatoraTransactions
+                .FirstOrDefaultAsync(s => s.TxID == swapId && s.StoreId == storeId);
+
+            try
+            {
+                var swap = await satoraService.GetSwapAsync(swapId);
+                model.BackendStatus = swap.Status.GetType().Name;
+                model.DepositAddress = (swap.Funding as SwapFunding.Gasless)?.@depositAddress;
+                model.DepositAmount = swap.DepositAmount;
+                model.DepositToken = swap.DepositToken.GetType().Name;
+                model.ReceiveAddress = swap.ReceiveAddress;
+                model.ReceiveAmount = swap.ReceiveAmount;
+                model.ReceiveToken = swap.ReceiveToken.GetType().Name;
+            }
+            catch (Exception e)
+            {
+                logger.LogWarning(e, "SatoraPlugin:GetSwapDetailsAsync({SwapId}): backend lookup failed", swapId);
+                model.BackendError = e.Message;
+            }
+
+            try
+            {
+                model.DerivedArkadeAddress = await satoraService.GetArkadeAddressAsync();
+            }
+            catch (Exception e)
+            {
+                logger.LogWarning(e, "SatoraPlugin:GetSwapDetailsAsync({SwapId}): derived address lookup failed", swapId);
+                // Non-fatal — operator can paste a destination manually.
+            }
+
+            return model;
+        }
+
+        // Drive a single swap one step forward. Idempotent: safe to call
+        // repeatedly. Returns the (action, newStatus) tuple so the caller
+        // (manual button today, watcher tomorrow) can surface it.
+        //
+        // FundSwap + Claim both require the same mnemonic that created the
+        // swap. With the current hardcoded seed in Plugin.cs that's fine;
+        // once persistence lands we'll re-derive the right Client per swap.
+        public async Task<(string action, string status)> ContinueSwapAsync(string swapId, string? destinationOverride)
+        {
+            try
+            {
+                var swap = await satoraService.GetSwapAsync(swapId);
+                var statusName = swap.Status.GetType().Name;
+
+                string action;
+                switch (swap.Status)
+                {
+                    case SwapStatus.Pending:
+                        // Backend hasn't seen our funding userOp yet.
+                        // Before submitting it, probe the depositor EOA —
+                        // FundSwapAsync requires the source token to
+                        // already be there (the customer's ERC-20
+                        // transfer to the deposit address). Probing
+                        // first means we surface "waiting for the
+                        // customer" cleanly instead of letting the SDK
+                        // throw a noisy TRANSFER_FROM_FAILED.
+                        var deposit = await satoraService.CheckDepositAsync(swapId);
+                        if (!deposit.HasSufficientSourceToken)
+                        {
+                            logger.LogInformation("SatoraPlugin:ContinueSwap({SwapId}): waiting for customer deposit ({Have}/{Need})",
+                                swapId, deposit.SourceTokenBalance, deposit.SourceTokenRequired);
+                            action = $"waiting_for_deposit ({deposit.SourceTokenBalance}/{deposit.SourceTokenRequired})";
+                            break;
+                        }
+                        var fundReceipt = await satoraService.FundSwapAsync(swapId);
+                        logger.LogInformation("SatoraPlugin:ContinueSwap({SwapId}): funded, userOpHash={Hash}", swapId, fundReceipt.UserOpHash);
+                        action = $"funded:{fundReceipt.UserOpHash}";
+                        swap = await satoraService.GetSwapAsync(swapId);
+                        statusName = swap.Status.GetType().Name;
+                        break;
+
+                    case SwapStatus.ClientFundingSeen:
+                    case SwapStatus.ClientFunded:
+                        // Funding userOp seen / confirmed on-chain;
+                        // waiting for the server to lock its matching
+                        // Arkade VHTLC. No client-side action.
+                        action = "waiting_for_server";
+                        break;
+
+                    case SwapStatus.ServerFunded:
+                        // VHTLC is live — sweep BTC out to destination.
+                        var destination = destinationOverride
+                            ?? await satoraService.GetArkadeAddressAsync();
+                        var claimReceipt = await satoraService.ClaimAsync(swapId, destination);
+                        logger.LogInformation("SatoraPlugin:ContinueSwap({SwapId}): claimed {Sats} sats to {Dest}, ark_txid={Txid}",
+                            swapId, claimReceipt.ClaimAmountSats, destination, claimReceipt.ArkTxid);
+                        action = $"claimed:{claimReceipt.ArkTxid}";
+                        swap = await satoraService.GetSwapAsync(swapId);
+                        statusName = swap.Status.GetType().Name;
+                        break;
+
+                    case SwapStatus.ClientRedeeming:
+                        action = "redeeming";
+                        break;
+
+                    case SwapStatus.ClientRedeemed:
+                    case SwapStatus.ServerRedeemed:
+                        action = "complete";
+                        break;
+
+                    default:
+                        // Terminal refund / expiry / error states.
+                        action = "terminal";
+                        break;
+                }
+
+                using var _context = pluginDbContextFactory.CreateContext();
+                var dbSwap = await _context.SatoraTransactions.FirstOrDefaultAsync(s => s.TxID == swapId);
+                if (dbSwap != null && dbSwap.Status != statusName)
+                {
+                    dbSwap.Status = statusName;
+                    _context.SatoraTransactions.Update(dbSwap);
+                    await _context.SaveChangesAsync();
+                }
+
+                return (action, statusName);
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "SatoraPlugin:ContinueSwapAsync({SwapId})", swapId);
                 throw;
             }
         }

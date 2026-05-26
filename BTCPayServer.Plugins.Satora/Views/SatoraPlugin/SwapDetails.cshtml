@@ -1,0 +1,191 @@
+@using BTCPayServer.Abstractions.Extensions
+@using BTCPayServer.Abstractions.Models
+@using BTCPayServer.Plugins.Satora.Views
+@using BTCPayServer.Plugins.Satora.Models
+@using BTCPayServer.Client
+
+@model BTCPayServer.Plugins.Satora.Models.SwapDetailsModel
+@{
+    ViewData.SetLayoutModel(new LayoutModel(nameof(PluginNavPages.Index), "Satora swap")
+    { ActiveCategory = nameof(PluginNavPages) });
+    var swapId = Model.LocalTx?.TxID ?? "(unknown)";
+    var depositUrl = TokenFormat.ExplorerUrl(Model.DepositAddress, Model.DepositToken);
+    var receiveUrl = TokenFormat.ExplorerUrl(Model.ReceiveAddress, Model.ReceiveToken);
+    var depositAmt = TokenFormat.FormatAmount(Model.DepositAmount, Model.DepositToken);
+    var receiveAmt = TokenFormat.FormatAmount(Model.ReceiveAmount, Model.ReceiveToken);
+}
+
+<partial name="_StatusMessage" />
+
+<div class="d-flex align-items-center mb-3">
+    <a asp-action="Index" asp-route-storeId="@Model.StoreId" class="btn btn-sm btn-link">&larr; Back to swaps</a>
+    <h4 class="mb-0 ms-2">Swap @swapId</h4>
+</div>
+
+@if (Model.LocalTx == null)
+{
+    <div class="alert alert-warning">No local record found for this swap id under this store.</div>
+}
+
+@if (!string.IsNullOrEmpty(Model.BackendError))
+{
+    <div class="alert alert-danger">
+        Backend lookup failed: @Model.BackendError
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <h5>Status</h5>
+        <table class="table table-sm">
+            <tr>
+                <th>Backend status</th>
+                <td>
+                    <span class="badge badge-info" id="backend-status">@(Model.BackendStatus ?? "unknown")</span>
+                    <a href="#" onclick="RefreshStatus();return false;" title="Refresh from backend">
+                        <vc:icon symbol="actions-refresh" class="icon-refresh" />
+                    </a>
+                </td>
+            </tr>
+            @if (Model.LocalTx != null)
+            {
+                <tr>
+                    <th>Created</th>
+                    <td>@Model.LocalTx.DateT.ToString("g")</td>
+                </tr>
+                <tr>
+                    <th>BTCPay invoice</th>
+                    <td>
+                        <a asp-controller="UIInvoice" asp-action="Invoice" asp-route-invoiceId="@Model.LocalTx.BTCPayInvoiceId">@Model.LocalTx.BTCPayInvoiceId</a>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Target BTC</th>
+                    <td>@Model.LocalTx.BTCAmount.ToString("F8") BTC</td>
+                </tr>
+            }
+        </table>
+    </div>
+
+    <div class="col-md-6">
+        <h5>Deposit (customer pays here)</h5>
+        <table class="table table-sm">
+            <tr>
+                <th>Address</th>
+                <td class="text-break">
+                    @if (!string.IsNullOrEmpty(Model.DepositAddress))
+                    {
+                        @if (depositUrl != null)
+                        {
+                            <a href="@depositUrl" target="_blank" rel="noopener"><code>@Model.DepositAddress</code></a>
+                        }
+                        else
+                        {
+                            <code>@Model.DepositAddress</code>
+                        }
+                    }
+                    else
+                    {
+                        <i class="text-muted">unavailable</i>
+                    }
+                </td>
+            </tr>
+            <tr>
+                <th>Amount</th>
+                <td>@depositAmt @Model.DepositToken</td>
+            </tr>
+            <tr>
+                <th>Token</th>
+                <td>@Model.DepositToken</td>
+            </tr>
+        </table>
+
+        <h5 class="mt-3">Receive</h5>
+        <table class="table table-sm">
+            <tr>
+                <th>Address</th>
+                <td class="text-break">
+                    @if (receiveUrl != null)
+                    {
+                        <a href="@receiveUrl" target="_blank" rel="noopener"><code>@Model.ReceiveAddress</code></a>
+                    }
+                    else
+                    {
+                        <code>@Model.ReceiveAddress</code>
+                    }
+                </td>
+            </tr>
+            <tr>
+                <th>Amount</th>
+                <td>@receiveAmt @Model.ReceiveToken</td>
+            </tr>
+            <tr>
+                <th>Token</th>
+                <td>@Model.ReceiveToken</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<hr />
+
+<div permission="@Policies.CanModifyStoreSettings">
+    <h5>Continue swap</h5>
+    <p class="text-muted">
+        Drives the swap one step forward based on its current backend status:
+        <code>ClientFundingSeen</code> &rarr; relay USDC into the EVM HTLC,
+        <code>ServerFunded</code> &rarr; claim the Arkade VHTLC to the destination below.
+        Safe to click repeatedly — it's idempotent.
+    </p>
+
+    <div class="form-group">
+        <label for="destination" class="form-label">Destination Arkade address</label>
+        <input type="text" id="destination" class="form-control" value="@Model.DerivedArkadeAddress" placeholder="ark1…" />
+        <small class="form-text text-muted">
+            Defaults to the address derived from the plugin's mnemonic. Override only for recovery to a different wallet.
+        </small>
+    </div>
+
+    <button type="button" class="btn btn-primary" onclick="ContinueSwap()">Continue swap</button>
+
+    <div id="continue-msg" class="mt-3"></div>
+</div>
+
+<script>
+    var swapId = '@swapId';
+
+    function RefreshStatus() {
+        $.ajax({
+            url: '../GetSwapStatus',
+            type: 'GET',
+            data: { swapId: swapId },
+            success: function (data) {
+                if (data) $('#backend-status').text(data);
+            },
+            error: function (err) { console.log('Refresh failed:', err); }
+        });
+    }
+
+    function ContinueSwap() {
+        var destination = $('#destination').val();
+        var msgEl = $('#continue-msg');
+        msgEl.html('<div class="alert alert-info">Working…</div>');
+        $.ajax({
+            url: '../../SatoraSwap/' + swapId + '/continue',
+            type: 'POST',
+            data: { destination: destination },
+            success: function (data) {
+                if (data.ok) {
+                    $('#backend-status').text(data.status);
+                    msgEl.html('<div class="alert alert-success">' + data.action + ' &mdash; status: ' + data.status + '</div>');
+                } else {
+                    msgEl.html('<div class="alert alert-danger">' + data.error + '</div>');
+                }
+            },
+            error: function (err) {
+                msgEl.html('<div class="alert alert-danger">Request failed</div>');
+                console.log('Continue failed:', err);
+            }
+        });
+    }
+</script>

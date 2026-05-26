@@ -97,11 +97,11 @@
                     {
                         <tr class="mass-action-row item">
                             <td class="text-break align-middle invoiceId-col">
-                                <div class="badge badge-settled">@item.TxID</div>
+                                <a asp-action="SwapDetails" asp-route-storeId="@Model.Settings.StoreId" asp-route-swapId="@item.TxID" class="badge badge-settled" title="Open swap details">@item.TxID</a>
                             </td>
                             <td align="center">
                                 <div class="badge badge-expired" id="status-@item.TxID">@item.Status</div><br />
-                                <a href="#" onclick="GetSwapStatus('@item.TxID');return false;">
+                                <a href="#" onclick="GetSwapStatus('@item.TxID');return false;" title="Refresh status">
                                     <vc:icon symbol="actions-refresh" class="icon-refresh" />
                                 </a>
                             </td>
@@ -146,6 +146,7 @@
                     }
                 });
             }
+
         </script>
         <nav aria-label="Page navigation" class="mt-3">
             <ul class="pagination justify-content-center">

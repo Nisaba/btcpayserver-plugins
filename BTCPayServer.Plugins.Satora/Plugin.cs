@@ -26,8 +26,8 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddHostedService<PluginMigrationRunner>()
                 .AddSingleton(sp =>
                 {
-                    var mnemonic = new Mnemonic(Wordlist.English, WordCount.Twelve);
-                    return new global::Satora.Sdk.Client("https://api.lendaswap.com", mnemonic.ToString());
+                    // FIXME: don't hardcode the seed, this should be stored somewhere   
+                    return new global::Satora.Sdk.Client("october poet helmet noodle loop weasel office else develop view attitude alert");
                 })
                 .AddSingleton<SatoraService>()
                 .AddSingleton<SatoraPluginService>();
