@@ -49,7 +49,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Satora.Sdk" Version="0.0.1-ci.20260526.19.sha-c7131cd" />
+    <PackageReference Include="Satora.Sdk" Version="0.1.0-ci.20260526.20.sha-4ecf28f" />
   </ItemGroup>
 
 </Project>
