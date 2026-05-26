@@ -12,7 +12,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
     public class ExolixService(ILogger<ExolixService> logger, HttpClient httpClient)
     {
         public const string BaseUrl = "https://exolix.com/api/v2/";
-        public const string APIKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVsbGlwc2UtMjFAbmlzYWJhLXNvbHV0aW9ucy5jb20iLCJzdWIiOjQxOTY0LCJpYXQiOjE3NDc1MjIxNjksImV4cCI6MTkwNTMxMDE2OX0.thq7I9--XW7DoPlSg9lGCqaU804h_fYk3EUOkMGSEag";
+        public const string APIKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGIycC1jZW50cmFsLmNvbSIsInN1YiI6NTM2OTAsImlhdCI6MTc3OTgzNDA0OSwiZXhwIjoxOTM3NjIyMDQ5fQ.5L3OhDYO58DZo79KvtyTuAqC00XaM26O1WoFb-UjKfI";
 
         public async Task<SwapCreationResponse> CreateSwapAsync(SwapCreationRequest req)
         {
