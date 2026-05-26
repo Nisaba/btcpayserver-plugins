@@ -26,9 +26,8 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddHostedService<PluginMigrationRunner>()
                 .AddSingleton(sp =>
                 {
-                    // FIXME: we need to store the mnemonic or it will all be lost on a reload
-                    var mnemonic = new Mnemonic(Wordlist.English, WordCount.Twelve);
-                    return new global::Satora.Sdk.Client(mnemonic.ToString());
+                    // FIXME: don't hardcode the seed, this should be stored somewhere   
+                    return new global::Satora.Sdk.Client("october poet helmet noodle loop weasel office else develop view attitude alert");
                 })
                 .AddSingleton<SatoraService>()
                 .AddSingleton<SatoraPluginService>();

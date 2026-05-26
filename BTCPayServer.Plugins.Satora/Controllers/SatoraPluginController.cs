@@ -58,6 +58,12 @@ namespace BTCPayServer.Plugins.Satora.Controllers
             }
         }
 
+        [HttpGet("swap/{swapId}")]
+        public async Task<IActionResult> SwapDetails([FromRoute] string storeId, [FromRoute] string swapId)
+        {
+            var model = await pluginService.GetSwapDetailsAsync(storeId, swapId);
+            return View(model);
+        }
 
     }
 }

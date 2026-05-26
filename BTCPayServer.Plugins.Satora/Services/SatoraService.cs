@@ -101,17 +101,38 @@ namespace BTCPayServer.Plugins.Satora.Services
 
         public async Task<string> GetSwapInfoAsync(string id)
         {
-            string sRep = "";
             try
             {
                 var swap = await client.GetSwapAsync(id);
-                return swap.Status.ToString();
+                // Use the variant type name (e.g. "Pending") rather than
+                // the record's default ToString ("Pending { }") so the
+                // local-cache column and the details page stay readable
+                // and consistent with what ContinueSwapAsync writes.
+                return swap.Status.GetType().Name;
             }
             catch (Exception ex)
             {
-                logger.LogError($"SatoraPlugin.GetSwapInfo(): {ex.Message} - {sRep} - {id}");
+                logger.LogError($"SatoraPlugin.GetSwapInfo(): {ex.Message} - {id}");
                 throw;
             }
         }
+
+        public Task<global::Satora.Sdk.SwapDetails> GetSwapAsync(string id) =>
+            client.GetSwapAsync(id);
+
+        // SDK picks the node RPC URL from the swap's deposit chain
+        // (mainnet public RPC per chain — fine for low volume; pass
+        // GaslessOpts directly if you need a private endpoint).
+        public Task<global::Satora.Sdk.FundReceipt> FundSwapAsync(string swapId) =>
+            client.FundSwapAsync(swapId);
+
+        public Task<global::Satora.Sdk.DepositStatus> CheckDepositAsync(string swapId) =>
+            client.CheckDepositAsync(swapId);
+
+        public Task<global::Satora.Sdk.ClaimReceipt> ClaimAsync(string swapId, string destination) =>
+            client.ClaimAsync(swapId, destination);
+
+        public Task<string> GetArkadeAddressAsync() =>
+            client.GetArkadeAddressAsync();
     }
 }
