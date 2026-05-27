@@ -8,7 +8,7 @@
 	<PropertyGroup>
 		<Product>Exolix</Product>
 		<Description>Allows your customers to pay in Altcoins with Exolix in a seamless way. As merchant, you can also swap your balance. Please read our documentation for updates history</Description>
-		<Version>1.5.1</Version>
+		<Version>1.5.2</Version>
 	</PropertyGroup>
 
 	<!-- Plugin development properties -->
@@ -43,8 +43,7 @@
     <Folder Include="Views\ExolixPlugin\" />
     <Folder Include="Views\Shared\CheckoutV2\" />
   </ItemGroup>
-
-
+	
 	<ItemGroup>
 		<EmbeddedResource Include="Resources\**" />
 	</ItemGroup>

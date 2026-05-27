@@ -91,6 +91,7 @@ Here you will find the list of swaps you have executed from your BTC balance.
 - **1.4.6** - New icon for dark mode, add ZCash at checkout (Select it in the Exolix configuration page so that it is active at checkout), fix the link to the transaction json view in the backoffice customers swap list, small improvements
 - **1.4.7** - Fix issue to the check status link at checkout
 - **1.5.1** - Fix a breaking change In Exolix API
+- **1.5.2** - Small improvements
 
 
   

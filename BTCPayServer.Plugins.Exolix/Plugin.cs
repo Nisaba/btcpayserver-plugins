@@ -24,7 +24,6 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddHttpClient<ExolixService>(client =>
                 {
                     client.BaseAddress = new Uri(ExolixService.BaseUrl);
-                    client.DefaultRequestHeaders.Add("Authorization", "Bearer " + ExolixService.APIKey);
                 });
 
 
