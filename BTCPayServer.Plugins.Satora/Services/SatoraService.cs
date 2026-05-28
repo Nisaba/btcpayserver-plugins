@@ -4,9 +4,9 @@ using uniffi.satora_sdk_ffi;
 
 namespace BTCPayServer.Plugins.Satora.Services
 {
-    public class SatoraService(ILogger<SatoraService> logger, global::Satora.Sdk.Client client)
+    public class SatoraService(ILogger<SatoraService> logger)
     {
-       public async Task<SwapResponse> CreateSwapAsync(SwapRequest req)
+       public async Task<SwapResponse> CreateSwapAsync(SwapRequest req, string seedPhrase)
        {
             try
             {
@@ -59,6 +59,7 @@ namespace BTCPayServer.Plugins.Satora.Services
                     _ => new Address()
                 };
 
+                using var client = new global::Satora.Sdk.Client(seedPhrase);
                 var apiSwap = await client.CreateSwapAsync(chainFrom, tokenFrom, chainTo, new TokenId.Btc(), quoteAmount, addressTo, true);
                 
                 string? sDepositAddress = apiSwap.Funding switch
@@ -99,10 +100,11 @@ namespace BTCPayServer.Plugins.Satora.Services
 
         }
 
-        public async Task<string> GetSwapInfoAsync(string id)
+        public async Task<string> GetSwapInfoAsync(string id, string seedPhrase)
         {
             try
             {
+                using var client = new global::Satora.Sdk.Client(seedPhrase);
                 var swap = await client.GetSwapAsync(id);
                 // Use the variant type name (e.g. "Pending") rather than
                 // the record's default ToString ("Pending { }") so the
@@ -117,22 +119,74 @@ namespace BTCPayServer.Plugins.Satora.Services
             }
         }
 
-        public Task<global::Satora.Sdk.SwapDetails> GetSwapAsync(string id) =>
-            client.GetSwapAsync(id);
+        public async Task<global::Satora.Sdk.SwapDetails> GetSwapAsync(string id, string seedPhrase)
+        {
+            try
+            {
+                using var client = new global::Satora.Sdk.Client(seedPhrase);
+                return await client.GetSwapAsync(id);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"SatoraPlugin.GetSwapAsync(): {ex.Message} - {id}");
+                throw;
+            }
+        }
 
-        // SDK picks the node RPC URL from the swap's deposit chain
-        // (mainnet public RPC per chain — fine for low volume; pass
-        // GaslessOpts directly if you need a private endpoint).
-        public Task<global::Satora.Sdk.FundReceipt> FundSwapAsync(string swapId) =>
-            client.FundSwapAsync(swapId);
+        public async Task<global::Satora.Sdk.FundReceipt> FundSwapAsync(string swapId, string seedPhrase)
+        {
+            try
+            {
+                using var client = new global::Satora.Sdk.Client(seedPhrase);
+                return await client.FundSwapAsync(swapId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"SatoraPlugin.FundSwapAsync(): {ex.Message} - {swapId}");
+                throw;
+            }
+        }
 
-        public Task<global::Satora.Sdk.DepositStatus> CheckDepositAsync(string swapId) =>
-            client.CheckDepositAsync(swapId);
+        public async Task<global::Satora.Sdk.DepositStatus> CheckDepositAsync(string swapId, string seedPhrase)
+        {
+            try
+            {
+                using var client = new global::Satora.Sdk.Client(seedPhrase);
+                return await client.CheckDepositAsync(swapId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"SatoraPlugin.CheckDepositAsync(): {ex.Message} - {swapId}");
+                throw;
+            }
+        }
 
-        public Task<global::Satora.Sdk.ClaimReceipt> ClaimAsync(string swapId, string destination) =>
-            client.ClaimAsync(swapId, destination);
+        public async Task<global::Satora.Sdk.ClaimReceipt> ClaimAsync(string swapId, string destination, string seedPhrase)
+        {
+            try
+            {
+                using var client = new global::Satora.Sdk.Client(seedPhrase);
+                return await client.ClaimAsync(swapId, destination);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"SatoraPlugin.ClaimAsync(): {ex.Message} - {swapId} -> {destination}");
+                throw;
+            }
+        }
 
-        public Task<string> GetArkadeAddressAsync() =>
-            client.GetArkadeAddressAsync();
+        public async Task<string> GetArkadeAddressAsync(string seedPhrase)
+        {
+            try
+            {
+                using var client = new global::Satora.Sdk.Client(seedPhrase);
+                return await client.GetArkadeAddressAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"SatoraPlugin.GetArkadeAddressAsync(): {ex.Message}");
+                throw;
+            }
+        }
     }
 }

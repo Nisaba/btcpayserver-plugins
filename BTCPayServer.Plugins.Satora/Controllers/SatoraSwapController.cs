@@ -1,6 +1,7 @@
 ﻿using BTCPayServer.Plugins.Satora.Models;
 using BTCPayServer.Plugins.Satora.Services;
 using Microsoft.AspNetCore.Mvc;
+using NBitcoin;
 
 namespace BTCPayServer.Plugins.Satora.Controllers
 {
@@ -15,7 +16,9 @@ namespace BTCPayServer.Plugins.Satora.Controllers
             var rep = new SwapResponse();
             try
             {
-                rep = await satoraService.CreateSwapAsync(req);
+                var seedPhrase = new Mnemonic(Wordlist.English, WordCount.Twelve).ToString();
+
+                rep = await satoraService.CreateSwapAsync(req, seedPhrase);
 
                 await pluginService.AddStoreTransaction(new SatoraTx
                 {
@@ -25,7 +28,8 @@ namespace BTCPayServer.Plugins.Satora.Controllers
                     DateT = DateTime.UtcNow,
                     BTCAmount = req.BtcAmount,
                     TxID = rep.SwapId,
-                    BTCPayInvoiceId = req.BtcPayInvoiceId
+                    BTCPayInvoiceId = req.BtcPayInvoiceId,
+                    Seed = seedPhrase,
                 });
                 rep.Success = true;
             }
@@ -41,7 +45,8 @@ namespace BTCPayServer.Plugins.Satora.Controllers
         [HttpGet("{id}")]
         public async Task<string> GetSwapInfo([FromRoute] string id)
         {
-            return await satoraService.GetSwapInfoAsync(id);
+            var seedPhrase = await pluginService.GetSeedPhraseBySwapId(id) ?? "";
+            return await satoraService.GetSwapInfoAsync(id, seedPhrase);
         }
 
         // Manual recovery hatch: drives a single swap one step forward

@@ -2,9 +2,6 @@ using BTCPayServer.Abstractions.Contracts;
 using BTCPayServer.Abstractions.Models;
 using BTCPayServer.Plugins.Satora.Data;
 using BTCPayServer.Plugins.Satora.Services;
-using NBitcoin;
-using uniffi.satora_sdk_ffi;
-
 
 namespace BTCPayServer.Plugins.Satora;
 
@@ -24,11 +21,6 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddUIExtension("checkout-payment", "CheckoutV2/CheckoutSatoraPaymentExtension")
                 .AddSingleton<SatoraPluginDbContextFactory>()
                 .AddHostedService<PluginMigrationRunner>()
-                .AddSingleton(sp =>
-                {
-                    // FIXME: don't hardcode the seed, this should be stored somewhere   
-                    return new global::Satora.Sdk.Client("october poet helmet noodle loop weasel office else develop view attitude alert");
-                })
                 .AddSingleton<SatoraService>()
                 .AddSingleton<SatoraPluginService>();
 
