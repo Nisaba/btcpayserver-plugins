@@ -1,6 +1,7 @@
 using BTCPayServer.Plugins.Satora.Data;
 using BTCPayServer.Plugins.Satora.Models;
 using Microsoft.EntityFrameworkCore;
+using NBitcoin;
 using uniffi.satora_sdk_ffi;
 
 namespace BTCPayServer.Plugins.Satora.Services
@@ -19,7 +20,8 @@ namespace BTCPayServer.Plugins.Satora.Services
                     settings = new SatoraSettings
                     {
                         StoreId = storeId,
-                        Enabled = false
+                        Enabled = false,
+                        Seed = new Mnemonic(Wordlist.English, WordCount.Twelve).ToString()
                     };
                 }
                 return settings;
@@ -68,6 +70,11 @@ namespace BTCPayServer.Plugins.Satora.Services
         {
             try
             {
+                if (settings.Seed == null)
+                {
+                    settings.Seed = new Mnemonic(Wordlist.English, WordCount.Twelve).ToString();
+                }
+
                 await using var _context = pluginDbContextFactory.CreateContext();
                 var dbSettings = await _context.SatoraSettings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
                 if (dbSettings == null)
@@ -111,8 +118,9 @@ namespace BTCPayServer.Plugins.Satora.Services
             try
             {
                 await using var _context = pluginDbContextFactory.CreateContext();
-                var tx = await _context.SatoraTransactions.FirstOrDefaultAsync(s => s.TxID == swapId);
-                return tx?.Seed;
+                var dbSwap = await _context.SatoraTransactions.FirstOrDefaultAsync(s => s.TxID == swapId);
+                var settings = await _context.SatoraSettings.FirstOrDefaultAsync(s => s.StoreId == dbSwap.StoreId);
+                return settings?.Seed;
             }
             catch (Exception e)
             {
@@ -128,7 +136,9 @@ namespace BTCPayServer.Plugins.Satora.Services
             {
                 using var _context = pluginDbContextFactory.CreateContext();
                 var dbSwap = await _context.SatoraTransactions.FirstOrDefaultAsync(s => s.TxID == swapId);
-                var status = await satoraService.GetSwapInfoAsync(swapId, dbSwap.Seed);
+
+                var storeSettings = await _context.SatoraSettings.FirstOrDefaultAsync(s => s.StoreId == dbSwap.StoreId);
+                var status = await satoraService.GetSwapInfoAsync(swapId, storeSettings.Seed);
                 if (dbSwap.Status != status)
                 {
                     dbSwap.Status = status;
@@ -153,12 +163,13 @@ namespace BTCPayServer.Plugins.Satora.Services
             var model = new SwapDetailsModel { StoreId = storeId };
 
             await using var _context = pluginDbContextFactory.CreateContext();
+            var storeSettings = await _context.SatoraSettings.FirstOrDefaultAsync(s => s.StoreId == storeId);
             model.LocalTx = await _context.SatoraTransactions
                 .FirstOrDefaultAsync(s => s.TxID == swapId && s.StoreId == storeId);
 
             try
             {
-                var swap = await satoraService.GetSwapAsync(swapId, model.LocalTx.Seed);
+                var swap = await satoraService.GetSwapAsync(swapId, storeSettings.Seed);
                 model.BackendStatus = swap.Status.GetType().Name;
                 model.DepositAddress = (swap.Funding as SwapFunding.Gasless)?.@depositAddress;
                 model.DepositAmount = swap.DepositAmount;
@@ -175,7 +186,7 @@ namespace BTCPayServer.Plugins.Satora.Services
 
             try
             {
-                model.DerivedArkadeAddress = await satoraService.GetArkadeAddressAsync(model.LocalTx.Seed);
+                model.DerivedArkadeAddress = await satoraService.GetArkadeAddressAsync(storeSettings.Seed);
             }
             catch (Exception e)
             {
@@ -199,8 +210,9 @@ namespace BTCPayServer.Plugins.Satora.Services
             {
                 using var _context = pluginDbContextFactory.CreateContext();
                 var dbSwap = await _context.SatoraTransactions.FirstOrDefaultAsync(s => s.TxID == swapId);
+                var storeSettings = await _context.SatoraSettings.FirstOrDefaultAsync(s => s.StoreId == dbSwap.StoreId);
 
-                var swap = await satoraService.GetSwapAsync(swapId, dbSwap.Seed);
+                var swap = await satoraService.GetSwapAsync(swapId, storeSettings.Seed);
                 var statusName = swap.Status.GetType().Name;
 
                 string action;
@@ -215,7 +227,7 @@ namespace BTCPayServer.Plugins.Satora.Services
                         // first means we surface "waiting for the
                         // customer" cleanly instead of letting the SDK
                         // throw a noisy TRANSFER_FROM_FAILED.
-                        var deposit = await satoraService.CheckDepositAsync(swapId, dbSwap.Seed);
+                        var deposit = await satoraService.CheckDepositAsync(swapId, storeSettings.Seed);
                         if (!deposit.HasSufficientSourceToken)
                         {
                             logger.LogInformation("SatoraPlugin:ContinueSwap({SwapId}): waiting for customer deposit ({Have}/{Need})",
@@ -223,10 +235,10 @@ namespace BTCPayServer.Plugins.Satora.Services
                             action = $"waiting_for_deposit ({deposit.SourceTokenBalance}/{deposit.SourceTokenRequired})";
                             break;
                         }
-                        var fundReceipt = await satoraService.FundSwapAsync(swapId, dbSwap.Seed);
+                        var fundReceipt = await satoraService.FundSwapAsync(swapId, storeSettings.Seed);
                         logger.LogInformation("SatoraPlugin:ContinueSwap({SwapId}): funded, userOpHash={Hash}", swapId, fundReceipt.UserOpHash);
                         action = $"funded:{fundReceipt.UserOpHash}";
-                        swap = await satoraService.GetSwapAsync(swapId, dbSwap.Seed);
+                        swap = await satoraService.GetSwapAsync(swapId, storeSettings.Seed);
                         statusName = swap.Status.GetType().Name;
                         break;
 
@@ -241,12 +253,12 @@ namespace BTCPayServer.Plugins.Satora.Services
                     case SwapStatus.ServerFunded:
                         // VHTLC is live — sweep BTC out to destination.
                         var destination = destinationOverride
-                            ?? await satoraService.GetArkadeAddressAsync(dbSwap.Seed);
-                        var claimReceipt = await satoraService.ClaimAsync(swapId, destination, dbSwap.Seed);
+                            ?? await satoraService.GetArkadeAddressAsync(storeSettings.Seed);
+                        var claimReceipt = await satoraService.ClaimAsync(swapId, destination, storeSettings.Seed);
                         logger.LogInformation("SatoraPlugin:ContinueSwap({SwapId}): claimed {Sats} sats to {Dest}, ark_txid={Txid}",
                             swapId, claimReceipt.ClaimAmountSats, destination, claimReceipt.ArkTxid);
                         action = $"claimed:{claimReceipt.ArkTxid}";
-                        swap = await satoraService.GetSwapAsync(swapId, dbSwap.Seed);
+                        swap = await satoraService.GetSwapAsync(swapId, storeSettings.Seed);
                         statusName = swap.Status.GetType().Name;
                         break;
 

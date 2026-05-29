@@ -18,10 +18,7 @@ namespace BTCPayServer.Plugins.Satora.Migrations
         }
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "CryptedSeed",
-                table: "SatoraTransactions"
-            );
+            migrationBuilder.Sql("ALTER TABLE \"BTCPayServer.Plugins.Satora\".\"SatoraTransactions\" DROP COLUMN IF EXISTS \"CryptedSeed\";");
         }
     }
 }

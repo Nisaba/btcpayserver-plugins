@@ -16,7 +16,8 @@ namespace BTCPayServer.Plugins.Satora.Controllers
             var rep = new SwapResponse();
             try
             {
-                var seedPhrase = new Mnemonic(Wordlist.English, WordCount.Twelve).ToString();
+                var settings = await pluginService.GetStoreSettings(storeId);
+                var seedPhrase = await pluginService.GetSeedPhraseBySwapId(settings.StoreId) ?? "";
 
                 rep = await satoraService.CreateSwapAsync(req, seedPhrase);
 
@@ -28,8 +29,7 @@ namespace BTCPayServer.Plugins.Satora.Controllers
                     DateT = DateTime.UtcNow,
                     BTCAmount = req.BtcAmount,
                     TxID = rep.SwapId,
-                    BTCPayInvoiceId = req.BtcPayInvoiceId,
-                    Seed = seedPhrase,
+                    BTCPayInvoiceId = req.BtcPayInvoiceId
                 });
                 rep.Success = true;
             }

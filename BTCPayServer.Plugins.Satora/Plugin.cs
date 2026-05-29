@@ -10,7 +10,7 @@ public class Plugin : BaseBTCPayServerPlugin
     public override IBTCPayServerPlugin.PluginDependency[] Dependencies { get; } =
     {
         new() { Identifier = nameof(BTCPayServer), Condition = ">=2.3.7" },
-        new() { Identifier = "BTCPayServer.Plugins.ArkPayServer", Condition = ">=2.1.0" }
+   //     new() { Identifier = "BTCPayServer.Plugins.ArkPayServer", Condition = ">=2.1.0" }
 
     };
 
@@ -21,10 +21,8 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddUIExtension("checkout-payment", "CheckoutV2/CheckoutSatoraPaymentExtension")
                 .AddSingleton<SatoraPluginDbContextFactory>()
                 .AddHostedService<PluginMigrationRunner>()
+                .AddHostedService<SatoraSwapWatcher>()
                 .AddSingleton<SatoraService>()
                 .AddSingleton<SatoraPluginService>();
-
-
     }
-
 }

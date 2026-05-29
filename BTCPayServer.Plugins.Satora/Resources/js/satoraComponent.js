@@ -60,7 +60,7 @@
     methods: {
         payInWallet() {
             if (!this.qrCodeData) return;
-            window.open(this.qrCodeData, '_blank', 'noopener,noreferrer');
+            window.location.href = this.qrCodeData;
         },
         async checkStatus() {
             if (!this.swapResult || !this.swapResult.swapId) return;

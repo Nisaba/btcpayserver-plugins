@@ -4,14 +4,20 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BTCPayServer.Plugins.Satora.Migrations
 {
     [DbContext(typeof(SatoraPluginDbContext))]
-    [Migration("20260522_Status")]
-    public partial class Status:Migration
+    [Migration("20260529_Seed2")]
+    public partial class Seed2: Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropColumn(
+             name: "CryptedSeed",
+             table: "SatoraTransactions",
+             schema: "BTCPayServer.Plugins.Satora"
+         );
+
             migrationBuilder.AddColumn<string>(
-                name: "Status",
-                table: "SatoraTransactions",
+                name: "CryptedSeed",
+                table: "SatoraSettings",
                 schema: "BTCPayServer.Plugins.Satora",
                 nullable: true
             );
@@ -19,8 +25,8 @@ namespace BTCPayServer.Plugins.Satora.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Status",
-                table: "SatoraTransactions",
+                name: "CryptedSeed",
+                table: "SatoraSettings",
                 schema: "BTCPayServer.Plugins.Satora"
             );
         }
