@@ -61,13 +61,16 @@ const ExolixCheckout = {
             return this.protocolMap[cryptoCode] || cryptoCode.toLowerCase();
         },
 
-        payInWallet() {
-            if (!this.swapData || !this.selectedCrypto) return;
-
+        buildPaymentUrl() {
+            if (!this.swapData || !this.selectedCrypto) return null;
             const protocol = this.getProtocol(this.selectedCrypto);
-            const paymentUrl = `${protocol}:${this.swapData.fromAddress}?amount=${this.formatAmount(this.swapData.fromAmount)}`;
-            window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+            return `${protocol}:${this.swapData.fromAddress}?amount=${this.formatAmount(this.swapData.fromAmount)}`;
         },
+
+        payInWallet() {
+            window.location.href = this.buildPaymentUrl();
+        },
+
         asNumber(val) {
             return val && parseFloat(val.toString().replace(/\s/g, ''));
         },
@@ -198,9 +201,7 @@ const ExolixCheckout = {
             return this.asNumber(this.model.due);
         },
         qrCodeData() {
-            if (!this.swapData || !this.selectedCrypto) return null;
-            const protocol = this.getProtocol(this.selectedCrypto);
-            return `${protocol}:${this.swapData.fromAddress}?amount=${this.formatAmount(this.swapData.fromAmount)}`;
+            return this.buildPaymentUrl();
         },
         canShowCryptoList() {
             return this.asNumber(this.model.due) > 0;
