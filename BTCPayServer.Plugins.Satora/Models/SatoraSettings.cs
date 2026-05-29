@@ -23,12 +23,15 @@ public class SatoraSettings
     private const int Iterations = 100_000;
 
     [NotMapped]
-    public string Seed
+    public string? Seed
     {
         get
         {
             if (!string.IsNullOrEmpty(_seed))
                 return _seed;
+
+            if (string.IsNullOrEmpty(CryptedSeed))
+                return null;
 
             var fullData = Convert.FromBase64String(CryptedSeed);
 
