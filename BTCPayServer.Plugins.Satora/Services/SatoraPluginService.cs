@@ -84,6 +84,7 @@ namespace BTCPayServer.Plugins.Satora.Services
                 else
                 {
                     dbSettings.Enabled = settings.Enabled;
+                    dbSettings.Seed = settings.Seed;
                     _context.SatoraSettings.Update(dbSettings);
                 }
 

@@ -17,9 +17,7 @@ namespace BTCPayServer.Plugins.Satora.Controllers
             try
             {
                 var settings = await pluginService.GetStoreSettings(storeId);
-                var seedPhrase = await pluginService.GetSeedPhraseBySwapId(settings.StoreId) ?? "";
-
-                rep = await satoraService.CreateSwapAsync(req, seedPhrase);
+                rep = await satoraService.CreateSwapAsync(req, settings.Seed);
 
                 await pluginService.AddStoreTransaction(new SatoraTx
                 {
