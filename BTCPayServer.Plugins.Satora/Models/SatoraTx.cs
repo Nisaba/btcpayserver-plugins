@@ -19,7 +19,10 @@ namespace BTCPayServer.Plugins.Satora.Models
 
         public string BTCPayInvoiceId { get; set; }
 
-
+        // Arkade txid of the claim that swept the VHTLC into the store
+        // wallet. Recorded so the BTCPay invoice settlement carries a real
+        // settlement reference, and so a failed settle can be retried.
+        public string? ClaimTxId { get; set; }
 
     }
 }
