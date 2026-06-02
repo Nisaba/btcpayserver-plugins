@@ -105,14 +105,14 @@
 
                 <div v-if="swapResult && swapResult.success && !isLoadingSwap" class="swap-details border rounded p-3 mb-3">
     
-                    <div class="text-center satora-qr-container mb-3" v-if="qrCodeData">
-                        <div>
+                    <div class="text-center mb-3" v-if="qrCodeData">
+                        <div class="satora-qr-container">
                             <qrcode :value="qrCodeData" :options="qrOptions" tag="div" />
-                        </div>
-                        
-                        <div class="satora-qr-icons-wrapper">
-                            <img class="satora-qr-icon" :src="getCryptoIcon(selectedStablecoin)" :alt="selectedStablecoin" />
-                            <img class="satora-qr-blockchain-icon" v-if="selectedBlockchain" :src="getCryptoIcon(selectedBlockchain.substring(0, 3).toUpperCase())" :alt="selectedBlockchain" />
+                            
+                            <div class="satora-qr-icons-wrapper">
+                                <img class="satora-qr-icon" :src="getCryptoIcon(selectedStablecoin)" :alt="selectedStablecoin" />
+                                <img class="satora-qr-blockchain-icon" v-if="selectedBlockchain" :src="getCryptoIcon(selectedBlockchain.substring(0, 3).toUpperCase())" :alt="selectedBlockchain" />
+                            </div>
                         </div>
                     </div>
 
