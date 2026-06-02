@@ -22,7 +22,7 @@
 <script src="~/Resources/js/satoraComponent.js"></script>
 
 <style>
-    .qr-container {
+    .satora-qr-container {
         text-align: center;
         padding: 1rem;
         background: white;
@@ -32,7 +32,7 @@
         margin: 0 auto;
     }
 
-    .qr-icons-wrapper {
+    .satora-qr-icons-wrapper {
         position: absolute;
         left: 50%;
         top: 50%;
@@ -41,7 +41,7 @@
         height: 70px;
     }
 
-    .qr-container .qr-icon {
+    .satora-qr-container .satora-qr-icon {
         width: 100%;
         height: 100%;
         padding: 5px;
@@ -49,7 +49,7 @@
         background: white;
     }
     
-    .qr-container .qr-blockchain-icon {
+    .satora-qr-container .satora-qr-blockchain-icon {
         position: absolute;
         right: -8px;
         bottom: -8px;
@@ -105,14 +105,14 @@
 
                 <div v-if="swapResult && swapResult.success && !isLoadingSwap" class="swap-details border rounded p-3 mb-3">
     
-                    <div class="text-center qr-container mb-3" v-if="qrCodeData">
+                    <div class="text-center satora-qr-container mb-3" v-if="qrCodeData">
                         <div>
                             <qrcode :value="qrCodeData" :options="qrOptions" tag="div" />
                         </div>
                         
-                        <div class="qr-icons-wrapper">
-                            <img class="qr-icon" :src="getCryptoIcon(selectedStablecoin)" :alt="selectedStablecoin" />
-                            <img class="qr-blockchain-icon" v-if="selectedBlockchain" :src="getCryptoIcon(selectedBlockchain.substring(0, 3).toUpperCase())" :alt="selectedBlockchain" />
+                        <div class="satora-qr-icons-wrapper">
+                            <img class="satora-qr-icon" :src="getCryptoIcon(selectedStablecoin)" :alt="selectedStablecoin" />
+                            <img class="satora-qr-blockchain-icon" v-if="selectedBlockchain" :src="getCryptoIcon(selectedBlockchain.substring(0, 3).toUpperCase())" :alt="selectedBlockchain" />
                         </div>
                     </div>
 
