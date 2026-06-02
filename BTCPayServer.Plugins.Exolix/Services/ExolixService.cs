@@ -88,6 +88,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
                     FromRefundAddress = req.FromRefundAddress ?? string.Empty,
                     IsFixed = req.FromAmount == 0
                 };
+
                 var reqJson = JsonConvert.SerializeObject(b2pReq, Formatting.None);
                 var webRequest = new HttpRequestMessage(HttpMethod.Post, "Create")
                 {
@@ -95,16 +96,55 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 };
 
                 using var rep = await httpClient.SendAsync(webRequest);
-                rep.EnsureSuccessStatusCode();
                 var sRep = await rep.Content.ReadAsStringAsync();
+
+                if (!rep.IsSuccessStatusCode)
+                {
+                    string errorMessage = "";
+
+                    try
+                    {
+                        dynamic apiError = JsonConvert.DeserializeObject(sRep);
+                        string fullErrorString = apiError?.error;
+
+                        if (!string.IsNullOrEmpty(fullErrorString))
+                        {
+                            errorMessage = fullErrorString;
+
+                            int jsonStartIndex = fullErrorString.IndexOf(" - {");
+                            if (jsonStartIndex >= 0)
+                            {
+                                string innerJson = fullErrorString.Substring(jsonStartIndex + 3);
+                                dynamic exolixError = JsonConvert.DeserializeObject(innerJson);
+
+                                if (exolixError?.error != null)
+                                {
+                                    errorMessage = exolixError.error;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            errorMessage = sRep; 
+                        }
+                    }
+                    catch
+                    {
+                        errorMessage = sRep;
+                    }
+
+                    throw new Exception(errorMessage);
+                }
+
                 return JsonConvert.DeserializeObject<SwapCreationResponse>(sRep);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "ExolixPlugin:CreateSwapAsync()");
-                throw;
+                throw; // L'exception remontera avec notre message proprement formaté
             }
         }
+
         public async Task<string> GetSwapInfoAsync(string id)
         {
             string sRep = "";

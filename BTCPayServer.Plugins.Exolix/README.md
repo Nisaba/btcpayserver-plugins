@@ -93,6 +93,7 @@ Here you will find the list of swaps you have executed from your BTC balance.
 - **1.5.1** - Fix a breaking change In Exolix API
 - **1.5.2** - Small improvements
 - **1.5.3** - Fix an issue in the "Pay in wallet" button at checkout, in modern browsers
+- **1.5.4** - Display clear error messages at checkout in case of swap failure, correct an incompatibility with Arkade plugin at checkout
 
 
   
