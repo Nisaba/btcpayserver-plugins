@@ -231,8 +231,8 @@ namespace BTCPayServer.Plugins.Satora.Services
                         var deposit = await satoraService.CheckDepositAsync(swapId, storeSettings.Seed);
                         if (!deposit.HasSufficientSourceToken)
                         {
-                            logger.LogInformation("SatoraPlugin:ContinueSwap({SwapId}): waiting for customer deposit ({Have}/{Need})",
-                                swapId, deposit.SourceTokenBalance, deposit.SourceTokenRequired);
+                           // logger.LogInformation("SatoraPlugin:ContinueSwap({SwapId}): waiting for customer deposit ({Have}/{Need})",
+                           //     swapId, deposit.SourceTokenBalance, deposit.SourceTokenRequired);
                             action = $"waiting_for_deposit ({deposit.SourceTokenBalance}/{deposit.SourceTokenRequired})";
                             break;
                         }
