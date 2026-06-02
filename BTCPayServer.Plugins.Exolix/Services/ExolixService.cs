@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -124,12 +123,12 @@ namespace BTCPayServer.Plugins.Exolix.Services
         }
 
 
-        private static string GetNetwork(string crypto) => crypto switch
+     /*   private static string GetNetwork(string crypto) => crypto switch
         {
             "BNB" => "BSC",
             "POL" => "MATIC",
             _ => crypto
-        };
+        };*/
 
     }
 }

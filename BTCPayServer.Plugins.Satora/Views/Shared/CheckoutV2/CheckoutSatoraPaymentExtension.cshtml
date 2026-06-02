@@ -43,6 +43,18 @@
         border-radius: 50%;
         background: white;
     }
+    
+    .qr-container .qr-blockchain-icon {
+        position: absolute;
+        right: 1.5rem;
+        bottom: 1.5rem;
+        width: 35px;
+        height: 35px;
+        padding: 3px;
+        border-radius: 50%;
+        background: white;
+        box-shadow: 0 0 4px rgba(0,0,0,0.3);
+    }
 </style>
 
 <script src="~/vendor/vue-qrcode/vue-qrcode.min.js" asp-append-version="true"></script>
@@ -92,6 +104,8 @@
                         <div>
                             <qrcode :value="qrCodeData" :options="qrOptions" tag="div" />
                         </div>
+                        <img class="qr-icon" :src="getCryptoIcon(selectedStablecoin)" :alt="selectedStablecoin" />
+                        <img class="qr-blockchain-icon" v-if="selectedBlockchain" :src="getCryptoIcon(selectedBlockchain.substring(0, 3).toUpperCase())" :alt="selectedBlockchain" />
                     </div>
 
                     <div class="mb-2">

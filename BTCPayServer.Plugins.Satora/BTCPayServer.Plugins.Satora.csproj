@@ -10,7 +10,7 @@
   <PropertyGroup>
     <Product>Satora</Product>
     <Description>Allows your customers to pay in Stablecoins with Satora in a seamless and non custodial way. Please read our documentation for updates history</Description>
-    <Version>0.0.7</Version>
+    <Version>0.0.8</Version>
   </PropertyGroup>
 
   <!-- Plugin development properties -->

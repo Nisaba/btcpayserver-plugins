@@ -86,6 +86,9 @@
                 this.checkingStatus = false;
             }
         },
+        getCryptoIcon(cryptoCode) {
+            return `/Resources/ico-satora/${cryptoCode}.webp`;
+        },
         normalizeBlockchain(blockchain) {
             return (blockchain || "").replace(/ /g, "_");
         },
