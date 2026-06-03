@@ -27,8 +27,9 @@ namespace BTCPayServer.Plugins.Satora.Controllers
                     DateT = DateTime.UtcNow,
                     BTCAmount = req.BtcAmount,
                     TxID = rep.SwapId,
-                    BTCPayInvoiceId = req.BtcPayInvoiceId
-                });
+                    BTCPayInvoiceId = req.BtcPayInvoiceId,
+                    InvoiceArkadeAddress = req.BtcDestination
+                }); 
                 rep.Success = true;
             }
             catch (Exception ex)

@@ -23,7 +23,6 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddHostedService<PluginMigrationRunner>()
                 .AddHostedService<SatoraSwapWatcher>()
                 .AddSingleton<SatoraService>()
-                .AddSingleton<SatoraSettlementService>()
                 .AddSingleton<SatoraPluginService>();
     }
 }

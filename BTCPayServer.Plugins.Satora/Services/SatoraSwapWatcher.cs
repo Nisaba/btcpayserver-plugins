@@ -52,7 +52,7 @@ public class SatoraSwapWatcher(
 
             try
             {
-                var (action, newStatus) = await pluginService.ContinueSwapAsync(tx.TxID, destinationOverride: null);
+                var (action, newStatus) = await pluginService.ContinueSwapAsync(tx.TxID);
 
                 if (initialStatus != newStatus)
                 {

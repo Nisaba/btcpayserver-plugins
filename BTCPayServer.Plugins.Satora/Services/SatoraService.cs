@@ -6,8 +6,8 @@ namespace BTCPayServer.Plugins.Satora.Services
 {
     public class SatoraService(ILogger<SatoraService> logger)
     {
-       public async Task<SwapResponse> CreateSwapAsync(SwapRequest req, string seedPhrase)
-       {
+        public async Task<SwapResponse> CreateSwapAsync(SwapRequest req, string seedPhrase)
+        {
             try
             {
                 ChainId chainFrom = req.NetworkFrom switch
@@ -20,24 +20,15 @@ namespace BTCPayServer.Plugins.Satora.Services
 
                 TokenId tokenFrom = (req.CryptoFrom, req.NetworkFrom) switch
                 {
-                    // USDC
-                    (Stablecoins.USDC, Blockchains.Polygon) => new TokenId.UsdcPolygon(),
-                    (Stablecoins.USDC, Blockchains.Arbitrum) => new TokenId.UsdcArbitrum(),
-                    (Stablecoins.USDC, Blockchains.Ethereum) => new TokenId.UsdcEthereum(),
-
-                    // USDT
-                    (Stablecoins.USDT, Blockchains.Polygon) => new TokenId.UsdtPolygon(),
-                    (Stablecoins.USDT, Blockchains.Ethereum) => new TokenId.UsdtEthereum(),
-
-                    // USDT0
+                    (Stablecoins.USDC, Blockchains.Polygon)   => new TokenId.UsdcPolygon(),
+                    (Stablecoins.USDC, Blockchains.Arbitrum)  => new TokenId.UsdcArbitrum(),
+                    (Stablecoins.USDC, Blockchains.Ethereum)  => new TokenId.UsdcEthereum(),
+                    (Stablecoins.USDT, Blockchains.Polygon)   => new TokenId.UsdtPolygon(),
+                    (Stablecoins.USDT, Blockchains.Ethereum)  => new TokenId.UsdtEthereum(),
                     (Stablecoins.USDT0, Blockchains.Arbitrum) => new TokenId.Usdt0Arbitrum(),
-
-                    // WBTC
-                    (Stablecoins.WBTC, Blockchains.Polygon) => new TokenId.WbtcPolygon(),
-                    (Stablecoins.WBTC, Blockchains.Arbitrum) => new TokenId.WbtcArbitrum(),
-                    (Stablecoins.WBTC, Blockchains.Ethereum) => new TokenId.WbtcEthereum(),
-
-                    // Fallback
+                    (Stablecoins.WBTC, Blockchains.Polygon)   => new TokenId.WbtcPolygon(),
+                    (Stablecoins.WBTC, Blockchains.Arbitrum)  => new TokenId.WbtcArbitrum(),
+                    (Stablecoins.WBTC, Blockchains.Ethereum)  => new TokenId.WbtcEthereum(),
                     _ => new TokenId.Other($"{req.CryptoFrom}-{req.NetworkFrom}")
                 };
 
@@ -45,28 +36,23 @@ namespace BTCPayServer.Plugins.Satora.Services
 
                 ChainId chainTo = req.BtcNetwork switch
                 {
-                    "BTC" => new ChainId.Bitcoin(),
+                    "BTC"       => new ChainId.Bitcoin(),
                     "LIGHTNING" => new ChainId.Lightning(),
-                    "ARKADE" => new ChainId.Arkade(),
-                    _ => new ChainId.Other(req.BtcNetwork)
+                    "ARKADE"    => new ChainId.Arkade(),
+                    _           => new ChainId.Other(req.BtcNetwork)
                 };
 
-                // Arkade swaps route to the SDK's own internal wallet
-                // (receive_to = null): the plugin claims the BTC into the
-                // store-seed wallet and settles the BTCPay invoice via
-                // PaymentService afterward. BTC / Lightning targets keep
-                // the explicit customer-supplied destination.
-                Address? addressTo = req.BtcNetwork switch
+                Address addressTo = req.BtcNetwork switch
                 {
-                    "BTC" => new Address.Bitcoin(req.BtcDestination),
+                    "BTC"       => new Address.Bitcoin(req.BtcDestination),
                     "LIGHTNING" => new Address.Lightning(req.BtcDestination),
-                    "ARKADE" => null,
-                    _ => new Address()
+                    "ARKADE"    => new Address.Arkade(req.BtcDestination),
+                    _           => new Address()
                 };
 
                 using var client = new global::Satora.Sdk.Client(seedPhrase);
                 var apiSwap = await client.CreateSwapAsync(chainFrom, tokenFrom, chainTo, new TokenId.Btc(), quoteAmount, addressTo, true);
-                
+
                 string? sDepositAddress = apiSwap.Funding switch
                 {
                     SwapFunding.Gasless gasless => gasless.depositAddress,
@@ -75,34 +61,34 @@ namespace BTCPayServer.Plugins.Satora.Services
 
                 int decimals = req.CryptoFrom switch
                 {
-                    Stablecoins.EURC => 6,
-                    Stablecoins.USDC => 6,
-                    Stablecoins.USDT => 6,
+                    Stablecoins.EURC  => 6,
+                    Stablecoins.USDC  => 6,
+                    Stablecoins.USDT  => 6,
                     Stablecoins.USDT0 => 6,
-                    Stablecoins.WBTC => 8,
-                    _ => 18 
+                    Stablecoins.WBTC  => 8,
+                    _ => 18
                 };
-                var divisor = Math.Pow(10, decimals);
 
                 var rawAmount = double.Parse(apiSwap.DepositAmount, CultureInfo.InvariantCulture);
 
                 var swap = new SwapResponse
                 {
-                    SwapId = apiSwap.Id,
-                    FromAddress = sDepositAddress,
-                    FromAmount = (float)(rawAmount / divisor),
-                    Success = true,
+                    SwapId        = apiSwap.Id,
+                    FromAddress   = sDepositAddress,
+                    FromAmount    = (float)(rawAmount / Math.Pow(10, decimals)),
+                    Success       = true,
                     StatusMessage = "Swap created successfully"
                 };
-                logger.LogInformation($"Satora Swap Created : {swap.SwapId} {swap.FromAmount} {req.CryptoFrom}-{req.NetworkFrom} -> {req.BtcNetwork}");
+                logger.LogInformation("Satora Swap Created : {SwapId} {FromAmount} {From} -> {To}",
+                    swap.SwapId, swap.FromAmount, $"{req.CryptoFrom}-{req.NetworkFrom}", req.BtcNetwork);
                 return swap;
             }
             catch (Exception ex)
             {
-                logger.LogError($"SatoraPlugin.CreateSwap(): {ex.Message} - {req.CryptoFrom}-{req.NetworkFrom} -> {req.BtcNetwork}");
-                 throw;
+                logger.LogError("SatoraPlugin.CreateSwap(): {Message} - {From} -> {To}",
+                    ex.Message, $"{req.CryptoFrom}-{req.NetworkFrom}", req.BtcNetwork);
+                throw;
             }
-
         }
 
         public async Task<string> GetSwapInfoAsync(string id, string seedPhrase)
@@ -111,15 +97,11 @@ namespace BTCPayServer.Plugins.Satora.Services
             {
                 using var client = new global::Satora.Sdk.Client(seedPhrase);
                 var swap = await client.GetSwapAsync(id);
-                // Use the variant type name (e.g. "Pending") rather than
-                // the record's default ToString ("Pending { }") so the
-                // local-cache column and the details page stay readable
-                // and consistent with what ContinueSwapAsync writes.
                 return swap.Status.GetType().Name;
             }
             catch (Exception ex)
             {
-                logger.LogError($"SatoraPlugin.GetSwapInfo(): {ex.Message} - {id}");
+                logger.LogError("SatoraPlugin.GetSwapInfo(): {Message} - {Id}", ex.Message, id);
                 throw;
             }
         }
@@ -133,7 +115,7 @@ namespace BTCPayServer.Plugins.Satora.Services
             }
             catch (Exception ex)
             {
-                logger.LogError($"SatoraPlugin.GetSwapAsync(): {ex.Message} - {id}");
+                logger.LogError("SatoraPlugin.GetSwapAsync(): {Message} - {Id}", ex.Message, id);
                 throw;
             }
         }
@@ -147,7 +129,7 @@ namespace BTCPayServer.Plugins.Satora.Services
             }
             catch (Exception ex)
             {
-                logger.LogError($"SatoraPlugin.FundSwapAsync(): {ex.Message} - {swapId}");
+                logger.LogError("SatoraPlugin.FundSwapAsync(): {Message} - {SwapId}", ex.Message, swapId);
                 throw;
             }
         }
@@ -161,7 +143,7 @@ namespace BTCPayServer.Plugins.Satora.Services
             }
             catch (Exception ex)
             {
-                logger.LogError($"SatoraPlugin.CheckDepositAsync(): {ex.Message} - {swapId}");
+                logger.LogError("SatoraPlugin.CheckDepositAsync(): {Message} - {SwapId}", ex.Message, swapId);
                 throw;
             }
         }
@@ -175,7 +157,7 @@ namespace BTCPayServer.Plugins.Satora.Services
             }
             catch (Exception ex)
             {
-                logger.LogError($"SatoraPlugin.ClaimAsync(): {ex.Message} - {swapId} -> {destination}");
+                logger.LogError("SatoraPlugin.ClaimAsync(): {Message} - {SwapId} -> {Dest}", ex.Message, swapId, destination);
                 throw;
             }
         }
@@ -189,7 +171,28 @@ namespace BTCPayServer.Plugins.Satora.Services
             }
             catch (Exception ex)
             {
-                logger.LogError($"SatoraPlugin.GetArkadeAddressAsync(): {ex.Message}");
+                logger.LogError("SatoraPlugin.GetArkadeAddressAsync(): {Message}", ex.Message);
+                throw;
+            }
+        }
+
+        public async Task<string> SweepToAddressAsync(string destinationArkadeAddress, ulong amountSats, string seedPhrase)
+        {
+            try
+            {
+                using var client = new global::Satora.Sdk.Client(seedPhrase);
+
+                var sendTxId = await client.SendArkadeAsync(destinationArkadeAddress, amountSats);
+
+                logger.LogInformation("SatoraPlugin.SweepToAddressAsync(): swept {Sats} sats to {Dest}, ark_txid={Txid}",
+                    amountSats, destinationArkadeAddress, sendTxId);
+
+                return sendTxId;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("SatoraPlugin.SweepToAddressAsync(): {Message} - {Sats} sats -> {Dest}",
+                    ex.Message, amountSats, destinationArkadeAddress);
                 throw;
             }
         }
