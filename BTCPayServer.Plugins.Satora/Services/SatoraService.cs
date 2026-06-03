@@ -51,11 +51,16 @@ namespace BTCPayServer.Plugins.Satora.Services
                     _ => new ChainId.Other(req.BtcNetwork)
                 };
 
-                Address addressTo = req.BtcNetwork switch
+                // Arkade swaps route to the SDK's own internal wallet
+                // (receive_to = null): the plugin claims the BTC into the
+                // store-seed wallet and settles the BTCPay invoice via
+                // PaymentService afterward. BTC / Lightning targets keep
+                // the explicit customer-supplied destination.
+                Address? addressTo = req.BtcNetwork switch
                 {
                     "BTC" => new Address.Bitcoin(req.BtcDestination),
                     "LIGHTNING" => new Address.Lightning(req.BtcDestination),
-                    "ARKADE" => new Address.Arkade(req.BtcDestination),
+                    "ARKADE" => null,
                     _ => new Address()
                 };
 

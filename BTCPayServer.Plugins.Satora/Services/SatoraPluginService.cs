@@ -6,7 +6,7 @@ using uniffi.satora_sdk_ffi;
 
 namespace BTCPayServer.Plugins.Satora.Services
 {
-    public class SatoraPluginService(SatoraPluginDbContextFactory pluginDbContextFactory, ILogger<SatoraPluginService> logger, SatoraService satoraService)
+    public class SatoraPluginService(SatoraPluginDbContextFactory pluginDbContextFactory, ILogger<SatoraPluginService> logger, SatoraService satoraService, SatoraSettlementService settlementService)
     {
 
         public async Task<SatoraSettings> GetStoreSettings(string storeId)
@@ -215,6 +215,7 @@ namespace BTCPayServer.Plugins.Satora.Services
 
                 var swap = await satoraService.GetSwapAsync(swapId, storeSettings.Seed);
                 var statusName = swap.Status.GetType().Name;
+                var originalClaimTxId = dbSwap?.ClaimTxId;
 
                 string action;
                 switch (swap.Status)
@@ -252,13 +253,29 @@ namespace BTCPayServer.Plugins.Satora.Services
                         break;
 
                     case SwapStatus.ServerFunded:
-                        // VHTLC is live — sweep BTC out to destination.
+                        // VHTLC is live — sweep BTC into the store wallet
+                        // (or an operator override), then settle the
+                        // BTCPay invoice with the claim txid.
                         var destination = destinationOverride
                             ?? await satoraService.GetArkadeAddressAsync(storeSettings.Seed);
                         var claimReceipt = await satoraService.ClaimAsync(swapId, destination, storeSettings.Seed);
                         logger.LogInformation("SatoraPlugin:ContinueSwap({SwapId}): claimed {Sats} sats to {Dest}, ark_txid={Txid}",
                             swapId, claimReceipt.ClaimAmountSats, destination, claimReceipt.ArkTxid);
                         action = $"claimed:{claimReceipt.ArkTxid}";
+                        if (dbSwap != null)
+                            dbSwap.ClaimTxId = claimReceipt.ArkTxid;
+                        // Settle is best-effort: if it throws, the claim
+                        // still stands (funds are in the store wallet) and
+                        // the ClientRedeemed branch retries via the manual
+                        // button. Don't let a settle failure unwind the claim.
+                        try
+                        {
+                            await settlementService.SettleAsync(dbSwap?.BTCPayInvoiceId, claimReceipt.ArkTxid, claimReceipt.ClaimAmountSats);
+                        }
+                        catch (Exception se)
+                        {
+                            logger.LogError(se, "SatoraPlugin:ContinueSwap({SwapId}): claim succeeded but invoice settlement failed", swapId);
+                        }
                         swap = await satoraService.GetSwapAsync(swapId, storeSettings.Seed);
                         statusName = swap.Status.GetType().Name;
                         break;
@@ -269,6 +286,22 @@ namespace BTCPayServer.Plugins.Satora.Services
 
                     case SwapStatus.ClientRedeemed:
                     case SwapStatus.ServerRedeemed:
+                        // Already claimed. If a prior settle didn't land
+                        // (transient failure during the claim tick), retry
+                        // it from the recorded claim txid — idempotent on
+                        // the payment outpoint.
+                        if (dbSwap != null && !string.IsNullOrEmpty(dbSwap.ClaimTxId))
+                        {
+                            ulong.TryParse(swap.ReceiveAmount, out var redeemedSats);
+                            try
+                            {
+                                await settlementService.SettleAsync(dbSwap.BTCPayInvoiceId, dbSwap.ClaimTxId, redeemedSats);
+                            }
+                            catch (Exception se)
+                            {
+                                logger.LogWarning(se, "SatoraPlugin:ContinueSwap({SwapId}): settle retry failed", swapId);
+                            }
+                        }
                         action = "complete";
                         break;
 
@@ -278,7 +311,7 @@ namespace BTCPayServer.Plugins.Satora.Services
                         break;
                 }
 
-                if (dbSwap != null && dbSwap.Status != statusName)
+                if (dbSwap != null && (dbSwap.Status != statusName || dbSwap.ClaimTxId != originalClaimTxId))
                 {
                     dbSwap.Status = statusName;
                     _context.SatoraTransactions.Update(dbSwap);
