@@ -218,6 +218,84 @@ else
 
 
 
+    <!-- WooCommerce Integration -->
+    <div class="card mb-4 mt-4">
+        <div class="card-header">
+            <strong>WooCommerce Integration</strong>
+        </div>
+        <div class="card-body">
+            @if (Model.WooCommerceSettings != null && Model.WooCommerceSettings.IsConfigured)
+            {
+                <div class="alert alert-success mb-3">
+                    <span class="me-2">&#10003;</span>
+                    Connected to <strong>@Model.WooCommerceSettings.WooCommerceUrl</strong>
+                </div>
+            }
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="wcUrl" class="form-label">WooCommerce Store URL</label>
+                    <input id="wcUrl" type="url" class="form-control" placeholder="https://your-store.com" value="@(Model.WooCommerceSettings?.WooCommerceUrl ?? "")" />
+                </div>
+                <div class="col-md-4">
+                    <label for="wcKey" class="form-label">Consumer Key</label>
+                    <input id="wcKey" type="text" class="form-control" placeholder="ck_..." value="@(Model.WooCommerceSettings?.ConsumerKey ?? "")" />
+                </div>
+                <div class="col-md-4">
+                    <label for="wcSecret" class="form-label">Consumer Secret</label>
+                    <input id="wcSecret" type="password" class="form-control" placeholder="cs_..." value="@(Model.WooCommerceSettings?.ConsumerSecret ?? "")" />
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="wcLocation" class="form-label">Location</label>
+                    <select id="wcLocation" class="form-select">
+                        <option value="" selected="@(string.IsNullOrEmpty(Model.WooCommerceSettings?.Location) ? "selected" : null)">Select a location</option>
+                        @foreach (var group in ShopstrSettings.AvailableLocations)
+                        {
+                            <optgroup label="@group.Key">
+                                @foreach (var location in group.Value)
+                                {
+                                    <option value="@location" selected="@(Model.WooCommerceSettings?.Location == location ? "selected" : null)">@location</option>
+                                }
+                            </optgroup>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="wcFlashSales" class="form-label">Flash Sales</label>
+                    <div class="form-check mt-2">
+                        <input id="wcFlashSales" class="form-check-input" type="checkbox" @(Model.WooCommerceSettings?.FlashSales == true ? "checked" : "") />
+                        <label class="form-check-label" for="wcFlashSales">Enabled</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="wcCondition" class="form-label">Condition</label>
+                    <select id="wcCondition" class="form-select">
+                        @foreach (var condition in Enum.GetValues(typeof(ConditionEnum)))
+                        {
+                            var field = typeof(ConditionEnum).GetField(condition.ToString());
+                            var descAttr = (DescriptionAttribute)field.GetCustomAttributes(typeof(DescriptionAttribute), false).FirstOrDefault();
+                            var displayText = descAttr?.Description ?? condition.ToString();
+                            var isSelected = Model.WooCommerceSettings != null && (ConditionEnum)condition == Model.WooCommerceSettings.Condition;
+                            <option value="@condition" selected="@(isSelected ? "selected" : null)">@displayText</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="wcRestrictions" class="form-label">Restrictions</label>
+                    <input id="wcRestrictions" type="text" class="form-control" placeholder="US shipping only, etc." value="@(Model.WooCommerceSettings?.Restrictions ?? "")" />
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button id="BtSaveWc" class="btn btn-primary" onclick="SaveWcSettings()">Save WooCommerce Settings</button>
+                <button id="BtPublishWc" class="btn btn-secondary" onclick="DoPublishWc()">Publish WooCommerce Products</button>
+                <img id="WaitPublishWc" src="/Resources/img/waiting.webp" style="display:none" />
+                <button id="BtUnpublishWc" class="btn btn-secondary" onclick="DoUnpublishWc()">Unpublish</button>
+                <img id="WaitUnpublishWc" src="/Resources/img/waiting.webp" style="display:none" />
+            </div>
+        </div>
+    </div>
+
     @Html.AntiForgeryToken()
 
     <script type="text/javascript" >
@@ -289,6 +367,74 @@ else
                 alert("Error: " + error + " - " + xhr.responseText);
                 $('#WaitPublish' + appId).hide();
                 $('#BtPublish' + appId).show();
+            }
+        });
+    }
+
+    function SaveWcSettings() {
+        $('#BtSaveWc').hide();
+        $.ajax({
+            url: 'Shopstr/SaveWooCommerceSettings',
+            type: 'POST',
+            data: {
+                wooCommerceUrl: $('#wcUrl').val(),
+                consumerKey: $('#wcKey').val(),
+                consumerSecret: $('#wcSecret').val(),
+                location: $('#wcLocation').val(),
+                flashSales: $('#wcFlashSales').is(':checked'),
+                condition: $('#wcCondition').val(),
+                restrictions: $('#wcRestrictions').val()
+            },
+            headers: { 'RequestVerificationToken': antiForgeryToken },
+            success: function() {
+                alert("WooCommerce settings saved");
+                $('#BtSaveWc').show();
+            },
+            error: function(xhr, status, error) {
+                alert("Error: " + error + " - " + xhr.responseText);
+                $('#BtSaveWc').show();
+            }
+        });
+    }
+
+    function DoPublishWc() {
+        if (!confirm("Publish WooCommerce products to Shopstr marketplace?")) return;
+        $('#BtPublishWc').hide();
+        $('#WaitPublishWc').show();
+        $.ajax({
+            url: 'Shopstr/PublishWooCommerce',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': antiForgeryToken },
+            success: function() {
+                alert("WooCommerce products published to Shopstr");
+                $('#WaitPublishWc').hide();
+                $('#BtPublishWc').show();
+            },
+            error: function(xhr, status, error) {
+                alert("Error: " + error + " - " + xhr.responseText);
+                $('#WaitPublishWc').hide();
+                $('#BtPublishWc').show();
+            }
+        });
+    }
+
+    function DoUnpublishWc() {
+        if (!confirm("Unpublish WooCommerce products from Shopstr marketplace?")) return;
+        $('#BtUnpublishWc').hide();
+        $('#WaitUnpublishWc').show();
+        $.ajax({
+            url: 'Shopstr/UnPublishWooCommerce',
+            type: 'POST',
+            headers: { 'RequestVerificationToken': antiForgeryToken },
+            success: function() {
+                alert("WooCommerce products unpublished from Shopstr");
+                $('#WaitUnpublishWc').hide();
+                $('#BtUnpublishWc').show();
+            },
+            error: function(xhr, status, error) {
+                alert("Error: " + error + " - " + xhr.responseText);
+                $('#WaitUnpublishWc').hide();
+                $('#BtUnpublishWc').show();
             }
         });
     }
