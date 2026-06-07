@@ -23,12 +23,18 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             var perPage = 100;
 
             using var client = new HttpClient();
-            var authBytes = Encoding.ASCII.GetBytes($"{settings.ConsumerKey}:{settings.ConsumerSecret}");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(authBytes));
+            var useBasicAuth = baseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+            if (useBasicAuth)
+            {
+                var authBytes = Encoding.ASCII.GetBytes($"{settings.ConsumerKey}:{settings.ConsumerSecret}");
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(authBytes));
+            }
 
             while (true)
             {
                 var url = $"{baseUrl}/wp-json/wc/v3/products?status=publish&per_page={perPage}&page={page}";
+                if (!useBasicAuth)
+                    url += $"&consumer_key={Uri.EscapeDataString(settings.ConsumerKey)}&consumer_secret={Uri.EscapeDataString(settings.ConsumerSecret)}";
 
                 try
                 {
@@ -48,6 +54,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
 
                     foreach (var wc in wcProducts)
                     {
+                        var inStock = wc.StockStatus == "instock" || wc.InStock;
                         products.Add(new AppItem
                         {
                             Id = wc.Id.ToString(),
@@ -55,8 +62,8 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                             Description = StripHtml(wc.ShortDescription ?? wc.Description ?? ""),
                             Price = decimal.TryParse(wc.Price, out var p) ? p : 0,
                             Image = wc.Images?.FirstOrDefault()?.Src ?? "",
-                            Disabled = wc.Status != "publish",
-                            Inventory = wc.StockQuantity ?? (wc.InStock ? 999 : 0),
+                            Disabled = wc.Status != "publish" || !inStock,
+                            Inventory = wc.StockQuantity ?? (inStock ? 999 : 0),
                             Categories = wc.Categories?.Select(c => c.Name).ToArray() ?? Array.Empty<string>(),
                         });
                     }
@@ -104,6 +111,7 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             [JsonProperty("price")] public string Price { get; set; }
             [JsonProperty("stock_quantity")] public int? StockQuantity { get; set; }
             [JsonProperty("in_stock")] public bool InStock { get; set; }
+            [JsonProperty("stock_status")] public string StockStatus { get; set; }
             [JsonProperty("images")] public List<WcImage> Images { get; set; }
             [JsonProperty("categories")] public List<WcCategory> Categories { get; set; }
         }
