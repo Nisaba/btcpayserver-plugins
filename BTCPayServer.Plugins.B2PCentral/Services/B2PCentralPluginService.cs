@@ -171,12 +171,14 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
 
                 if (cnfg.OffChainEnabled)
                 {
+                    var bFlag = false;
                     try
                     {
                         var lightningClient = GetLightningClient(store);
                         var balance = await lightningClient.GetBalance();
                         cnfg.OffChainBalance = (balance.OffchainBalance != null
                                                ? (balance.OffchainBalance.Local ?? 0):0).ToDecimal(LightMoneyUnit.BTC);
+                        bFlag = true;
                         var info = await lightningClient.GetInfo();
                         if (info.Alias == "boltz-client" && balance.OnchainBalance != null)
                         {
@@ -187,7 +189,8 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                     }
                     catch (Exception ex)
                     {
-                        logger.LogWarning(ex, "B2PCentral:GetBalances() - Failed to get Lightning balance");
+                        if (!bFlag)
+                            logger.LogWarning(ex, "B2PCentral:GetBalances() - Failed to get Lightning balance");
                     }
                 }
 

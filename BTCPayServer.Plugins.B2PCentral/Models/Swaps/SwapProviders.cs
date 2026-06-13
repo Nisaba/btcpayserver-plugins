@@ -70,6 +70,9 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
         [Description("Bitania")]
         BITANIA = 21,
 
+        [Description("StereoSwap")]
+        STEREO_SWAP = 22,
+
     }
 
     public static class SwapProviders
@@ -99,7 +102,8 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.PEGASUS_SWAP,
             SwapProvidersEnum.CCE_CASH,
             SwapProvidersEnum.SAGE_SWAP,
-            SwapProvidersEnum.BITANIA
+            SwapProvidersEnum.BITANIA,
+            SwapProvidersEnum.STEREO_SWAP
         ];
 
         public static readonly SwapProvidersEnum[] KYCProviders = [
