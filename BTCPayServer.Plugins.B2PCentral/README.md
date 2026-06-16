@@ -138,6 +138,10 @@ What's new in v 2.2.1 :
 - HodlHodl is now also available for Lightning bitcoin offers
 - New icon for dark mode
 
+What's new in v 2.2.2 :
+- BitcoinVN and StereoSwap added as Swap providers
+- Small improvements
+
 
 
 

@@ -83,7 +83,6 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.TROCADOR,
             SwapProvidersEnum.FIXED_FLOAT,
             SwapProvidersEnum.CHANGE_NOW,
-            SwapProvidersEnum.BITCOIN_VN,
             SwapProvidersEnum.SWAP_SPACE,
             SwapProvidersEnum.AVAN_CHANGE,
             SwapProvidersEnum.MAJESTIC_BANK
@@ -103,7 +102,8 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.CCE_CASH,
             SwapProvidersEnum.SAGE_SWAP,
             SwapProvidersEnum.BITANIA,
-            SwapProvidersEnum.STEREO_SWAP
+            SwapProvidersEnum.STEREO_SWAP,
+            SwapProvidersEnum.BITCOIN_VN
         ];
 
         public static readonly SwapProvidersEnum[] KYCProviders = [
