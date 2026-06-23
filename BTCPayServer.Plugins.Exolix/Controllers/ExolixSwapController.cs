@@ -65,8 +65,15 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSwapInfo([FromRoute] string id)
         {
-            var jsonResult = await exolixService.GetSwapInfoAsync(id);
-            return Content(jsonResult, "application/json");
+            try
+            {
+                var swapInfo = await exolixService.GetSwapInfoAsync(id);
+                return Content(swapInfo, "application/json");
+            }
+            catch (Exception ex)
+            {
+                return Content($"{{\"error\":\"{ex.Message}\"}}", "application/json");
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using BTCPayServer.Plugins.Exolix.Model;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Ocsp;
 using System;
 using System.Net.Http;
 using System.Text;
@@ -141,7 +142,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
             catch (Exception ex)
             {
                 logger.LogError(ex, "ExolixPlugin:CreateSwapAsync()");
-                throw; // L'exception remontera avec notre message proprement formaté
+                throw;
             }
         }
 
@@ -152,7 +153,43 @@ namespace BTCPayServer.Plugins.Exolix.Services
             {
                 var response = await httpClient.GetAsync($"{BaseUrl}Info?swapId={id}");
                 sRep = await response.Content.ReadAsStringAsync();
-                response.EnsureSuccessStatusCode();
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMessage = "";
+
+                    try
+                    {
+                        dynamic apiError = JsonConvert.DeserializeObject(sRep);
+                        string fullErrorString = apiError?.error;
+
+                        if (!string.IsNullOrEmpty(fullErrorString))
+                        {
+                            errorMessage = fullErrorString;
+
+                            int jsonStartIndex = fullErrorString.IndexOf(" - {");
+                            if (jsonStartIndex >= 0)
+                            {
+                                string innerJson = fullErrorString.Substring(jsonStartIndex + 3);
+                                dynamic exolixError = JsonConvert.DeserializeObject(innerJson);
+
+                                if (exolixError?.error != null)
+                                {
+                                    errorMessage = exolixError.error;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            errorMessage = sRep;
+                        }
+                    }
+                    catch
+                    {
+                        errorMessage = sRep;
+                    }
+
+                    throw new Exception(errorMessage);
+                }
                 return sRep;
             }
             catch (Exception ex)
@@ -161,7 +198,6 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 throw;
             }
         }
-
 
      /*   private static string GetNetwork(string crypto) => crypto switch
         {
