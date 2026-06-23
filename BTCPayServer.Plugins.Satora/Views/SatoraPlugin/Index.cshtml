@@ -33,6 +33,7 @@
 
 <partial name="_StatusMessage" />
 <br />
+
 <div permission="@Policies.CanModifyStoreSettings">
     <h4>Configuration</h4>
     <form method="post">
@@ -54,12 +55,111 @@
             </table>
         </div>
     </form>
+
+    @if (Model.Settings.Seed != null)
+    {
+        <div class="form-group mt-3">
+            <h4>Seed Phrase</h4>
+            <div class="alert alert-warning alert-dismissible fade show d-flex align-items-start gap-2" role="alert" id="seedWarningAlert">
+                <span>⚠</span>
+                <span class="flex-grow-1">
+                    <strong>Warning:</strong> Never share your seed phrase with anyone.
+                    Anyone who obtains it can take full control of your wallet.
+                    Store it securely offline.
+                </span>
+                <button type="button" class="btn btn-link text-decoration-none p-0 border-0" data-bs-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true" style="font-weight: bold; font-size: 1.2rem; color: #000;">✕</span>
+                </button>
+            </div>
+            <div class="input-group">
+                <input type="password"
+                       id="seedPhraseInput"
+                       class="form-control font-monospace"
+                       value="@Model.Settings.Seed"
+                       readonly
+                       autocomplete="off"
+                       data-sensitive />
+                <button class="btn btn-outline-secondary"
+                        type="button"
+                        id="toggleSeedBtn"
+                        onclick="toggleSeedPhrase()"
+                        title="Show / Hide seed phrase">
+                    Show
+                </button>
+                <button class="btn btn-outline-secondary"
+                        type="button"
+                        onclick="copySeedPhrase()"
+                        title="Copy seed phrase to clipboard">
+                    Copy
+                </button>
+            </div>
+            <div id="seedCopiedMsg" class="text-success small mt-1" style="display:none;">
+                Copied to clipboard!
+            </div>
+        </div>
+        <script>
+            function toggleSeedPhrase() {
+                const input = document.getElementById('seedPhraseInput');
+                const btn   = document.getElementById('toggleSeedBtn');
+                const isHidden = input.type === 'password';
+                input.type   = isHidden ? 'text' : 'password';
+                btn.textContent = isHidden ? 'Hide' : 'Show';
+            }
+
+            function copySeedPhrase() {
+                const input = document.getElementById('seedPhraseInput');
+                navigator.clipboard.writeText(input.value).then(() => {
+                    const msg = document.getElementById('seedCopiedMsg');
+                    msg.style.display = 'block';
+                    setTimeout(() => msg.style.display = 'none', 2500);
+                });
+            }
+        </script>
+    }
 </div>
 <br />
 <br />
 
 <div permission="@Policies.CanViewInvoices">
-    <div style="height:20px"></div>
+
+    @if (Model.WalletBalance != null)
+    {
+        var confirmedBtc    = Model.WalletBalance.confirmedSats    / 100_000_000m;
+        var preConfirmedBtc = Model.WalletBalance.preConfirmedSats / 100_000_000m;
+        var recoverableBtc  = Model.WalletBalance.recoverableSats  / 100_000_000m;
+
+        <div class="widget store-wallet-balance">
+            <div class="d-flex gap-3 align-items-center justify-content-between mb-2">
+                <h6>Arkade Wallet Balance</h6>
+            </div>
+            <div class="balances d-flex flex-wrap gap-4">
+                <div class="balance">
+                    <div class="d-flex align-items-baseline gap-1">
+                        <h3 class="d-inline-block me-1" data-balance="@confirmedBtc" data-sensitive>@confirmedBtc.ToString("0.########")</h3>
+                        <span class="text-secondary fw-semibold text-nowrap"><span class="currency">BTC</span> confirmed</span>
+                    </div>
+                </div>
+
+                <div class="balance">
+                    <div class="d-flex align-items-baseline gap-1">
+                        <h3 class="d-inline-block me-1" data-balance="@preConfirmedBtc" data-sensitive>@preConfirmedBtc.ToString("0.########")</h3>
+                        <span class="text-secondary text-nowrap"><span class="currency">BTC</span> pre-confirmed</span>
+                    </div>
+                </div>
+
+                <div class="balance">
+                    <div class="d-flex align-items-baseline gap-1">
+                        <h3 class="d-inline-block me-1" data-balance="@recoverableBtc" data-sensitive>@recoverableBtc.ToString("0.########")</h3>
+                        <span class="text-secondary text-nowrap"><span class="currency">BTC</span> recoverable</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="height:20px"></div><br/>
+    }
+
+
+
     <h4>Satora Customers Transactions</h4>
 
     @if (!Model.Transactions.Any())

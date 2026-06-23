@@ -176,7 +176,21 @@ namespace BTCPayServer.Plugins.Satora.Services
             }
         }
 
-        public async Task<string> SweepToAddressAsync(string destinationArkadeAddress, ulong amountSats, string seedPhrase)
+        public async Task<ArkadeBalance> GetArkadeBalanceAsync (string seedPhrase)
+        {
+            try
+            {
+                using var client = new global::Satora.Sdk.Client(seedPhrase);
+                return await client.GetArkadeBalanceAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("SatoraPlugin.GetArkadeBalanceAsync(): {Message}", ex.Message);
+                throw;
+            }
+        }
+
+   /*     public async Task<string> SweepToAddressAsync(string destinationArkadeAddress, ulong amountSats, string seedPhrase)
         {
             try
             {
@@ -195,6 +209,6 @@ namespace BTCPayServer.Plugins.Satora.Services
                     ex.Message, amountSats, destinationArkadeAddress);
                 throw;
             }
-        }
+        }*/
     }
 }

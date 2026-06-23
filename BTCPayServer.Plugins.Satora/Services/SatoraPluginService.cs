@@ -2,6 +2,7 @@ using BTCPayServer.Plugins.Satora.Data;
 using BTCPayServer.Plugins.Satora.Models;
 using Microsoft.EntityFrameworkCore;
 using NBitcoin;
+using Satora.Sdk;
 using uniffi.satora_sdk_ffi;
 
 namespace BTCPayServer.Plugins.Satora.Services
@@ -9,7 +10,8 @@ namespace BTCPayServer.Plugins.Satora.Services
     public class SatoraPluginService(
         SatoraPluginDbContextFactory pluginDbContextFactory,
         ILogger<SatoraPluginService> logger,
-        SatoraService satoraService)
+        SatoraService satoraService,
+        SatoraSettlementService settlementService)
     {
 
         public async Task<SatoraSettings> GetStoreSettings(string storeId)
@@ -56,7 +58,11 @@ namespace BTCPayServer.Plugins.Satora.Services
                     .OrderByDescending(a => a.DateT)
                     .ToListAsync();
 
-                return new SatoraModel { Settings = settings, Transactions = txs };
+                ArkadeBalance walletBalance = null;
+                if (!string.IsNullOrEmpty(settings.Seed))
+                    walletBalance = await satoraService.GetArkadeBalanceAsync(settings.Seed);
+
+                return new SatoraModel { Settings = settings, Transactions = txs, WalletBalance = walletBalance };
             }
             catch (Exception e)
             {
@@ -220,7 +226,7 @@ namespace BTCPayServer.Plugins.Satora.Services
                         break;
 
                     case SwapStatus.ServerFunded:
-                        var destination = destinationOverride
+                      /*  var destination = destinationOverride
                             ?? await satoraService.GetArkadeAddressAsync(storeSettings.Seed);
                         var claimReceipt = await satoraService.ClaimAsync(swapId, destination, storeSettings.Seed);
                         logger.LogInformation("SatoraPlugin:ContinueSwap({SwapId}): claimed {Sats} sats → wallet Satora, ark_txid={Txid}",
@@ -238,8 +244,23 @@ namespace BTCPayServer.Plugins.Satora.Services
                         if (sweepTxId != null && dbSwap != null)
                             dbSwap.SweepTxId = sweepTxId;
 
-                        action     = sweepTxId != null ? $"swept:{sweepTxId}" : $"claimed:{claimReceipt.ArkTxid}";
-                        swap       = await satoraService.GetSwapAsync(swapId, storeSettings.Seed);
+                        action     = sweepTxId != null ? $"swept:{sweepTxId}" : $"claimed:{claimReceipt.ArkTxid}";*/
+                        action = "claimed";
+
+                        if (dbSwap != null && !string.IsNullOrEmpty(dbSwap.ClaimTxId))
+                        {
+                            ulong.TryParse(swap.ReceiveAmount, out var redeemedSats);
+                            try
+                            {
+                                await settlementService.SettleAsync(dbSwap.BTCPayInvoiceId, dbSwap.ClaimTxId, redeemedSats);
+                            }
+                            catch (Exception se)
+                            {
+                                logger.LogWarning(se, "SatoraPlugin:ContinueSwap({SwapId}): settle retry failed", swapId);
+                            }
+                        }
+
+                        swap = await satoraService.GetSwapAsync(swapId, storeSettings.Seed);
                         statusName = swap.Status.GetType().Name;
                         break;
 
@@ -249,19 +270,32 @@ namespace BTCPayServer.Plugins.Satora.Services
 
                     case SwapStatus.ClientRedeemed:
                     case SwapStatus.ServerRedeemed:
-                        if (dbSwap != null && !string.IsNullOrEmpty(dbSwap.ClaimTxId) && string.IsNullOrEmpty(dbSwap.SweepTxId))
+                        /* if (dbSwap != null && !string.IsNullOrEmpty(dbSwap.ClaimTxId) && string.IsNullOrEmpty(dbSwap.SweepTxId))
+                         {
+                             ulong.TryParse(swap.ReceiveAmount, out var redeemedSats);
+                             var retrySweepTxId = await SweepToMerchantAsync(
+                                 dbSwap.BTCPayInvoiceId,
+                                 redeemedSats,
+                                 storeSettings.Seed,
+                                 swapId,
+                                 dbSwap.InvoiceArkadeAddress);
+
+                             if (retrySweepTxId != null)
+                                 dbSwap.SweepTxId = retrySweepTxId;
+                         }*/
+                        if (dbSwap != null && !string.IsNullOrEmpty(dbSwap.ClaimTxId))
                         {
                             ulong.TryParse(swap.ReceiveAmount, out var redeemedSats);
-                            var retrySweepTxId = await SweepToMerchantAsync(
-                                dbSwap.BTCPayInvoiceId,
-                                redeemedSats,
-                                storeSettings.Seed,
-                                swapId,
-                                dbSwap.InvoiceArkadeAddress);
-
-                            if (retrySweepTxId != null)
-                                dbSwap.SweepTxId = retrySweepTxId;
+                            try
+                            {
+                                await settlementService.SettleAsync(dbSwap.BTCPayInvoiceId, dbSwap.ClaimTxId, redeemedSats);
+                            }
+                            catch (Exception se)
+                            {
+                                logger.LogWarning(se, "SatoraPlugin:ContinueSwap({SwapId}): settle retry failed", swapId);
+                            }
                         }
+
                         action = "complete";
                         break;
 
@@ -289,7 +323,7 @@ namespace BTCPayServer.Plugins.Satora.Services
             }
         }
 
-        private async Task<string?> SweepToMerchantAsync(
+    /*    private async Task<string?> SweepToMerchantAsync(
             string? invoiceId,
             ulong amountSats,
             string satoraSeed,
@@ -314,6 +348,6 @@ namespace BTCPayServer.Plugins.Satora.Services
                     swapId, amountSats);
                 return null;
             }
-        }
+        }*/
     }
 }

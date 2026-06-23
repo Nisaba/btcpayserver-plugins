@@ -98,16 +98,6 @@
             const parsed = Number(normalized);
             return Number.isFinite(parsed) ? parsed : 0;
         },
-        resolveBtcNetwork() {
-            const paymentMethodId = (this.model.paymentMethodId || "").toUpperCase();
-            if (paymentMethodId.includes("ARKADE")) {
-                return "ARKADE";
-            }
-            if (paymentMethodId.includes("LIGHTNING") || paymentMethodId.includes("LN")) {
-                return "LIGHTNING";
-            }
-            return "BTC";
-        },
         getSwapUrl() {
             const rootPath = (this.model.rootPath || "/").replace(/\/?$/, "/");
             return `${rootPath}plugins/${encodeURIComponent(this.model.storeId)}/SatoraSwap`;
@@ -135,8 +125,8 @@
             payload.set("CryptoFrom", this.selectedStablecoin);
             payload.set("NetworkFrom", this.normalizeBlockchain(this.selectedBlockchain));
             payload.set("BtcAmount", this.parseAmount(this.model.due).toString());
-            payload.set("BtcDestination", this.model.address || "");
-            payload.set("BtcNetwork", this.resolveBtcNetwork());
+            payload.set("BtcDestination", "");
+            payload.set("BtcNetwork", "");
             payload.set("BtcPayInvoiceId", this.model.invoiceId || "");
 
             try {

@@ -1,7 +1,6 @@
 ﻿using BTCPayServer.Plugins.Satora.Models;
 using BTCPayServer.Plugins.Satora.Services;
 using Microsoft.AspNetCore.Mvc;
-using NBitcoin;
 
 namespace BTCPayServer.Plugins.Satora.Controllers
 {
@@ -17,6 +16,10 @@ namespace BTCPayServer.Plugins.Satora.Controllers
             try
             {
                 var settings = await pluginService.GetStoreSettings(storeId);
+
+                req.BtcNetwork = "ARKADE";
+                req.BtcDestination = await satoraService.GetArkadeAddressAsync(settings.Seed);
+
                 rep = await satoraService.CreateSwapAsync(req, settings.Seed);
 
                 await pluginService.AddStoreTransaction(new SatoraTx
