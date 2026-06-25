@@ -177,24 +177,25 @@
                             <label class="form-label mb-1">
                                 <small class="text-muted">Can't find your coin? Search all Exolix currencies:</small>
                             </label>
-                            <div class="input-group input-group-sm">
-                                <input type="text"
-                                       v-model="searchQuery"
-                                       class="form-control"
-                                       placeholder="e.g. USDT, ETH, SOL…"
-                                       :disabled="searching || loading"
-                                       v-on:keyup.enter="searchExolixCurrencies">
-                                <button class="btn btn-outline-secondary"
-                                        type="button"
-                                        :disabled="searching || loading || !searchQuery.trim()"
-                                        v-on:click="searchExolixCurrencies">
-                                    <span v-if="searching"
-                                          class="spinner-border spinner-border-sm"
-                                          role="status"
-                                          aria-hidden="true"></span>
-                                    <span v-else><i class="fa fa-search"></i></span>
-                                </button>
-                            </div>
+                            <form v-on:submit.prevent="searchExolixCurrencies">
+                                <div class="input-group input-group-sm">
+                                    <input type="text"
+                                           v-model="searchQuery"
+                                           class="form-control"
+                                           placeholder="e.g. USDT, ETH, SOL…"
+                                           :disabled="searching || loading"
+                                           inputmode="search">
+                                    <button class="btn btn-outline-secondary"
+                                            type="submit"
+                                            :disabled="searching || loading || !searchQuery.trim()">
+                                        <span v-if="searching"
+                                              class="spinner-border spinner-border-sm"
+                                              role="status"
+                                              aria-hidden="true"></span>
+                                        <span v-else><i class="fa fa-search"></i></span>
+                                    </button>
+                                </div>
+                            </form>
 
                             <div v-if="searchError" class="alert alert-danger mt-2 py-1 small">
                                 {{ searchError }}
