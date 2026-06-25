@@ -21,13 +21,7 @@ For the plugin to be active, it must be activated and at least one altcoin must 
 
 A new option allows customers to search in checkout for more coins listed in Exolix (about hundreds of coins available), if they are not in the list of selected coins. This option is enabled by default.
 
-![image](https://github.com/user-attachments/assets/e4b67eff-83c0-405d-aca6-58138b337b21)
-
-## Checkout
-During checkout, the customer must click on "Altcoins" and then choose their crypto from the drop-down list. They can then complete their transaction according to the information provided, using the appropriate QR code.
-
-![image](https://github.com/user-attachments/assets/cdb528cd-6706-4f3d-9372-558a1df1c028)
-
+<img width="802" height="743" alt="image" src="https://github.com/user-attachments/assets/c9630cab-c4bb-4c4f-92ce-da71ede944ed" />
 
 ## Using Lightning at Checkout
 Now, during checkout, a Lightning swap will can made if available, instead of an onchain swap. This will ensure a much faster payment for your customers, and a better user experience.
@@ -40,6 +34,14 @@ It works better with "Unify on-chain and lightning payment URL/QR code" option a
 If not, Lightning swap will be activated only if the user cliks on "Lightning" before clicking on "Altcoins". Otherwise, onchain mode is selected for the swap.
 
 **Note**: If you are not using Lightning, please set your invoice expiration time to a value greater than at least 60 minutes or more (in the BTCPay store settings), as the swap will not be completed if the invoice expires before the altcoin transaction is confirmed.
+
+## Checkout
+During checkout, the customer must click on "Altcoins" and then choose their crypto from the drop-down list. They can then complete their transaction according to the information provided, using the appropriate QR code.
+
+![image](https://github.com/user-attachments/assets/cdb528cd-6706-4f3d-9372-558a1df1c028)
+
+In last releases, a new option allows to search coins from all Exolix supprted coins (about hundreds of coins available)
+<img width="535" height="767" alt="image" src="https://github.com/user-attachments/assets/1cded476-3a71-418f-8392-e404aa8d8caf" />
 
 ## Customers Swap List
 
