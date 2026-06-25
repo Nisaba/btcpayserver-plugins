@@ -19,6 +19,8 @@ The plugin settings must be configured for each BTCPay store. It is accessible t
 You must activate the plugin and select the desired cryptocurrencies from the list during checkout.
 For the plugin to be active, it must be activated and at least one altcoin must be selected.
 
+A new option allows customers to search in checkout for more coins listed in Exolix (about hundreds of coins available), if they are not in the list of selected coins. This option is enabled by default.
+
 ![image](https://github.com/user-attachments/assets/e4b67eff-83c0-405d-aca6-58138b337b21)
 
 ## Checkout
@@ -37,6 +39,7 @@ It works better with "Unify on-chain and lightning payment URL/QR code" option a
 
 If not, Lightning swap will be activated only if the user cliks on "Lightning" before clicking on "Altcoins". Otherwise, onchain mode is selected for the swap.
 
+**Note**: If you are not using Lightning, please set your invoice expiration time to a value greater than at least 60 minutes or more (in the BTCPay store settings), as the swap will not be completed if the invoice expires before the altcoin transaction is confirmed.
 
 ## Customers Swap List
 
@@ -94,7 +97,7 @@ Here you will find the list of swaps you have executed from your BTC balance.
 - **1.5.2** - Small improvements
 - **1.5.3** - Fix an issue in the "Pay in wallet" button at checkout, in modern browsers
 - **1.5.4** - Display clear error messages at checkout in case of swap failure, correct an incompatibility with Arkade plugin at checkout
-
+- **1.6.1** - Add support at checkout for hundreds altcoins supported by Exolix, small improvements
 
   
 
