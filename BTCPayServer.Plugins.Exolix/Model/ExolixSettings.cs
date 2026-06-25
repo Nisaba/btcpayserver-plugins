@@ -25,6 +25,9 @@ public class ExolixSettings
     [Display(Name = "Allow Lightning Network swaps if available")]
     public bool AllowLightning { get; set; }
 
+    [Display(Name = "Allow customer to search in checkout more coins listed in Exolix")]
+    public bool AllowMoreExolixCoins { get; set; }
+
     [NotMapped]
     public bool isConfigured
     {

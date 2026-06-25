@@ -73,7 +73,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 }
             }*/
 
-        public async Task<SwapCreationResponse> CreateSwapAsync(SwapCreationRequest req)
+        public async Task<SwapCreationResponse> CreateSwapAsync(SwapCreationRequest req, bool isTrueNetwork = false)
         {
             try
             {
@@ -91,7 +91,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 };
 
                 var reqJson = JsonConvert.SerializeObject(b2pReq, Formatting.None);
-                var webRequest = new HttpRequestMessage(HttpMethod.Post, "Create")
+                var webRequest = new HttpRequestMessage(HttpMethod.Post, $"Create?isTrueNetwork={(isTrueNetwork ? "true" : "false")}")
                 {
                     Content = new StringContent(reqJson, Encoding.UTF8, "application/json"),
                 };

@@ -12,7 +12,7 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
 
         [HttpPost]
         [IgnoreAntiforgeryToken]
-        public async Task<SwapCreationResponse> Index([FromRoute] string storeId, [FromForm] SwapRequest req)
+        public async Task<SwapCreationResponse> Index([FromRoute] string storeId, [FromForm] SwapRequest req, [FromQuery] bool isTrueNetwork = false)
         {
             var rep = new SwapCreationResponse();
             try
@@ -25,7 +25,7 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                     sNetworkFrom = sSplit[1];
                 }
                 else
-                {
+                { 
                     sCryptoFrom = req.CryptoFrom;
                     sNetworkFrom = req.CryptoFrom;
                 }
@@ -40,7 +40,7 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                     ToAmount = req.BtcAmount,
                     ToAddress = req.BtcAddress,
                 };
-                rep = await exolixService.CreateSwapAsync(exoliwSwapReq);
+                rep = await exolixService.CreateSwapAsync(exoliwSwapReq, isTrueNetwork);
 
                 await pluginService.AddStoreTransaction(new ExolixTx
                 {

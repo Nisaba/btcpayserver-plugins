@@ -23,7 +23,7 @@
         <td>
             <br />
             <p>
-                Allows your customers to pay with altcoins that are not supported by BTCPay Server, using<br /><a href="https://exolix.com?ref=492A36CE022C5FA643B322029C0E5BBE" target="_blank">Exolix service</a>, in a seamless way.<br />
+                Allows your customers to pay with altcoins that are not supported by BTCPay Server, using<br /><a href="https://exolix.com?ref=269C1A01B071F9BE91E0B588EFE45E4B" target="_blank">Exolix service</a>, in a seamless way.<br />
                 Please read our documentation <a href="https://github.com/Nisaba/btcpayserver-plugins/blob/master/BTCPayServer.Plugins.Exolix/README.md" target="_blank">here</a>.
             </p>
         </td>
@@ -106,6 +106,13 @@
                             </optgroup>
                         }
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <div class="d-flex align-items-center">
+                        <input asp-for="@Model.Settings.AllowMoreExolixCoins" type="checkbox" class="btcpay-toggle me-3" />
+                        <label asp-for="@Model.Settings.AllowMoreExolixCoins" class="form-check-label"></label>
+                    </div>
                 </div>
 
             </form>
