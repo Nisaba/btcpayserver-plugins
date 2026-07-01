@@ -14,6 +14,7 @@ public class ShopstrDbContext : DbContext
     }
 
     public DbSet<ShopstrSettings> Settings { get; set; }
+    public DbSet<WooCommerceSettings> WooCommerceSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
