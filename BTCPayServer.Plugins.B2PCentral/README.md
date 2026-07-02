@@ -142,6 +142,7 @@ What's new in v 2.2.2 :
 - BitcoinVN and StereoSwap added as Swap providers
 - Small improvements
 
-
+What's new in v 2.2.3 :
+- QuikEx added as Swap provider
 
 

@@ -73,6 +73,9 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
         [Description("StereoSwap")]
         STEREO_SWAP = 22,
 
+        [Description("QuickEx")]
+        QUICK_EX = 23,
+
     }
 
     public static class SwapProviders
@@ -103,7 +106,8 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.SAGE_SWAP,
             SwapProvidersEnum.BITANIA,
             SwapProvidersEnum.STEREO_SWAP,
-            SwapProvidersEnum.BITCOIN_VN
+            SwapProvidersEnum.BITCOIN_VN,
+            SwapProvidersEnum.QUICK_EX,
         ];
 
         public static readonly SwapProvidersEnum[] KYCProviders = [
@@ -113,6 +117,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.CHANGE_HERO,
             SwapProvidersEnum.STEALTH_EX,
             SwapProvidersEnum.EASY_BIT,
+            SwapProvidersEnum.QUICK_EX
         ];
 
         public static string GetDisplayName(this SwapProvidersEnum provider)
