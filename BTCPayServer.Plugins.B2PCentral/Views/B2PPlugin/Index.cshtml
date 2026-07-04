@@ -372,7 +372,7 @@
                 </div>
                 <br />
                 <div id="swapProvidersContainer" style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
-                    @foreach (var provider in SwapProviders.ActiveProviders)
+                    @foreach (var provider in SwapProviders.ActiveProviders.OrderBy(p => p.GetDisplayName()))
                     {
                         var description = provider.GetDisplayName();
                         var imagePath = $"/Resources/img/{description}.webp";

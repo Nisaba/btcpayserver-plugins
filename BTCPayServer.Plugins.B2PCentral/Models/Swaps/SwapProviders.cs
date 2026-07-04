@@ -76,6 +76,9 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
         [Description("QuickEx")]
         QUICK_EX = 23,
 
+        [Description("ElCapo")]
+        EL_CAPO = 24
+
     }
 
     public static class SwapProviders
@@ -108,6 +111,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.STEREO_SWAP,
             SwapProvidersEnum.BITCOIN_VN,
             SwapProvidersEnum.QUICK_EX,
+            SwapProvidersEnum.EL_CAPO
         ];
 
         public static readonly SwapProvidersEnum[] KYCProviders = [

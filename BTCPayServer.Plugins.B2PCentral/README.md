@@ -145,4 +145,7 @@ What's new in v 2.2.2 :
 What's new in v 2.2.3 :
 - QuikEx added as Swap provider
 
+What's new in v 2.2.4 :
+- El Capo added as Swap provider
+
 
