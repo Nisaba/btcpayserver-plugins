@@ -1,9 +1,5 @@
-using BTCPayServer.Plugins.B2PCentral.Models.P2P;
-using System;
-using System.Collections.Generic;
+using BTCPayServer.Plugins.B2PCentral.Models.Swaps;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
 
 namespace BTCPayServer.Plugins.B2PCentral.Models;
 
@@ -16,9 +12,34 @@ public class B2PSettings
     [Required(ErrorMessage = "This field is mandatory.")]
     public string ApiKey { get; set; }
 
-    public string ProvidersString { get; set; }
+    [Display(Name = "Enable auto-swaps for on-chain paid invoices")]
+    public bool OnChainAutoSwapEnabled { get; set; }
 
-    [NotMapped]
+    [Display(Name = "Enable auto-swaps for Lightning paid invoices")]
+    public bool LightningAutoSwapEnabled { get; set; }
+
+    [Display(Name = "Minimum on-chain balance for auto-swaps (sats)")]
+    public int OnChainAutoSwapThreshold { get; set; }
+
+    [Display(Name = "Minimum Lightning balance for auto-swaps (sats)")]
+    public int LightningAutoSwapThreshold { get; set; }
+
+    [Display(Name = "Percentage of on-chain balance to swap")]
+    public int OnChainAutoSwapPercent { get; set; }
+
+    [Display(Name = "Percentage of Lightning balance to swap")]
+    public int LightningAutoSwapPercent { get; set; }
+
+    [Display(Name = "Provider for on-chain swaps")]
+    public SwapProvidersEnum OnChainAutoSwapProvider { get; set; }
+
+    [Display(Name = "Provider for Lightning swaps")]
+    public SwapProvidersEnum LightningAutoSwapProvider { get; set;  }
+
+
+    // public string ProvidersString { get; set; }
+
+   /* [NotMapped]
     public List<ProvidersEnum> Providers
     {
         get
@@ -29,5 +50,5 @@ public class B2PSettings
         {
             ProvidersString = string.Join(",", value.ToArray());
         }
-    }
+    }*/
 }

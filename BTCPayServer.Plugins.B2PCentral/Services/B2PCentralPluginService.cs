@@ -22,12 +22,14 @@ using Microsoft.Extensions.Options;
 using NBitcoin;
 using Newtonsoft.Json;
 using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using static BTCPayServer.Data.CustomerSelector;
 
 namespace BTCPayServer.Plugins.B2PCentral.Services;
 
@@ -77,7 +79,11 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
             var settings = await context.B2PSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
             if (settings == null)
             {
-                settings = new B2PSettings { StoreId = storeId, ProvidersString = "0" };
+                settings = new B2PSettings { 
+                    StoreId = storeId, LightningAutoSwapEnabled = false, OnChainAutoSwapEnabled = false,
+                    OnChainAutoSwapPercent = 70, LightningAutoSwapPercent = 70, 
+                    OnChainAutoSwapThreshold = 100000, LightningAutoSwapThreshold = 10000
+                };
             }
             return settings;
 
@@ -117,8 +123,14 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                 context.B2PSettings.Add(settings);
             } else
             {
-                dbSettings.ProvidersString = settings.ProvidersString;
                 dbSettings.ApiKey = settings.ApiKey;
+                dbSettings.OnChainAutoSwapEnabled = settings.OnChainAutoSwapEnabled;
+                dbSettings.LightningAutoSwapEnabled = settings.LightningAutoSwapEnabled;
+                dbSettings.OnChainAutoSwapPercent = settings.OnChainAutoSwapPercent;
+                dbSettings.LightningAutoSwapPercent = settings.LightningAutoSwapPercent;
+                dbSettings.OnChainAutoSwapThreshold = settings.OnChainAutoSwapThreshold;
+                dbSettings.LightningAutoSwapThreshold = settings.LightningAutoSwapThreshold;
+
                 context.B2PSettings.Update(dbSettings);
             }
 
@@ -300,6 +312,25 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
             throw;
         }
     }
+
+    public async Task<List<ProviderInfo>> GetSwapProvidersInfos()
+    {
+        string sRep = "";
+        try
+        {
+            var response = await httpClient.GetAsync($"{BaseApiUrl}swaps/providersinfos");
+            sRep = await response.Content.ReadAsStringAsync();
+            response.EnsureSuccessStatusCode();
+            return JsonConvert.DeserializeObject<List<ProviderInfo>>(sRep);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "B2PCentral:GetSwapProvidersInfos()");
+            throw;
+        }
+    }
+
+
 
     public async Task<(string PullPaymentId, string PayoutId)> CreatePayout(string storeId, string provider, SwapCreationResponse swap, SwapCreationRequestJS req, CancellationToken cancellationToken = default)
     {

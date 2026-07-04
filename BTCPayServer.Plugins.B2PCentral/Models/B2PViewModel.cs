@@ -8,5 +8,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Models
         public B2PSettings Settings { get; set; }
         public List<B2PStoreSwap> Swaps { get; set; }
         public bool IsPayoutCreated { get; set; }
+
+        public List<ProviderInfo> SwapProvidersInfos { get; set; }
     }
 }
