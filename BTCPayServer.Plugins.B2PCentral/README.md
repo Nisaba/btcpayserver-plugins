@@ -3,6 +3,8 @@
 If you want to sell bitcoins you earn with your store activity, this plugin allows you to get P2P bitcoin buy offers from <a href="https://www.b2p-central.com" target="b2p">B2P Central</a>, according to your onchain and lightning wallets balances and the store's default currency.
 You can also perform onchain swaps to a variety of altcoins and stablecoins supported by B2P Central.<br />
 
+Get more info in <a href="https://blog.b2p-central.com/The-Ultimate-Merchant-Workflow-Integrating-B2P-Central-into-Your-BTCPay-Server" target="b2pblog">our blog</a>.
+
 ## Configuration
 
 First, you need to get a B2P Central API key <a href="https://getapi.b2p-central.com" target="b2pApi">here</a>.
