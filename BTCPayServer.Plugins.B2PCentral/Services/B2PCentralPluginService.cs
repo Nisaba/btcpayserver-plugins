@@ -82,7 +82,10 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                 settings = new B2PSettings { 
                     StoreId = storeId, LightningAutoSwapEnabled = false, OnChainAutoSwapEnabled = false,
                     OnChainAutoSwapPercent = 70, LightningAutoSwapPercent = 70, 
-                    OnChainAutoSwapThreshold = 100000, LightningAutoSwapThreshold = 10000
+                    OnChainAutoSwapThreshold = 100000, LightningAutoSwapThreshold = 10000,
+                    OnChainAutoSwapProvider = SwapProvidersEnum.NONE, LightningAutoSwapProvider = SwapProvidersEnum.NONE,
+                    OnChainAutoSwapCryptoTo = "", LightningAutoSwapCryptoTo = "",
+                    OnChainAutoSwapAddressTo = "", LightningAutoSwapAddressTo = ""
                 };
             }
             return settings;
@@ -130,6 +133,12 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                 dbSettings.LightningAutoSwapPercent = settings.LightningAutoSwapPercent;
                 dbSettings.OnChainAutoSwapThreshold = settings.OnChainAutoSwapThreshold;
                 dbSettings.LightningAutoSwapThreshold = settings.LightningAutoSwapThreshold;
+                dbSettings.OnChainAutoSwapProvider = settings.OnChainAutoSwapProvider;
+                dbSettings.LightningAutoSwapProvider = settings.LightningAutoSwapProvider;
+                dbSettings.OnChainAutoSwapCryptoTo = settings.OnChainAutoSwapCryptoTo;
+                dbSettings.LightningAutoSwapCryptoTo = settings.LightningAutoSwapCryptoTo;
+                dbSettings.OnChainAutoSwapAddressTo = settings.OnChainAutoSwapAddressTo;
+                dbSettings.LightningAutoSwapAddressTo = settings.LightningAutoSwapAddressTo;
 
                 context.B2PSettings.Update(dbSettings);
             }
@@ -250,8 +259,11 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
             var webRequest = new HttpRequestMessage(HttpMethod.Post, "Offers")
             {
                 Content = new StringContent(reqJson, Encoding.UTF8, "application/json"),
+                Headers =
+                {
+                    { "B2P-API-KEY", key },
+                },
             };
-            webRequest.Headers.Add("B2P-API-KEY", key);
 
             using var rep = await httpClient.SendAsync(webRequest);
             rep.EnsureSuccessStatusCode();
@@ -274,8 +286,11 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
             var webRequest = new HttpRequestMessage(HttpMethod.Post, "swaps")
             {
                 Content = new StringContent(reqJson, Encoding.UTF8, "application/json"),
+                Headers =
+                {
+                    { "B2P-API-KEY", key },
+                },
             };
-            webRequest.Headers.Add("B2P-API-KEY", key);
 
             using var rep = await httpClient.SendAsync(webRequest);
             rep.EnsureSuccessStatusCode();
@@ -298,8 +313,11 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
             var webRequest = new HttpRequestMessage(HttpMethod.Put, "swaps")
             {
                 Content = new StringContent(reqJson, Encoding.UTF8, "application/json"),
+                Headers =
+                {
+                    { "B2P-API-KEY", key },
+                },
             };
-            webRequest.Headers.Add("B2P-API-KEY", key);
 
             using var rep = await httpClient.SendAsync(webRequest);
             rep.EnsureSuccessStatusCode();
@@ -313,14 +331,23 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
         }
     }
 
-    public async Task<List<ProviderInfo>> GetSwapProvidersInfos()
+    public async Task<List<ProviderInfo>> GetSwapProvidersInfos(string key)
     {
         string sRep = "";
         try
         {
-            var response = await httpClient.GetAsync($"{BaseApiUrl}swaps/providersinfos");
-            sRep = await response.Content.ReadAsStringAsync();
-            response.EnsureSuccessStatusCode();
+            var webRequest = new HttpRequestMessage(HttpMethod.Get, "swaps/providersinfos")
+            {
+                Headers =
+                {
+                    { "B2P-API-KEY", key },
+                },
+            };
+
+            using var rep = await httpClient.SendAsync(webRequest);
+
+            sRep = await rep.Content.ReadAsStringAsync();
+            rep.EnsureSuccessStatusCode();
             return JsonConvert.DeserializeObject<List<ProviderInfo>>(sRep);
         }
         catch (Exception ex)

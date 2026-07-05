@@ -100,6 +100,7 @@
                     $("#tabOnChain").show();
                     $("#tabLightning").hide();
                     $("#tabSwaps").hide();
+                    $("#tabAutoSwaps").hide();
                     $("#tabListSwaps").hide();
                     this.tblOfrsLightning = this.tblOfrs;
                     this.tblOfrs = this.tblOfrsOnChain;
@@ -109,6 +110,7 @@
                     $("#tabOnChain").hide();
                     $("#tabLightning").show();
                     $("#tabSwaps").hide();
+                    $("#tabAutoSwaps").hide();
                     $("#tabListSwaps").hide();
                     this.tblOfrsOnChain = this.tblOfrs;
                     this.tblOfrs = this.tblOfrsLightning;
@@ -118,6 +120,7 @@
                     $("#tabOnChain").hide();
                     $("#tabLightning").hide();
                     $("#tabSwaps").show();
+                    $("#tabAutoSwaps").hide();
                     $("#tabListSwaps").hide();
                     break;
                 case 4:
@@ -125,6 +128,15 @@
                     $("#tabOnChain").hide();
                     $("#tabLightning").hide();
                     $("#tabSwaps").hide();
+                    $("#tabAutoSwaps").show();
+                    $("#tabListSwaps").hide();
+                    break;
+                case 5:
+                    $("#SectionNav-5").addClass("active").siblings().removeClass("active");
+                    $("#tabOnChain").hide();
+                    $("#tabLightning").hide();
+                    $("#tabSwaps").hide();
+                    $("#tabAutoSwaps").hide();
                     $("#tabListSwaps").show();
                     break;
             }

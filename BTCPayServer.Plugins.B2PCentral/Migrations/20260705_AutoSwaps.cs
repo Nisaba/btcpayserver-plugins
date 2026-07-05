@@ -58,6 +58,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Migrations
                 defaultValue: 70);
 
         }
+
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
@@ -76,6 +77,28 @@ namespace BTCPayServer.Plugins.B2PCentral.Migrations
                 name: "LightningAutoSwapEnabled",
                 schema: "BTCPayServer.Plugins.B2PCentral",
                 table: "B2PSettings");
+
+            migrationBuilder.DropColumn(
+                name: "OnChainAutoSwapThreshold",
+                schema: "BTCPayServer.Plugins.B2PCentral",
+                table: "B2PSettings");
+
+            migrationBuilder.DropColumn(
+                name: "LightningAutoSwapThreshold",
+                schema: "BTCPayServer.Plugins.B2PCentral",
+                table: "B2PSettings");
+
+            migrationBuilder.DropColumn(
+                name: "OnChainAutoSwapPercent",
+                schema: "BTCPayServer.Plugins.B2PCentral",
+                table: "B2PSettings");
+
+            migrationBuilder.DropColumn(
+                name: "LightningAutoSwapPercent",
+                schema: "BTCPayServer.Plugins.B2PCentral",
+                table: "B2PSettings");
+
         }
+
     }
 }

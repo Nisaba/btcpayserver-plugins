@@ -118,7 +118,8 @@
                 <a id="SectionNav-1" class="nav-link active" href="#SectionNav" onclick="B2PCore.switchTab(1)"><vc:icon symbol="wallet-wallet" /> Sell (On Chain)</a>
                 <a id="SectionNav-2" class="nav-link" href="#SectionNav" onclick="B2PCore.switchTab(2)"><vc:icon symbol="lightning" /> Sell (Lightning)</a>
                 <a id="SectionNav-3" class="nav-link" href="#SectionNav" onclick="B2PCore.switchTab(3)"><vc:icon symbol="actions-refresh" /> Swaps (On Chain)</a>
-                <a id="SectionNav-4" class="nav-link" href="#SectionNav" onclick="B2PCore.switchTab(4)"><vc:icon symbol="actions-refresh" /> Swaps list</a>
+                <a id="SectionNav-4" class="nav-link" href="#SectionNav" onclick="B2PCore.switchTab(4)"><vc:icon symbol="actions-refresh" /> Auto-Swaps</a>
+                <a id="SectionNav-5" class="nav-link" href="#SectionNav" onclick="B2PCore.switchTab(5)"><vc:icon symbol="actions-refresh" /> Swaps list</a>
             </div>
         </nav>
 
@@ -308,7 +309,7 @@
             }
         </div>
 
-        <div permission="@Policies.CanCreateNonApprovedPullPayments" id="tabSwaps" style="display:none" permission="@Policies.CanCreateNonApprovedPullPayments">
+        <div permission="@Policies.CanCreateNonApprovedPullPayments" id="tabSwaps" style="display:none">
             <h4>Swaps (On Chain)</h4>
             @if (walletConfig.OnChainEnabled)
             {
@@ -411,7 +412,179 @@
 
         </div>
 
-        <div permission="@Policies.CanCreateNonApprovedPullPayments" id="tabListSwaps" style="display:none">
+        <div permission="@Policies.CanModifyStoreSettings" id="tabAutoSwaps" style="display:none">
+            <form method="post" autocomplete="off">
+                <input asp-for="Settings.StoreId" type="hidden" />
+                <input asp-for="Settings.ApiKey" type="hidden" />
+
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h4>Auto-Swap Settings</h4>
+                        <p class="text-muted mb-0">Configure automatic swaps of received funds to other crypto-assets as soon as your balances allow.</p>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- On-Chain Auto Swap -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h5 class="card-title mb-0">Auto-Swap (On-Chain)</h5>
+                                    <input asp-for="Settings.OnChainAutoSwapEnabled" type="checkbox" class="btcpay-toggle" id="OnChainAutoSwapEnabled" />
+                                </div>
+                                <p class="text-muted small">Automatically swap your On-Chain bitcoins to other supported cryptocurrencies.</p>
+
+                                <div id="OnChainAutoSwapConfig" style="display: none;">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Settings.OnChainAutoSwapThreshold" class="form-label"></label>
+                                        <div class="input-group">
+                                            <input asp-for="Settings.OnChainAutoSwapThreshold" class="form-control" type="number" min="0" placeholder="e.g. 50000" />
+                                            <span class="input-group-text">sats</span>
+                                        </div>
+                                        <span asp-validation-for="Settings.OnChainAutoSwapThreshold" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Settings.OnChainAutoSwapPercent" class="form-label"></label>
+                                        <div class="input-group">
+                                            <input asp-for="Settings.OnChainAutoSwapPercent" class="form-control" type="number" min="1" max="100" placeholder="100" />
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <span asp-validation-for="Settings.OnChainAutoSwapPercent" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Settings.OnChainAutoSwapProvider" class="form-label"></label>
+                                        <select asp-for="Settings.OnChainAutoSwapProvider" class="form-select">
+                                            @foreach (var provider in SwapProviders.ActiveProviders.OrderBy(p => p.GetDisplayName()))
+                                            {
+                                                <option value="@provider">@provider.GetDisplayName()</option>
+                                            }
+                                        </select>
+                                        <span asp-validation-for="Settings.OnChainAutoSwapProvider" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Settings.OnChainAutoSwapCryptoTo" class="form-label"></label>
+                                        <select asp-for="Settings.OnChainAutoSwapCryptoTo" class="form-select">
+                                            @foreach (var group in SwapCryptos.AvailableCryptos.GroupBy(c => c.Value.Category).OrderBy(g => g.Key))
+                                            {
+                                                <optgroup label="@SwapCryptos.CategoryLabels[group.Key]">
+                                                    @foreach (var crypto in group.OrderBy(c => c.Value.Name))
+                                                    {
+                                                        <option value="@crypto.Key">@GetCryptoIcon(crypto.Key) @crypto.Value.Name</option>
+                                                    }
+                                                </optgroup>
+                                            }
+                                        </select>
+                                        <span asp-validation-for="Settings.OnChainAutoSwapCryptoTo" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Settings.OnChainAutoSwapAddressTo" class="form-label"></label>
+                                        <input asp-for="Settings.OnChainAutoSwapAddressTo" class="form-control" />
+                                        <span asp-validation-for="Settings.OnChainAutoSwapAddressTo" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lightning Auto Swap -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h5 class="card-title mb-0">Auto-Swap (Lightning)</h5>
+                                    <input asp-for="Settings.LightningAutoSwapEnabled" type="checkbox" class="btcpay-toggle" id="LightningAutoSwapEnabled" />
+                                </div>
+                                <p class="text-muted small">Automatically swap your bitcoin balances received via Lightning Network.</p>
+
+                                <div id="LightningAutoSwapConfig" style="display: none;">
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Settings.LightningAutoSwapThreshold" class="form-label"></label>
+                                        <div class="input-group">
+                                            <input asp-for="Settings.LightningAutoSwapThreshold" class="form-control" type="number" min="0" placeholder="e.g. 10000" />
+                                            <span class="input-group-text">sats</span>
+                                        </div>
+                                        <span asp-validation-for="Settings.LightningAutoSwapThreshold" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Settings.LightningAutoSwapPercent" class="form-label"></label>
+                                        <div class="input-group">
+                                            <input asp-for="Settings.LightningAutoSwapPercent" class="form-control" type="number" min="1" max="100" placeholder="100" />
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <span asp-validation-for="Settings.LightningAutoSwapPercent" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Settings.LightningAutoSwapProvider" class="form-label"></label>
+                                        <select asp-for="Settings.LightningAutoSwapProvider" class="form-select">
+                                            @foreach (var provider in SwapProviders.ActiveProviders
+                                                        .Where(p => Model.SwapProvidersInfos?.Any(info => info.NumProvider == (int)p && info.IsLightning) == true)
+                                                        .OrderBy(p => p.GetDisplayName()))
+                                            {
+                                                <option value="@provider">@provider.GetDisplayName()</option>
+                                            }
+                                        </select>
+                                        <span asp-validation-for="Settings.LightningAutoSwapProvider" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Settings.LightningAutoSwapCryptoTo" class="form-label"></label>
+                                        <select asp-for="Settings.LightningAutoSwapCryptoTo" class="form-select">
+                                            @foreach (var group in SwapCryptos.AvailableCryptos.GroupBy(c => c.Value.Category).OrderBy(g => g.Key))
+                                            {
+                                                <optgroup label="@SwapCryptos.CategoryLabels[group.Key]">
+                                                    @foreach (var crypto in group.OrderBy(c => c.Value.Name))
+                                                    {
+                                                        <option value="@crypto.Key">@GetCryptoIcon(crypto.Key) @crypto.Value.Name</option>
+                                                    }
+                                                </optgroup>
+                                            }
+                                        </select>
+                                        <span asp-validation-for="Settings.LightningAutoSwapCryptoTo" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label asp-for="Settings.LightningAutoSwapAddressTo" class="form-label"></label>
+                                        <input asp-for="Settings.LightningAutoSwapAddressTo" class="form-control" />
+                                        <span asp-validation-for="Settings.LightningAutoSwapAddressTo" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary" name="Command" value="Save">Save Auto-Swap Settings</button>
+                </div>
+            </form>
+
+            <script asp-add-nonce="true">
+                document.addEventListener("DOMContentLoaded", function () {
+                    const initToggle = (toggleId, panelId) => {
+                        const toggle = document.getElementById(toggleId);
+                        const panel = document.getElementById(panelId);
+                        if (toggle && panel) {
+                            const update = () => {
+                                panel.style.display = toggle.checked ? "block" : "none";
+                            };
+                            toggle.addEventListener("change", update);
+                            update();
+                        }
+                    };
+
+                    initToggle("OnChainAutoSwapEnabled", "OnChainAutoSwapConfig");
+                    initToggle("LightningAutoSwapEnabled", "LightningAutoSwapConfig");
+                });
+            </script>
+        </div>
+        <div permission="@Policies.CanViewPullPayments" id="tabListSwaps" style="display:none">
             @if(Model.Swaps.Any())
             {
                 <h4>Swaps list</h4>

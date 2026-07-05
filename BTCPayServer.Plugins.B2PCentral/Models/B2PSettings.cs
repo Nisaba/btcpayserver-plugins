@@ -36,19 +36,31 @@ public class B2PSettings
     [Display(Name = "Provider for Lightning swaps")]
     public SwapProvidersEnum LightningAutoSwapProvider { get; set;  }
 
+    [Display(Name = "Swap Destination Crypto")]
+    public string OnChainAutoSwapCryptoTo { get; set; }
+
+    [Display(Name = "Swap Destination Crypto")]
+    public string LightningAutoSwapCryptoTo { get; set; }
+
+    [Display(Name = "Swap Destination Address")]
+    public string OnChainAutoSwapAddressTo { get; set; }
+
+    [Display(Name = "Swap Destination Address")]
+    public string LightningAutoSwapAddressTo { get; set; }
+
 
     // public string ProvidersString { get; set; }
 
-   /* [NotMapped]
-    public List<ProvidersEnum> Providers
-    {
-        get
-        {
-            return string.IsNullOrEmpty(ProvidersString) ? [] : ProvidersString.Split(',').Select(Enum.Parse<ProvidersEnum>).ToList();
-        }
-        set
-        {
-            ProvidersString = string.Join(",", value.ToArray());
-        }
-    }*/
+    /* [NotMapped]
+     public List<ProvidersEnum> Providers
+     {
+         get
+         {
+             return string.IsNullOrEmpty(ProvidersString) ? [] : ProvidersString.Split(',').Select(Enum.Parse<ProvidersEnum>).ToList();
+         }
+         set
+         {
+             ProvidersString = string.Join(",", value.ToArray());
+         }
+     }*/
 }
