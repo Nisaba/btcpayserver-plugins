@@ -158,7 +158,7 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                     FromRefundAddress = req.FromRefundAddress ?? string.Empty,
                     NotificationNpub = string.Empty
                 };
-                var createdSwap = await pluginService.CreateSwapAsync(storeId, swap, req.ApiKey);
+                var createdSwap = await pluginService.CreateSwapAsync(swap, req.ApiKey);
                 if (createdSwap != null && createdSwap.Success)
                 {
                     var sProvider = req.Provider.GetDisplayName();
@@ -196,5 +196,39 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
             TempData[WellKnownTempData.ErrorMessage] = ex.Message;
         }
         return RedirectToAction("Index", routeValues: new { storeId = storeId });
+    }
+
+    [HttpPost]
+    [Authorize(Policy = Policies.CanCreateNonApprovedPullPayments, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
+    [Authorize(Policy = Policies.CanManagePayouts, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
+    [Route("GetTestSwapInfo")]
+    public async Task<IActionResult>GetTestSwapInfo([FromForm]SwapRateRequestJS req)
+    {
+        try
+        {
+            SwapCryptos.AvailableCryptos.TryGetValue(req.ToCrypto, out var cryptoNetwork);
+            var swapReq = new SwapRateRequest
+            {
+                FromCrypto = "BTC",
+                FromNetwork = "Bitcoin",
+                ToCrypto = req.ToCrypto.Split("-")[0],
+                ToCryptoNetwork = cryptoNetwork.Name,
+                ToNetwork = SwapCryptos.GetNetwork(req.ToCrypto),
+                FromAmount = Math.Round(req.FromAmount, 8, MidpointRounding.AwayFromZero),
+                ToAmount = req.ToAmount,
+                FiatCurrency = req.FiatCurrency,
+                Providers = req.Providers
+            };
+            var swap = await pluginService.GetSwapsListAsync(swapReq, req.ApiKey);
+            if (swap.Count == 0)
+            {
+                return BadRequest("No swap found for the given parameters");
+            }
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 }

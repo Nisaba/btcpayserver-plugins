@@ -305,7 +305,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
         }
     }
 
-    public async Task<SwapCreationResponse> CreateSwapAsync(string storeId, SwapCreationRequest req, string key)
+    public async Task<SwapCreationResponse> CreateSwapAsync(SwapCreationRequest req, string key)
     {
         try
         {

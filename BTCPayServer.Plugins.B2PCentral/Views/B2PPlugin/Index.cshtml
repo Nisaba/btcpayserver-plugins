@@ -152,7 +152,7 @@
 
                     function OnChainSearchClick() {
                         var tbl = [];
-                        if (document.querySelector('#chkBitania').checked) tbl.push(@((short)ProvidersEnum.Bitania));
+                        if (document.querySelector('#chkBitaria').checked) tbl.push(@((short)ProvidersEnum.Bitania));
                         if (document.querySelector('#chkHodl').checked) tbl.push(@((short)ProvidersEnum.HodlHodl));
                         if (document.querySelector('#chkNoo').checked) tbl.push(@((short)ProvidersEnum.NoOnes));
                         if (document.querySelector('#chkLocalSw').checked) tbl.push(@((short)ProvidersEnum.LocalCoinSwap));
@@ -171,9 +171,9 @@
                 <b>Select providers:</b><br/>
                 <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 15px;">
                     <div style="display: flex; align-items: center; min-width: 150px;">
-                        <input id="chkBitania" type="checkbox" class="form-check-input me-2" checked />
+                        <input id="chkBitaria" type="checkbox" class="form-check-input me-2" checked />
                         <img src="/Resources/img/Bitania.webp" style="width: 28px; height: 28px; margin-right: 8px;" />
-                        <label for="chkBitania" class="form-check-label" style="cursor: pointer;">Bitania</label>
+                        <label for="chkBitaria" class="form-check-label" style="cursor: pointer;">Bitania</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkHodl" type="checkbox" class="form-check-input me-2" checked />
@@ -439,7 +439,7 @@
                                     <div class="form-group mb-3">
                                         <label asp-for="Settings.OnChainAutoSwapThreshold" class="form-label"></label>
                                         <div class="input-group">
-                                            <input asp-for="Settings.OnChainAutoSwapThreshold" class="form-control" type="number" min="0" placeholder="e.g. 50000" />
+                                            <input asp-for="Settings.OnChainAutoSwapThreshold" id="OnChainAutoSwapThreshold" class="form-control" type="number" min="0" placeholder="e.g. 50000" />
                                             <span class="input-group-text">sats</span>
                                         </div>
                                         <span asp-validation-for="Settings.OnChainAutoSwapThreshold" class="text-danger"></span>
@@ -448,7 +448,7 @@
                                     <div class="form-group mb-3">
                                         <label asp-for="Settings.OnChainAutoSwapPercent" class="form-label"></label>
                                         <div class="input-group">
-                                            <input asp-for="Settings.OnChainAutoSwapPercent" class="form-control" type="number" min="1" max="100" placeholder="100" />
+                                            <input asp-for="Settings.OnChainAutoSwapPercent" id="OnChainAutoSwapPercent" class="form-control" type="number" min="1" max="100" placeholder="100" />
                                             <span class="input-group-text">%</span>
                                         </div>
                                         <span asp-validation-for="Settings.OnChainAutoSwapPercent" class="text-danger"></span>
@@ -456,7 +456,7 @@
 
                                     <div class="form-group mb-3">
                                         <label asp-for="Settings.OnChainAutoSwapProvider" class="form-label"></label>
-                                        <select asp-for="Settings.OnChainAutoSwapProvider" class="form-select">
+                                        <select asp-for="Settings.OnChainAutoSwapProvider" id="OnChainAutoSwapProvider" class="form-select">
                                             @foreach (var provider in SwapProviders.ActiveProviders.OrderBy(p => p.GetDisplayName()))
                                             {
                                                 <option value="@provider">@provider.GetDisplayName()</option>
@@ -467,7 +467,7 @@
 
                                     <div class="form-group mb-3">
                                         <label asp-for="Settings.OnChainAutoSwapCryptoTo" class="form-label"></label>
-                                        <select asp-for="Settings.OnChainAutoSwapCryptoTo" class="form-select">
+                                        <select asp-for="Settings.OnChainAutoSwapCryptoTo" id="OnChainAutoSwapCryptoTo" class="form-select">
                                             @foreach (var group in SwapCryptos.AvailableCryptos.GroupBy(c => c.Value.Category).OrderBy(g => g.Key))
                                             {
                                                 <optgroup label="@SwapCryptos.CategoryLabels[group.Key]">
@@ -481,9 +481,13 @@
                                         <span asp-validation-for="Settings.OnChainAutoSwapCryptoTo" class="text-danger"></span>
                                     </div>
 
+                                    <div class="mt-2 text-center">
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="testAutoSwap('OnChain')">Test On-Chain Configuration</button>
+                                    </div>
+                                    <br/>
                                     <div class="form-group mb-3">
                                         <label asp-for="Settings.OnChainAutoSwapAddressTo" class="form-label"></label>
-                                        <input asp-for="Settings.OnChainAutoSwapAddressTo" class="form-control" />
+                                        <input asp-for="Settings.OnChainAutoSwapAddressTo" id="OnChainAutoSwapAddressTo" class="form-control" />
                                         <span asp-validation-for="Settings.OnChainAutoSwapAddressTo" class="text-danger"></span>
                                     </div>
                                 </div>
@@ -505,7 +509,7 @@
                                     <div class="form-group mb-3">
                                         <label asp-for="Settings.LightningAutoSwapThreshold" class="form-label"></label>
                                         <div class="input-group">
-                                            <input asp-for="Settings.LightningAutoSwapThreshold" class="form-control" type="number" min="0" placeholder="e.g. 10000" />
+                                            <input asp-for="Settings.LightningAutoSwapThreshold" id="LightningAutoSwapThreshold" class="form-control" type="number" min="0" placeholder="e.g. 10000" />
                                             <span class="input-group-text">sats</span>
                                         </div>
                                         <span asp-validation-for="Settings.LightningAutoSwapThreshold" class="text-danger"></span>
@@ -514,7 +518,7 @@
                                     <div class="form-group mb-3">
                                         <label asp-for="Settings.LightningAutoSwapPercent" class="form-label"></label>
                                         <div class="input-group">
-                                            <input asp-for="Settings.LightningAutoSwapPercent" class="form-control" type="number" min="1" max="100" placeholder="100" />
+                                            <input asp-for="Settings.LightningAutoSwapPercent" id="LightningAutoSwapPercent" class="form-control" type="number" min="1" max="100" placeholder="100" />
                                             <span class="input-group-text">%</span>
                                         </div>
                                         <span asp-validation-for="Settings.LightningAutoSwapPercent" class="text-danger"></span>
@@ -522,7 +526,7 @@
 
                                     <div class="form-group mb-3">
                                         <label asp-for="Settings.LightningAutoSwapProvider" class="form-label"></label>
-                                        <select asp-for="Settings.LightningAutoSwapProvider" class="form-select">
+                                        <select asp-for="Settings.LightningAutoSwapProvider" id="LightningAutoSwapProvider" class="form-select">
                                             @foreach (var provider in SwapProviders.ActiveProviders
                                                         .Where(p => Model.SwapProvidersInfos?.Any(info => info.NumProvider == (int)p && info.IsLightning) == true)
                                                         .OrderBy(p => p.GetDisplayName()))
@@ -535,7 +539,7 @@
 
                                     <div class="form-group mb-3">
                                         <label asp-for="Settings.LightningAutoSwapCryptoTo" class="form-label"></label>
-                                        <select asp-for="Settings.LightningAutoSwapCryptoTo" class="form-select">
+                                        <select asp-for="Settings.LightningAutoSwapCryptoTo" id="LightningAutoSwapCryptoTo" class="form-select">
                                             @foreach (var group in SwapCryptos.AvailableCryptos.GroupBy(c => c.Value.Category).OrderBy(g => g.Key))
                                             {
                                                 <optgroup label="@SwapCryptos.CategoryLabels[group.Key]">
@@ -549,9 +553,13 @@
                                         <span asp-validation-for="Settings.LightningAutoSwapCryptoTo" class="text-danger"></span>
                                     </div>
 
+                                    <div class="mt-2 text-center">
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="testAutoSwap('Lightning')">Test Lightning Configuration</button>
+                                    </div>
+                                    <br/>
                                     <div class="form-group mb-3">
                                         <label asp-for="Settings.LightningAutoSwapAddressTo" class="form-label"></label>
-                                        <input asp-for="Settings.LightningAutoSwapAddressTo" class="form-control" />
+                                        <input asp-for="Settings.LightningAutoSwapAddressTo" id="LightningAutoSwapAddressTo" class="form-control" />
                                         <span asp-validation-for="Settings.LightningAutoSwapAddressTo" class="text-danger"></span>
                                     </div>
                                 </div>
@@ -566,6 +574,58 @@
             </form>
 
             <script asp-add-nonce="true">
+                async function testAutoSwap(type) {
+                    const elProvider = document.getElementById(type + "AutoSwapProvider");
+                    const elCryptoTo = document.getElementById(type + "AutoSwapCryptoTo");
+                    const elThreshold = document.getElementById(type + "AutoSwapThreshold");
+                    const apiKey = '@Model.Settings.ApiKey';
+                    const fiatCurrency = '@walletConfig.FiatCurrency';
+
+                    if (!elProvider || !elCryptoTo || !elThreshold) {
+                        alert("Internal error: some form elements were not found.");
+                        return;
+                    }
+
+                    const providerValue = elProvider.value;
+                    const cryptoTo = elCryptoTo.value;
+                    const thresholdSats = elThreshold.value;
+
+                    if (!providerValue || providerValue === "NONE" || !cryptoTo || !thresholdSats) {
+                        alert("Please fill all configuration fields before testing.");
+                        return;
+                    }
+
+                    const thresholdBtc = (parseFloat(thresholdSats) / 100000000).toFixed(8);
+    
+                    const formData = new FormData();
+                    formData.append('Providers', providerValue);
+                    formData.append('ToCrypto', cryptoTo);
+                    formData.append('FromAmount', thresholdBtc);
+                    formData.append('ToAmount', '0');
+                    formData.append('FiatCurrency', fiatCurrency);
+                    formData.append('ApiKey', apiKey);
+
+                    try {
+                        const baseUrl = window.location.pathname.endsWith('/') ? window.location.pathname : window.location.pathname + '/';
+                        const response = await fetch(baseUrl + 'GetTestSwapInfo', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            }
+                        });
+
+                        if (response.ok) {
+                            alert("Configuration is valid! The swap provider is available and returned a quote.");
+                        } else {
+                            const error = await response.text();
+                            alert("Configuration test failed: " + error);
+                    }
+                    } catch (e) {
+                        alert("An error occurred during the test: " + e.message);
+                    }
+                }
+
                 document.addEventListener("DOMContentLoaded", function () {
                     const initToggle = (toggleId, panelId) => {
                         const toggle = document.getElementById(toggleId);
