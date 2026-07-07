@@ -19,6 +19,7 @@ using BTCPayServer.Services.Wallets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using NBitcoin;
 using Newtonsoft.Json;
 using System;
@@ -30,6 +31,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using static BTCPayServer.Data.CustomerSelector;
+using static BTCPayServer.Plugins.Monetization.Views.SelectExistingOfferingModalViewModel;
 
 namespace BTCPayServer.Plugins.B2PCentral.Services;
 
@@ -250,6 +252,52 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
 
     }
 
+    public async Task<int> GetOnChainBalanceInSats(string storeId)
+    {
+        var store = await storeRepository.FindStore(storeId);
+        var walletId = new WalletId(storeId, "BTC");
+        var data = await walletHistogramService.GetHistogram(store, walletId, HistogramType.Week);
+        if (data != null)
+        {
+            return (int)(data.Balance * 100000000);
+        }
+        else
+        {
+            using CancellationTokenSource cts = new(TimeSpan.FromSeconds(3));
+            var wallet = walletProvider.GetWallet(networkProvider.DefaultNetwork);
+            var derivation = store.GetDerivationSchemeSettings(paymentMethodHandlerDictionary, walletId.CryptoCode);
+            if (derivation is not null)
+            {
+                var network = paymentMethodHandlerDictionary.GetBitcoinHandler(walletId.CryptoCode).Network;
+                var balance = await wallet.GetBalance(derivation.AccountDerivation, cts.Token);
+               return (int)(balance.Available.GetValue(network) * 100000000);
+            }
+            return 0;
+        }
+    }
+
+    public async Task<int> GetLightningBalanceInSats(string storeId)
+    {
+        decimal lnBalance = 0;
+        try
+        {
+            var store = await storeRepository.FindStore(storeId);
+            var lightningClient = GetLightningClient(store);
+            var balance = await lightningClient.GetBalance();
+            lnBalance = (balance.OffchainBalance != null
+                                   ? (balance.OffchainBalance.Local ?? 0) : 0).ToDecimal(LightMoneyUnit.BTC);
+            var info = await lightningClient.GetInfo();
+            if (info.Alias == "boltz-client" && balance.OnchainBalance != null)
+            {
+                var totalOnchain = (balance.OnchainBalance.Confirmed ?? 0L) + (balance.OnchainBalance.Reserved ?? 0L) +
+                                      (balance.OnchainBalance.Unconfirmed ?? 0L);
+                lnBalance += Convert.ToDecimal(totalOnchain) / 100000000;
+            }
+        }
+        catch{ }
+        return (int)(lnBalance * 100000000);
+    }
+
     public async Task<List<B2POffer>> GetOffersListAsync(OffersRequest req, string key)
     {
         try
@@ -372,7 +420,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                 Amount = req.FromAmount,
                 Currency = "BTC",
                 ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
-                PayoutMethods = new[] { payoutMethodId.ToString() }
+                PayoutMethods = [payoutMethodId.ToString()]
             };
 
             var store = await storeRepository.FindStore(storeId);
