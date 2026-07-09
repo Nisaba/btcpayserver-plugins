@@ -23,6 +23,9 @@ public class Plugin : BaseBTCPayServerPlugin
 
         services.AddUIExtension("header-nav", "B2PCentralPluginHeaderNav")
                 .AddHostedService<PluginMigrationRunner>()
-                .AddSingleton<B2PCentralPluginDbContextFactory>();
+                .AddSingleton<B2PCentralPluginDbContextFactory>()
+               // .AddSingleton<B2PAutoSwapHostedService>()
+                    .AddHostedService(sp => sp.GetRequiredService<B2PAutoSwapHostedService>());
+
     }
 }

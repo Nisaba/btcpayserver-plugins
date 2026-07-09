@@ -19,19 +19,15 @@ using BTCPayServer.Services.Wallets;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using NBitcoin;
 using Newtonsoft.Json;
 using System;
-using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using static BTCPayServer.Data.CustomerSelector;
-using static BTCPayServer.Plugins.Monetization.Views.SelectExistingOfferingModalViewModel;
 
 namespace BTCPayServer.Plugins.B2PCentral.Services;
 
@@ -252,10 +248,9 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
 
     }
 
-    public async Task<int> GetOnChainBalanceInSats(string storeId)
+    public async Task<int> GetOnChainBalanceInSats(BTCPayServer.Data.StoreData store)
     {
-        var store = await storeRepository.FindStore(storeId);
-        var walletId = new WalletId(storeId, "BTC");
+        var walletId = new WalletId(store.Id, "BTC");
         var data = await walletHistogramService.GetHistogram(store, walletId, HistogramType.Week);
         if (data != null)
         {
@@ -276,12 +271,11 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
         }
     }
 
-    public async Task<int> GetLightningBalanceInSats(string storeId)
+    public async Task<int> GetLightningBalanceInSats(BTCPayServer.Data.StoreData store)
     {
         decimal lnBalance = 0;
         try
         {
-            var store = await storeRepository.FindStore(storeId);
             var lightningClient = GetLightningClient(store);
             var balance = await lightningClient.GetBalance();
             lnBalance = (balance.OffchainBalance != null
@@ -407,7 +401,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
 
 
 
-    public async Task<(string PullPaymentId, string PayoutId)> CreatePayout(string storeId, string provider, SwapCreationResponse swap, SwapCreationRequestJS req, CancellationToken cancellationToken = default)
+    public async Task<(string PullPaymentId, string PayoutId)> CreatePayout(string storeId, string provider, SwapCreationResponse swap, decimal fromAmount, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -417,7 +411,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
             {
                 Name = $"B2P Central {provider} Swap {swap.SwapId}",
                 Description = "",
-                Amount = req.FromAmount,
+                Amount = fromAmount,
                 Currency = "BTC",
                 ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
                 PayoutMethods = [payoutMethodId.ToString()]
@@ -450,7 +444,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
             {
                 Destination = mtPelerinDestination,
                 PullPaymentId = ppId,
-                ClaimedAmount = req.FromAmount,
+                ClaimedAmount = fromAmount,
                 PayoutMethodId = payoutMethodId,
                 StoreId = storeId,
                 PreApprove = true,
@@ -541,7 +535,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                     Value = value,
                     WalletId = new WalletId(store.Id, network.CryptoCode),
                     Enabled = !excludeFilters.Match(handler.PaymentMethodId) && strategy != null,
-                    Collapsed = network is Plugins.Altcoins.ElementsBTCPayNetwork { IsNativeAsset: false } && string.IsNullOrEmpty(value)
+                    Collapsed = network is Altcoins.ElementsBTCPayNetwork { IsNativeAsset: false } && string.IsNullOrEmpty(value)
 
                 });
             }

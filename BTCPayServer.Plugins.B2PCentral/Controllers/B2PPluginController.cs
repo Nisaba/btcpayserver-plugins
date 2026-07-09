@@ -162,7 +162,7 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                 if (createdSwap != null && createdSwap.Success)
                 {
                     var sProvider = req.Provider.GetDisplayName();
-                    var (pullPaymentId, payoutId) = await pluginService.CreatePayout(storeId, sProvider, createdSwap, req);
+                    var (pullPaymentId, payoutId) = await pluginService.CreatePayout(storeId, sProvider, createdSwap, req.FromAmount);
                     var dbSwap = new B2PStoreSwap
                     {
                         StoreId = storeId,
