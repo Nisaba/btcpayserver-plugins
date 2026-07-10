@@ -79,15 +79,17 @@ You can configure the following parameters, for each store, and for your onchain
 - **Target cryptocurrency**: Choose the altcoin or stablecoin you want to receive
 - **Destination address**: Enter the address where you want to receive the swapped cryptocurrency
 
+<img width="1209" height="774" alt="image" src="https://github.com/user-attachments/assets/d6212400-e65f-4a63-b217-892c4200d26f" />
+
 Before saving parameters, please click on **Test Configuration** buttons to check if these parameters are OK for the selected provider.
-An improved method for finding providers that match your specific parameters will be released in a future update. In the meantime, you can visit the <a href="https://www.b2p-central.com/#/swap-cryptos" target="b2pswap">B2P Central website</a> to search for swap quotations matching your requirements and identify suitable providers.
+An improved method for finding providers that match your specific parameters will be released in a future update. In the meantime, you can visit the <a href="https://www.b2p-central.com/#/swap-cryptos" target="_blank">B2P Central website</a> to search for swap quotations matching your requirements and identify suitable providers.
 
 ### Important notes:
 - The automatic swap will only be triggered if the plugin is enabled and the BTC balance exceeds the defined threshold
 - Also, it will only be performed if there is no pending payout in BTCPay Server
 - So, it's recommended to enable automatic payouts in BTCPay Server to avoid manual approval of the Pull Payment created by the swap. For onchain wallet, it requires to set a hot BTC wallet (keys are stored in BTCPay Server). It's generally considered as a security concern. But if you decide to swap a large part of amount once received, that should be considered acceptable. .
 - If automatic swaps fail, you can anyway use the manual swap function to perform the swap
-- Check the BTCPay Server logs for any errors related to the swap process. To be notified of swap failures and other BTCPay issues, you can use the <a href="https://plugin-builder.btcpayserver.org/public/plugins/serilog-plugin" target="_blank">BTCPay Serilog plugin</a>to receive notifications via Slack or Telegram.
+- Check the BTCPay Server logs for any errors related to the swap process. To be notified of swap failures and other BTCPay issues, you can use the <a href="https://plugin-builder.btcpayserver.org/public/plugins/serilog-plugin" target="_blank">BTCPay Serilog plugin</a> to receive notifications via Slack or Telegram.
 
 
 ## Swaps list
