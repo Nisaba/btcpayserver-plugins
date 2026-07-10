@@ -1,9 +1,10 @@
 using BTCPayServer.Plugins.B2PCentral.Models.Swaps;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace BTCPayServer.Plugins.B2PCentral.Models;
 
-public class B2PSettings
+public class B2PSettings : IValidatableObject
 {
     [Key]
     public string StoreId { get; set; }
@@ -48,19 +49,20 @@ public class B2PSettings
     [Display(Name = "Swap Destination Address")]
     public string LightningAutoSwapAddressTo { get; set; }
 
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (OnChainAutoSwapEnabled && string.IsNullOrWhiteSpace(OnChainAutoSwapAddressTo))
+        {
+            yield return new ValidationResult(
+                "On-chain swap destination address is required when on-chain auto-swaps are enabled.",
+                [nameof(OnChainAutoSwapAddressTo)]);
+        }
 
-    // public string ProvidersString { get; set; }
-
-    /* [NotMapped]
-     public List<ProvidersEnum> Providers
-     {
-         get
-         {
-             return string.IsNullOrEmpty(ProvidersString) ? [] : ProvidersString.Split(',').Select(Enum.Parse<ProvidersEnum>).ToList();
-         }
-         set
-         {
-             ProvidersString = string.Join(",", value.ToArray());
-         }
-     }*/
+        if (LightningAutoSwapEnabled && string.IsNullOrWhiteSpace(LightningAutoSwapAddressTo))
+        {
+            yield return new ValidationResult(
+                "Lightning swap destination address is required when Lightning auto-swaps are enabled.",
+                [nameof(LightningAutoSwapAddressTo)]);
+        }
+    }
 }

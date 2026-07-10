@@ -58,7 +58,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                                         IsBuy = true,
                                         CurrencyCode = "EUR",
                                         Amount = 0,
-                                        Providers = new[] {ProvidersEnum.None}
+                                        Providers = [ProvidersEnum.None]
                                     }, settings.ApiKey);
             return "OK";
         }
@@ -135,8 +135,8 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                 dbSettings.LightningAutoSwapProvider = settings.LightningAutoSwapProvider;
                 dbSettings.OnChainAutoSwapCryptoTo = settings.OnChainAutoSwapCryptoTo;
                 dbSettings.LightningAutoSwapCryptoTo = settings.LightningAutoSwapCryptoTo;
-                dbSettings.OnChainAutoSwapAddressTo = settings.OnChainAutoSwapAddressTo;
-                dbSettings.LightningAutoSwapAddressTo = settings.LightningAutoSwapAddressTo;
+                dbSettings.OnChainAutoSwapAddressTo = settings.OnChainAutoSwapAddressTo ?? "";
+                dbSettings.LightningAutoSwapAddressTo = settings.LightningAutoSwapAddressTo ?? "";
 
                 context.B2PSettings.Update(dbSettings);
             }

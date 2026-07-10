@@ -23,7 +23,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
 
         public B2PAutoSwapHostedService(EventAggregator eventAggregator,
                                         Logs logs, B2PCentralPluginService b2pService, 
-                                        ILogger<B2PAutoSwapHostedService> logger
+                                        ILogger<B2PAutoSwapHostedService> logger,
                                         StoreRepository storeRepository) : base(eventAggregator, logs)
         {
             _b2pService = b2pService;
@@ -44,16 +44,15 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
                 switch (evt)
                 {
                     case InvoiceEvent invoiceEvent when new[]
-                        {
-                        InvoiceEvent.MarkedCompleted,
-                        InvoiceEvent.ReceivedPayment
+                        { InvoiceEvent.PaymentSettled,
                     }.Contains(invoiceEvent.Name):
                         var invoice = invoiceEvent.Invoice;
                         var storeSettings = await _b2pService.GetStoreSettings(invoice.StoreId);
                         var payment = invoice.GetPayments(false).Last();
                         var store = await _storeRepository.FindStore(invoice.StoreId);
-                        
-                        var mainUser = store.UserStores.First(a => a.StoreRoleId == "Owner");
+
+                        var storeUsers = await _storeRepository.GetStoreUsers(invoice.StoreId);
+                        var mainUser = storeUsers.First(a => a.StoreRole.Role == "Owner");
 
                         var swap = new SwapCreationRequest
                         {
@@ -61,7 +60,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
                             IsFixed = true,
                             FromCrypto = "BTC",
                             ToAmount = 0,
-                            NotificationEmail = mainUser.ApplicationUser.Email,
+                            NotificationEmail = mainUser.Email,
                             FromRefundAddress = string.Empty,
                             NotificationNpub = string.Empty
                         };
@@ -78,7 +77,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
 
                             swap.Provider = storeSettings.OnChainAutoSwapProvider;
                             swap.FromNetwork = "Bitcoin";
-                            swap.ToCrypto = storeSettings.OnChainAutoSwapCryptoTo;
+                            swap.ToCrypto = storeSettings.OnChainAutoSwapCryptoTo.Split("-")[0];
                             swap.ToNetwork = SwapCryptos.GetNetwork(storeSettings.OnChainAutoSwapCryptoTo);
                             swap.ToAddress = storeSettings.OnChainAutoSwapAddressTo;
                             //swap.FromAmount = (walletBalance * (storeSettings.OnChainAutoSwapPercent / 100)) / 100000000;
@@ -95,7 +94,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
 
                             swap.Provider = storeSettings.LightningAutoSwapProvider;
                             swap.FromNetwork = "Lightning";
-                            swap.ToCrypto = storeSettings.LightningAutoSwapCryptoTo;
+                            swap.ToCrypto = storeSettings.LightningAutoSwapCryptoTo.Split("-")[0];
                             swap.ToNetwork = SwapCryptos.GetNetwork(storeSettings.LightningAutoSwapCryptoTo);
                             swap.ToAddress = storeSettings.LightningAutoSwapAddressTo;
                             swap.FromAmount = (walletBalance * storeSettings.LightningAutoSwapPercent) / 10_000_000_000m;
@@ -105,7 +104,6 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
                             break;
                         }
 
-                        SwapCryptos.AvailableCryptos.TryGetValue(swap.ToCrypto, out var cryptoNetwork);
                         var req = new SwapRateRequest
                         {
                             FiatCurrency = string.Empty,
@@ -115,7 +113,6 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
                             ToAmount = 0,
                             ToCrypto = swap.ToCrypto,
                             ToNetwork = swap.ToNetwork,
-                            ToCryptoNetwork = cryptoNetwork.Name,
                             Providers = [swap.Provider]
                         };
                         var quoteResult = await _b2pService.GetSwapsListAsync(req, storeSettings.ApiKey);
@@ -126,7 +123,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
                         if (createdSwap != null && createdSwap.Success)
                         {
                             var sProvider = swap.Provider.GetDisplayName();
-                            var (pullPaymentId, payoutId) = await _b2pService.CreatePayout(storeSettings.StoreId, sProvider, createdSwap, swap.FromAmount);
+                            var (pullPaymentId, payoutId) = await _b2pService.CreatePayout(storeSettings.StoreId, sProvider, createdSwap, swap.FromAmount, cancellationToken);
                             var dbSwap = new B2PStoreSwap
                             {
                                 StoreId = storeSettings.StoreId,
@@ -140,14 +137,14 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
                                 ToCrypto = swap.ToCrypto,
                                 ToNetwork = swap.ToNetwork,
                                 BTCPayPullPaymentId = pullPaymentId,
-                                BTCPayPayoutId = payoutId
+                                BTCPayPayoutId = payoutId,
+                                IsAutoSwap = true
                             };
                             await _b2pService.AddSwapInDb(dbSwap);
                         }
 
                         break;
                 }
-
             }
             catch (Exception ex)
             {

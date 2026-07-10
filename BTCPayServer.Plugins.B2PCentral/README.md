@@ -67,6 +67,29 @@ You can then find the best swaps rates from various providers and execute the sw
 - Please check that there is no previous pending payout in BTCPay before placing a swap
 - The swap creates a Pull Payment that needs to be approved (unless auto-approval is configured)
 
+## Auto Swaps
+This function allows you to automatically swap your onchain and/or Lightning BTC balance to a target cryptocurrency at a defined threshold. This is particularly useful for merchants who want to automatically convert their BTC earnings (all or only a predefined percent) into a stablecoin or another cryptocurrency without manual intervention.
+This action is performed by the plugin in the background, every time an invoice is paid.
+
+You can configure the following parameters, for each store, and for your onchain and Lightning wallets:
+- **Enable auto swap**: Toggle to enable or disable automatic swaps
+- **Threshold**: Define the minimum BTC balance that will trigger an automatic swap
+- **Percent to swap**: Specify the percentage of your BTC balance to swap when the threshold is reached
+- **Swap provider**: Select the providers you want to use for automatic swaps
+- **Target cryptocurrency**: Choose the altcoin or stablecoin you want to receive
+- **Destination address**: Enter the address where you want to receive the swapped cryptocurrency
+
+Before saving parameters, please click on **Test Configuration** buttons to check if these parameters are OK for the selected provider.
+An improved method for finding providers that match your specific parameters will be released in a future update. In the meantime, you can visit the <a href="https://www.b2p-central.com/#/swap-cryptos" target="b2pswap">B2P Central website</a> to search for swap quotations matching your requirements and identify suitable providers.
+
+### Important notes:
+- The automatic swap will only be triggered if the plugin is enabled and the BTC balance exceeds the defined threshold
+- Also, it will only be performed if there is no pending payout in BTCPay Server
+- So, it's recommended to enable automatic payouts in BTCPay Server to avoid manual approval of the Pull Payment created by the swap. For onchain wallet, it requires to set a hot BTC wallet (keys are stored in BTCPay Server). It's generally considered as a security concern. But if you decide to swap a large part of amount once received, that should be considered acceptable. .
+- If automatic swaps fail, you can anyway use the manual swap function to perform the swap
+- Check the BTCPay Server logs for any errors related to the swap process. To be notified of swap failures and other BTCPay issues, you can use the <a href="https://plugin-builder.btcpayserver.org/public/plugins/serilog-plugin" target="_blank">BTCPay Serilog plugin</a>to receive notifications via Slack or Telegram.
+
+
 ## Swaps list
 
 The **Swaps list** tab displays the history of all swaps performed through the plugin for the current store.
@@ -80,6 +103,7 @@ This tab is available for users having **CanCreateNonApprovedPullPayments** righ
 | **Swap ID** | Unique identifier from the swap provider (clickable link to provider's page) |
 | **Provider** | The swap provider used for this transaction |
 | **Altcoin** | Target cryptocurrency and network |
+| **Auto Swap** | Indicates if the swap was performed automatically |
 | **Created At** | Date and time when the swap was initiated |
 | **Amount (BTC)** | Amount of BTC sent |
 | **Amount (Alt)** | Amount of altcoin/stablecoin received |
@@ -150,4 +174,5 @@ What's new in v 2.2.3 :
 What's new in v 2.2.4 :
 - El Capo added as Swap provider
 
-
+What's new in v 3.0.1 :
+- New auto swap feature to automatically convert your BTC balance to a target cryptocurrency when a defined threshold is reached

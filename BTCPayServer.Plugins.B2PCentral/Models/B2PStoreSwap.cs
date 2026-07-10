@@ -22,5 +22,6 @@ namespace BTCPayServer.Plugins.B2PCentral.Models
         public string ToNetwork { get; set; }
         public string BTCPayPullPaymentId { get; set; }
         public string BTCPayPayoutId { get; set; }
+        public bool IsAutoSwap { get; set; }
     }
 }

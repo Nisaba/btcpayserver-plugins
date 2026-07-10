@@ -176,7 +176,8 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                         ToCrypto = swap.ToCrypto,
                         ToNetwork = swap.ToNetwork,
                         BTCPayPullPaymentId = pullPaymentId,
-                        BTCPayPayoutId = payoutId
+                        BTCPayPayoutId = payoutId,
+                        IsAutoSwap = false
                     };
                     await pluginService.AddSwapInDb(dbSwap);
                     TempData[WellKnownTempData.SuccessMessage] = $"Payout created! {sProvider} Swap ID: {createdSwap.SwapId}";

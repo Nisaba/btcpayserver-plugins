@@ -33,7 +33,7 @@
         "TRX" => "Ⓣ",
         _ when cryptoCode.StartsWith("USDT") => "🟢",
         _ when cryptoCode.StartsWith("USDC") => "🔵",
-        _ when cryptoCode.StartsWith("EUR") || cryptoCode.StartsWith("DEURO") => "🟡",
+        _ when cryptoCode.Contains("EUR") => "🟡",
         _ => "◆"
     };
 }
@@ -55,6 +55,9 @@
             <p>
                 Get P2P bitcoin buy offers from <a href="https://www.b2p-central.com" target="b2p">B2P Central</a>, according to your onchain and lightning wallets balances and the store's default currency.<br />
                 You can also perform onchain swaps to a variety of altcoins and stablecoins supported by B2P Central.<br />
+             </p>
+             <p>
+                If you like this plugin, please leave a review on <a href="https://plugin-builder.btcpayserver.org/public/plugins/b2pcentral-plugin" target="_blank">BTCPay plugin page</a>", <a href="https://www.trustpilot.com/review/b2p-central.com?utm_medium=btcpay" target="_blank">TrustPilot</a> and <a href="https://cryptwerk.com/company/b2p-central/?utm_source=btcpay" target="_blank">Cryptwerk</a>. Thank you !
              </p>
         </td>
 </tr></table>
@@ -413,7 +416,7 @@
         </div>
 
         <div permission="@Policies.CanModifyStoreSettings" id="tabAutoSwaps" style="display:none">
-            <form method="post" autocomplete="off">
+            <form method="post" autocomplete="off" id="formAutoSwaps">
                 <input asp-for="Settings.StoreId" type="hidden" />
                 <input asp-for="Settings.ApiKey" type="hidden" />
 
@@ -641,6 +644,34 @@
 
                     initToggle("OnChainAutoSwapEnabled", "OnChainAutoSwapConfig");
                     initToggle("LightningAutoSwapEnabled", "LightningAutoSwapConfig");
+
+                    const form = document.getElementById("formAutoSwaps");
+                    if (form) {
+                        form.addEventListener("submit", function (event) {
+                            const onChainEnabled = document.getElementById("OnChainAutoSwapEnabled")?.checked;
+                            const onChainAddress = document.getElementById("OnChainAutoSwapAddressTo")?.value?.trim();
+                            const lightningEnabled = document.getElementById("LightningAutoSwapEnabled")?.checked;
+                            const lightningAddress = document.getElementById("LightningAutoSwapAddressTo")?.value?.trim();
+
+                            let hasError = false;
+                            let errorMessage = "";
+
+                            if (onChainEnabled && !onChainAddress) {
+                                hasError = true;
+                                errorMessage += "Please enter destination address for Auto-Swap On-Chain.\n";
+                            }
+
+                            if (lightningEnabled && !lightningAddress) {
+                                hasError = true;
+                                errorMessage += "Please enter destination address for Auto-Swap Lightning.\n";
+                            }
+
+                            if (hasError) {
+                                event.preventDefault();
+                                alert(errorMessage);
+                            }
+                        });
+                    }
                 });
             </script>
         </div>
@@ -656,6 +687,7 @@
                             <th class="text-nowrap">Swap ID</th>
                             <th class="text-nowrap">Provider</th>
                             <th class="text-nowrap">Altcoin</th>
+                            <th class="text-nowrap">Auto Swap</th>
                             <th class="text-nowrap">Created At</th>
                             <th class="text-nowrap">Amount (BTC)</th>
                             <th class="text-nowrap">Amount (Alt)</th>
@@ -680,7 +712,10 @@
                                             @swap.ToCrypto @swap.ToNetwork
                                         </div>
                                     </td>
-                                    <td>@swap.DateT</td>
+                                    <td class="align-center">
+                                        <input type="checkbox" class="form-check-input" @(swap.IsAutoSwap ? "checked" : "") disabled />
+                                    </td>
+                                    <td>@swap.DateT.ToString("g")</td>
                                     <td class="align-right">@swap.FromAmount.ToString("0.00000000")</td>
                                     <td class="align-right">@swap.ToAmount.ToString("0.00000000")</td>
                                     <td class="text-break align-middle invoiceId-col">
