@@ -10,4 +10,9 @@
         public string FromAddress { get; set; }
         public string TransactionHash { get; set; }
     }
+
+    public class SwapCheckoutCreationResponse : SwapCreationResponse
+    {
+        public string ProviderName { get; set; }
+    }
 }

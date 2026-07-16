@@ -1,0 +1,213 @@
+const B2PCheckout = {
+    template: '#b2p-checkout-template',
+    props: {
+        model: {
+            type: Object,
+            required: true
+        }
+    },
+    components: {
+        qrcode: VueQrcode
+    },
+    data() {
+        return {
+            selectedCrypto: null,
+            swapData: null,
+            loading: false,
+            error: null,
+            checkingStatus: false,
+            swapStatus: null,
+            qrOptions: {
+                margin: 0,
+                type: 'svg',
+                color: { dark: '#000', light: '#fff' }
+            },
+            protocolMap: {
+                'XMR': 'monero',
+                'LTC': 'litecoin',
+                'DOGE': 'dogecoin',
+                'ETH': 'ethereum',
+                'TRX': 'tron',
+                'POL': 'polygon',
+                'BNB': 'bnb',
+                'ADA': 'cardano',
+                'SOL': 'solana',
+                'DAI': 'ethereum',
+                'USDT-ETH': 'ethereum-usdt',
+                'USDT-TRX': 'tron-usdt',
+                'USDT-BSC': 'bnb-usdt',
+                'USDT-SOL': 'solana-usdt',
+                'USDT-NEAR': 'near-usdt',
+                'USDT-MATIC': 'polygon-usdt',
+                'USDT-TON': 'ton-usdt',
+                'USDT-AVAXC': 'avalanche-usdt',
+                'USDC-ETH': 'ethereum-usdc',
+                'USDC-BSC': 'bnb-usdc',
+                'USDC-SOL': 'solana-usdc',
+                'USDC-NEAR': 'near-usdc',
+                'USDC-MATIC': 'polygon-usdc',
+                'USDC-AVAXC': 'avalanche-usdc',
+                'EURT-ETH': 'ethereum-eurt',
+                'EURI-ETH': 'ethereum-euri',
+                'EURI-BSC': 'bnb-euri',
+                'DEURO-ETH': 'ethereum-deuro'
+            },
+            manualAmount: '',
+            showAmountInput: false,
+        }
+    },
+    methods: {
+
+        getProtocol(cryptoCode) {
+            return this.protocolMap[cryptoCode] || cryptoCode.toLowerCase();
+        },
+
+        buildPaymentUrl() {
+            if (!this.swapData) return null;
+
+            if (this.selectedSearchCoin) {
+                const key = this.selectedSearchCoin.networkCode;
+                const protocol = this.protocolMap[key] || key.toLowerCase();
+                return `${protocol}:${this.swapData.fromAddress}?amount=${this.formatAmount(this.swapData.fromAmount)}`;
+            }
+
+            if (!this.selectedCrypto) return null;
+            const protocol = this.getProtocol(this.selectedCrypto);
+            return `${protocol}:${this.swapData.fromAddress}?amount=${this.formatAmount(this.swapData.fromAmount)}`;
+        },
+
+        payInWallet() {
+            window.location.href = this.buildPaymentUrl();
+        },
+
+        asNumber(val) {
+            return val && parseFloat(val.toString().replace(/\s/g, ''));
+        },
+
+        formatAmount(amount) {
+            return parseFloat(amount).toFixed(8);
+        },
+
+        getCryptoIcon(cryptoCode) {
+            return `/Resources/ico/${cryptoCode.substring(0, 4).replace("-", "")}.webp`;
+        },
+
+        async createSwap() {
+            if (!this.selectedCrypto) return;
+
+            this.loading = true;
+            this.error = null;
+            this.swapData = null;
+
+            try {
+                var btcAmount = this.asNumber(this.model.due);
+                if (btcAmount == 0) {
+                    this.error = 'Please enter a BTC amount first';
+                }
+                if (btcAmount > 3) {
+                    btcAmount /= 100000000;
+                }
+
+                const sInvoiceBitcoinUrl = this.model.invoiceBitcoinUrl || '';
+                let sAddress = this.model.address;
+
+                let isLightning = sInvoiceBitcoinUrl.includes('lnbc');
+                if (isLightning && !sAddress.includes("lnbc")) {
+                    const lightningPart = sInvoiceBitcoinUrl.split('lightning')[1];
+                    if (lightningPart) {
+                        sAddress = lightningPart.replace(':', '').replace('=', '');
+                    }
+                }
+
+                const formData = new FormData();
+                formData.append('Provider', isLightning ? window.b2pData.lightningProvider : window.b2pData.onchainProvider);
+                formData.append('QuoteID', '');
+                formData.append('ToCrypto', 'BTC');
+                formData.append('FromAmount', 0);
+                formData.append('ToAmount', btcAmount);
+                formData.append('ToAddress', sAddress);
+                formData.append('FromRefundAddress', '');
+                formData.append('IsFixed', true);
+                formData.append('NotificationEmail', window.b2pData.email);
+                formData.append('FromCrypto', this.selectedCrypto);
+                formData.append('FromNetwork', '');
+                formData.append('ToNetwork', isLightning ? "LIGHTNING" : "BTC");
+                formData.append('NotificationNpub', isLightning ? "LIGHTNING" : "BTC");
+                formData.append('ApiKey', window.b2pData.apiKey);
+                formData.append('InvoiceId', window.b2pData.invoiceId);
+
+                const response = await fetch(`/plugins/${window.b2pData.storeId}/B2PCentralCheckoutSwap`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                if (!result.success) {
+                    this.error = result.statusMessage || 'Swap creation failed';
+                    return;
+                }
+                this.swapData = result;
+            } catch (e) {
+                this.error = e.message || 'Failed to create swap. Please try again.';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        validateManualAmount() {
+            const amount = this.asNumber(this.manualAmount);
+            if (!amount || isNaN(amount) || amount <= 0) {
+                this.error = 'Please enter a valid BTC amount (greater than 0)';
+                return false;
+            }
+            this.error = null;
+            return true;
+        },
+
+        handleAmountSubmit() {
+            if (this.validateManualAmount()) {
+                this.model.due = this.manualAmount;
+                this.showAmountInput = false;
+            }
+        }
+    },
+
+    watch: {
+        selectedCrypto(newValue) {
+            if (newValue) {
+                this.selectedSearchCoin = null;
+                this.createSwap();
+            }
+        }
+    },
+
+    computed: {
+        orderAmount() {
+            return this.asNumber(this.model.orderAmount);
+        },
+        due() {
+            return this.asNumber(this.model.due);
+        },
+        qrCodeData() {
+            return this.buildPaymentUrl();
+        },
+        canShowCryptoList() {
+            return this.asNumber(this.model.due) > 0;
+        },
+
+        activeCryptoCode() {
+            if (this.selectedSearchCoin) return this.selectedSearchCoin.code == this.selectedSearchCoin.networkCode ? this.selectedSearchCoin.code : this.selectedSearchCoin.code + '-' + this.selectedSearchCoin.networkCode;
+            return this.selectedCrypto;
+        },
+
+        activeCryptoIcon() {
+            return this.getCryptoIcon(this.selectedCrypto);
+        }
+    }
+};
+
+Vue.component('B2PCheckout', B2PCheckout);

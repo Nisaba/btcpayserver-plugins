@@ -12,31 +12,6 @@
 @inject DisplayFormatter DisplayFormatter
 
 @model B2PViewModel 
-@functions {
-    string GetCategoryIcon(CryptoCategory category) => category switch
-    {
-        CryptoCategory.Altcoin => "🪙",
-        CryptoCategory.StablecoinUSD => "💵",
-        CryptoCategory.StablecoinEUR => "💶",
-        _ => "💰"
-    };
-
-    string GetCryptoIcon(string cryptoCode) => cryptoCode switch
-    {
-        "BTC" => "₿",
-        "BCH" => "₿",
-        "L-BTC" => "₿",
-        "ETH" => "Ξ",
-        "XMR" => "ɱ",
-        "LTC" => "Ł",
-        "DOGE" => "Ð",
-        "TRX" => "Ⓣ",
-        _ when cryptoCode.StartsWith("USDT") => "🟢",
-        _ when cryptoCode.StartsWith("USDC") => "🔵",
-        _ when cryptoCode.Contains("EUR") => "🟡",
-        _ => "◆"
-    };
-}
 @{
     ViewData.SetLayoutModel(new LayoutModel(nameof(PluginNavPages.Index), "B2P Central plugin"));
     Html.AntiForgeryToken();
@@ -359,7 +334,7 @@
                                 <optgroup label="@SwapCryptos.CategoryLabels[group.Key]">
                                     @foreach (var crypto in group.OrderBy(c => c.Value.Name))
                                     {
-                                        <option value="@crypto.Key">@GetCryptoIcon(crypto.Key) @crypto.Value.Name</option>
+                                        <option value="@crypto.Key">@SwapCryptos.GetCryptoIcon(crypto.Key) @crypto.Value.Name</option>
                                     }
                                 </optgroup>
                             }
@@ -415,15 +390,95 @@
 
         </div>
 
+        <div permission="@Policies.CanModifyStoreSettings" id="tabCheckoutSwaps" style="display:none">
+            <form method="post" autocomplete="off" id="formCheckoutSwaps">
+                <input asp-for="Settings.StoreId" type="hidden" />
+                <input asp-for="Settings.ApiKey" type="hidden" />
+                <input asp-for="Settings.LightningAutoSwapAddressTo" type="hidden" />
+                <input asp-for="Settings.LightningAutoSwapCryptoTo" type="hidden" />
+                <input asp-for="Settings.LightningAutoSwapEnabled" type="hidden" />
+                <input asp-for="Settings.LightningAutoSwapPercent" type="hidden" />
+                <input asp-for="Settings.LightningAutoSwapProvider" type="hidden" />
+                <input asp-for="Settings.LightningAutoSwapThreshold" type="hidden" />
+                <input asp-for="Settings.OnChainAutoSwapAddressTo" type="hidden" />
+                <input asp-for="Settings.OnChainAutoSwapCryptoTo" type="hidden" />
+                <input asp-for="Settings.OnChainAutoSwapEnabled" type="hidden" />
+                <input asp-for="Settings.OnChainAutoSwapPercent" type="hidden" />
+                <input asp-for="Settings.OnChainAutoSwapProvider" type="hidden" />
+                <input asp-for="Settings.OnChainAutoSwapThreshold" type="hidden" />
+
+
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h4>Checkout Swaps Settings</h4>
+                        <p class="text-muted mb-0">Enable checkout swaps to allow customers to pay with different cryptocurrencies.</p>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Settings.CheckoutEnabled" class="form-label"></label>
+                    <input asp-for="Settings.CheckoutEnabled" type="checkbox" class="btcpay-toggle" id="CheckoutEnabled" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Settings.OnChainCheckoutSwapProvider" class="form-label"></label>
+                    <select asp-for="Settings.OnChainCheckoutSwapProvider" id="OnChainCheckoutSwapProvider" class="form-select">
+                        @foreach (var provider in SwapProviders.ActiveProviders.OrderBy(p => p.GetDisplayName()))
+                        {
+                            <option value="@provider">@provider.GetDisplayName()</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Settings.OnChainCheckoutSwapProvider" class="text-danger"></span>
+                </div>
+
+                
+                <div class="form-group mb-3">
+                    <label asp-for="Settings.LightningCheckoutSwapProvider" class="form-label"></label>
+                    <select asp-for="Settings.LightningCheckoutSwapProvider" id="LightningCheckoutSwapProvider" class="form-select">
+                        @foreach (var provider in SwapProviders.ActiveProviders
+                                    .Where(p => Model.SwapProvidersInfos?.Any(info => info.NumProvider == (int)p && info.IsLightning) == true)
+                                    .OrderBy(p => p.GetDisplayName()))
+                        {
+                            <option value="@provider">@provider.GetDisplayName()</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Settings.LightningCheckoutSwapProvider" class="text-danger"></span>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary" name="Command" value="Save">Save Checkout Swaps Settings</button>
+                </div>
+
+            </form>
+            <script asp-add-nonce="true">
+                document.addEventListener("DOMContentLoaded", function () {
+
+                const form = document.getElementById("formCheckoutSwaps");
+                    if (form) {
+                        form.addEventListener("submit", function (event) {
+                        });
+                    }
+                });
+
+            </script>
+        </div>
+
         <div permission="@Policies.CanModifyStoreSettings" id="tabAutoSwaps" style="display:none">
             <form method="post" autocomplete="off" id="formAutoSwaps">
                 <input asp-for="Settings.StoreId" type="hidden" />
                 <input asp-for="Settings.ApiKey" type="hidden" />
+                <input asp-for="Settings.CheckoutEnabled" type="hidden" />
+                <input asp-for="Settings.LightningCheckoutSwapProvider" type="hidden" />
+                <input asp-for="Settings.OnChainCheckoutSwapProvider" type="hidden" />
 
                 <div class="d-flex align-items-center justify-content-between mb-4">
                     <div>
                         <h4>Auto-Swap Settings</h4>
                         <p class="text-muted mb-0">Configure automatic swaps of received funds to other crypto-assets as soon as your balances allow.</p>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="card-title mb-0">Auto-Swap (On-Chain)</h5>
+                        <input asp-for="Settings.OnChainAutoSwapEnabled" type="checkbox" class="btcpay-toggle" id="OnChainAutoSwapEnabled" />
                     </div>
                 </div>
 
@@ -476,7 +531,7 @@
                                                 <optgroup label="@SwapCryptos.CategoryLabels[group.Key]">
                                                     @foreach (var crypto in group.OrderBy(c => c.Value.Name))
                                                     {
-                                                        <option value="@crypto.Key">@GetCryptoIcon(crypto.Key) @crypto.Value.Name</option>
+                                                        <option value="@crypto.Key">@SwapCryptos.GetCryptoIcon(crypto.Key) @crypto.Value.Name</option>
                                                     }
                                                 </optgroup>
                                             }
@@ -548,7 +603,7 @@
                                                 <optgroup label="@SwapCryptos.CategoryLabels[group.Key]">
                                                     @foreach (var crypto in group.OrderBy(c => c.Value.Name))
                                                     {
-                                                        <option value="@crypto.Key">@GetCryptoIcon(crypto.Key) @crypto.Value.Name</option>
+                                                        <option value="@crypto.Key">@SwapCryptos.GetCryptoIcon(crypto.Key) @crypto.Value.Name</option>
                                                     }
                                                 </optgroup>
                                             }
@@ -687,11 +742,13 @@
                             <th class="text-nowrap">Swap ID</th>
                             <th class="text-nowrap">Provider</th>
                             <th class="text-nowrap">Altcoin</th>
+                            <th class="text-nowrap">Checkout Swap</th>
                             <th class="text-nowrap">Auto Swap</th>
                             <th class="text-nowrap">Created At</th>
                             <th class="text-nowrap">Amount (BTC)</th>
                             <th class="text-nowrap">Amount (Alt)</th>
                             <th class="text-nowrap">Pull Payment</th>
+                            <th class="text-nowrap">Invoice</th>
                             <th>Status</th>
                         </tr>
                         </thead>
@@ -713,13 +770,25 @@
                                         </div>
                                     </td>
                                     <td class="align-center">
+                                        <input type="checkbox" class="form-check-input" @(swap.IsCheckoutSwap ? "checked" : "") disabled />
+                                    </td>
+                                    <td class="align-center">
                                         <input type="checkbox" class="form-check-input" @(swap.IsAutoSwap ? "checked" : "") disabled />
                                     </td>
                                     <td>@swap.DateT.ToString("g")</td>
                                     <td class="align-right">@swap.FromAmount.ToString("0.00000000")</td>
                                     <td class="align-right">@swap.ToAmount.ToString("0.00000000")</td>
                                     <td class="text-break align-middle invoiceId-col">
-                                        <a asp-controller="UIPullPayment" asp-action="ViewPullPayment" asp-route-pullPaymentId="@swap.BTCPayPullPaymentId" class="text-break">@swap.BTCPayPullPaymentId</a>
+                                        @if(!swap.IsCheckoutSwap)
+                                        {
+                                            <a asp-controller="UIPullPayment" asp-action="ViewPullPayment" asp-route-pullPaymentId="@swap.BTCPayPullPaymentId" class="text-break">@swap.BTCPayPullPaymentId</a>
+                                        }
+                                    </td>
+                                    <td class="text-break align-middle invoiceId-col">
+                                        @if (swap.IsCheckoutSwap)
+                                        {
+                                            <a asp-controller="UIInvoice" asp-action="Invoice" asp-route-invoiceId="@swap.BTCPayPullPaymentId" class="text-break">@swap.BTCPayPullPaymentId</a>
+                                        }
                                     </td>
                                     <td>
                                         <a href="@swap.FollowUrl" target="_blank">View JSON</a>

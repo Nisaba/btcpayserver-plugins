@@ -16,13 +16,16 @@ public class Plugin : BaseBTCPayServerPlugin
 
     public override void Execute(IServiceCollection services)
     {
-        services.AddHttpClient<B2PCentralPluginService>(client =>
+        services.AddHttpClient<B2PCentralService>(client =>
         {
-            client.BaseAddress = new Uri(B2PCentralPluginService.BaseApiUrl);
+            client.BaseAddress = new Uri(B2PCentralService.BaseApiUrl);
         });
 
         services.AddUIExtension("header-nav", "B2PCentralPluginHeaderNav")
+                .AddUIExtension("checkout-payment-method", "CheckoutV2/B2PCheckoutPaymentMethodExtension")
+                .AddUIExtension("checkout-payment", "CheckoutV2/B2PCheckoutPaymentExtension")
                 .AddHostedService<PluginMigrationRunner>()
+                .AddSingleton<B2PCentralPluginService>()
                 .AddSingleton<B2PCentralPluginDbContextFactory>()
                 .AddSingleton<B2PAutoSwapHostedService>()
                     .AddHostedService(sp => sp.GetRequiredService<B2PAutoSwapHostedService>());

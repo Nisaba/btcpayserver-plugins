@@ -100,6 +100,7 @@
                     $("#tabOnChain").show();
                     $("#tabLightning").hide();
                     $("#tabSwaps").hide();
+                    $("#tabCheckoutSwaps").hide();
                     $("#tabAutoSwaps").hide();
                     $("#tabListSwaps").hide();
                     this.tblOfrsLightning = this.tblOfrs;
@@ -110,6 +111,7 @@
                     $("#tabOnChain").hide();
                     $("#tabLightning").show();
                     $("#tabSwaps").hide();
+                    $("#tabCheckoutSwaps").hide();
                     $("#tabAutoSwaps").hide();
                     $("#tabListSwaps").hide();
                     this.tblOfrsOnChain = this.tblOfrs;
@@ -120,6 +122,7 @@
                     $("#tabOnChain").hide();
                     $("#tabLightning").hide();
                     $("#tabSwaps").show();
+                    $("#tabCheckoutSwaps").hide();
                     $("#tabAutoSwaps").hide();
                     $("#tabListSwaps").hide();
                     break;
@@ -128,7 +131,8 @@
                     $("#tabOnChain").hide();
                     $("#tabLightning").hide();
                     $("#tabSwaps").hide();
-                    $("#tabAutoSwaps").show();
+                    $("#tabCheckoutSwaps").show();
+                    $("#tabAutoSwaps").hide();
                     $("#tabListSwaps").hide();
                     break;
                 case 5:
@@ -136,6 +140,16 @@
                     $("#tabOnChain").hide();
                     $("#tabLightning").hide();
                     $("#tabSwaps").hide();
+                    $("#tabCheckoutSwaps").hide();
+                    $("#tabAutoSwaps").show();
+                    $("#tabListSwaps").hide();
+                    break;
+                case 6:
+                    $("#SectionNav-6").addClass("active").siblings().removeClass("active");
+                    $("#tabOnChain").hide();
+                    $("#tabLightning").hide();
+                    $("#tabSwaps").hide();
+                    $("#tabCheckoutSwaps").hide();
                     $("#tabAutoSwaps").hide();
                     $("#tabListSwaps").show();
                     break;

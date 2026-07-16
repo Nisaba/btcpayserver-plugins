@@ -29,8 +29,12 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             { "TRX", new CryptoInfo("Tron", CryptoCategory.Altcoin) },
             { "ADA", new CryptoInfo("Cardano", CryptoCategory.Altcoin) },
             { "SOL", new CryptoInfo("Solana", CryptoCategory.Altcoin) },
-            
-            // Stablecoins USD
+            { "BSC", new CryptoInfo("Binance Coin", CryptoCategory.Altcoin) },
+            { "MATIC", new CryptoInfo("Polygon", CryptoCategory.Altcoin) },
+            { "TON", new CryptoInfo("Toncoin", CryptoCategory.Altcoin) },
+
+                // Stablecoins USD
+            { "DAI-ETH", new CryptoInfo("DAI (Ethereum)", CryptoCategory.StablecoinUSD) },
             { "USDT-LIQ", new CryptoInfo("USDT Tether (Liquid)", CryptoCategory.StablecoinUSD) },
             { "USDT-ETH", new CryptoInfo("USDT Tether (Ethereum)", CryptoCategory.StablecoinUSD) },
             { "USDT-TRX", new CryptoInfo("USDT Tether (Tron)", CryptoCategory.StablecoinUSD) },
@@ -67,6 +71,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             { "LIQ", "Liquid" },
             { "BSC", "Binance" },
             { "MATIC", "Polygon" },
+            { "TON", "Toncoin" },
             // Exact match mappings
             { "LTC", "Litecoin" },
             { "BCH", "Bitcoin Cash" },
@@ -89,5 +94,32 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             return NetworkMap.TryGetValue(exactMatch, out var network) ? network : string.Empty;
         }
 
+        public static string GetCategoryIcon(CryptoCategory category) => category switch
+        {
+            CryptoCategory.Altcoin => "🪙",
+            CryptoCategory.StablecoinUSD => "💵",
+            CryptoCategory.StablecoinEUR => "💶",
+            _ => "💰"
+        };
+
+        public static string GetCryptoIcon(string cryptoCode) => cryptoCode switch
+        {
+            "BTC" => "₿",
+            "BCH" => "₿",
+            "L-BTC" => "₿",
+            "ETH" => "Ξ",
+            "XMR" => "ɱ",
+            "LTC" => "Ł",
+            "DOGE" => "Ð",
+            "TRX" => "Ⓣ",
+            _ when cryptoCode.StartsWith("USDT") => "🟢",
+            _ when cryptoCode.StartsWith("USDC") => "🔵",
+            _ when cryptoCode.Contains("EUR") => "🟡",
+            _ => "◆"
+        };
+
+
     }
+
+
 }

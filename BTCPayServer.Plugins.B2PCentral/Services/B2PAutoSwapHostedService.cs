@@ -17,16 +17,19 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
 {
     public class B2PAutoSwapHostedService : EventHostedServiceBase
     {
-        private readonly B2PCentralPluginService _b2pService;
+        private readonly B2PCentralService _b2pService;
+        private readonly B2PCentralPluginService _pluginService;
         private readonly ILogger<B2PAutoSwapHostedService> _logger;
         private readonly StoreRepository _storeRepository;
 
         public B2PAutoSwapHostedService(EventAggregator eventAggregator,
-                                        Logs logs, B2PCentralPluginService b2pService, 
+                                        Logs logs, B2PCentralService b2pService,
+                                        B2PCentralPluginService pluginService,
                                         ILogger<B2PAutoSwapHostedService> logger,
                                         StoreRepository storeRepository) : base(eventAggregator, logs)
         {
             _b2pService = b2pService;
+            _pluginService = pluginService;
             _logger = logger;
             _storeRepository = storeRepository;
         }
@@ -47,7 +50,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
                         { InvoiceEvent.PaymentSettled,
                     }.Contains(invoiceEvent.Name):
                         var invoice = invoiceEvent.Invoice;
-                        var storeSettings = await _b2pService.GetStoreSettings(invoice.StoreId);
+                        var storeSettings = await _pluginService.GetStoreSettings(invoice.StoreId);
                         var payment = invoice.GetPayments(false).Last();
                         var store = await _storeRepository.FindStore(invoice.StoreId);
 
@@ -69,9 +72,9 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
                         {
                             if (!storeSettings.OnChainAutoSwapEnabled)
                                 break;
-                            if (! await _b2pService.TestPayout())
+                            if (! await _pluginService.TestPayout())
                                 break;
-                            var walletBalance = await _b2pService.GetOnChainBalanceInSats(store);
+                            var walletBalance = await _pluginService.GetOnChainBalanceInSats(store);
                             if (storeSettings.OnChainAutoSwapThreshold > walletBalance)
                                 break;
 
@@ -88,7 +91,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
                         {
                             if (!storeSettings.LightningAutoSwapEnabled)
                                 break;
-                            var walletBalance = await _b2pService.GetLightningBalanceInSats(store);
+                            var walletBalance = await _pluginService.GetLightningBalanceInSats(store);
                             if (storeSettings.LightningAutoSwapThreshold > walletBalance)
                                 break;
 
@@ -123,7 +126,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
                         if (createdSwap != null && createdSwap.Success)
                         {
                             var sProvider = swap.Provider.GetDisplayName();
-                            var (pullPaymentId, payoutId) = await _b2pService.CreatePayout(storeSettings.StoreId, sProvider, createdSwap, swap.FromAmount, cancellationToken);
+                            var (pullPaymentId, payoutId) = await _pluginService.CreatePayout(storeSettings.StoreId, sProvider, createdSwap, swap.FromAmount, cancellationToken);
                             var dbSwap = new B2PStoreSwap
                             {
                                 StoreId = storeSettings.StoreId,
@@ -138,9 +141,10 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
                                 ToNetwork = swap.ToNetwork,
                                 BTCPayPullPaymentId = pullPaymentId,
                                 BTCPayPayoutId = payoutId,
-                                IsAutoSwap = true
+                                IsAutoSwap = true,
+                                IsCheckoutSwap = false
                             };
-                            await _b2pService.AddSwapInDb(dbSwap);
+                            await _pluginService.AddSwapInDb(dbSwap);
                         }
 
                         break;

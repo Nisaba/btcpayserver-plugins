@@ -16,7 +16,9 @@ namespace BTCPayServer.Plugins.B2PCentral;
 [Route("~/plugins/{storeId}/b2pcentral")]
 [AutoValidateAntiforgeryToken]
 
-public class B2PPluginController(B2PCentralPluginService pluginService, UserManager<ApplicationUser> userManager) : Controller
+public class B2PPluginController(B2PCentralPluginService pluginService,
+                                 B2PCentralService b2pService,
+                                 UserManager<ApplicationUser> userManager) : Controller
 {
 
     [HttpGet]
@@ -31,7 +33,7 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
         };
         if (!string.IsNullOrEmpty(model.Settings.ApiKey))
         {
-            model.SwapProvidersInfos = await pluginService.GetSwapProvidersInfos(model.Settings.ApiKey);
+            model.SwapProvidersInfos = await b2pService.GetSwapProvidersInfos(model.Settings.ApiKey);
         }
         return View(model);
     }
@@ -86,7 +88,7 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                 IsOnChainSelected = req.IsLightning ? false : true,
                 Providers = req.Providers
             };
-            model.Offers = await pluginService.GetOffersListAsync(ofrReq, req.ApiKey);
+            model.Offers = await b2pService.GetOffersListAsync(ofrReq, req.ApiKey);
         }
         catch (Exception ex)
         {
@@ -118,7 +120,7 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                 FiatCurrency = req.FiatCurrency,
                 Providers = req.Providers
             };
-            model.Swaps = await pluginService.GetSwapsListAsync(swapReq, req.ApiKey);
+            model.Swaps = await b2pService.GetSwapsListAsync(swapReq, req.ApiKey);
             model.ToCrypto = swapReq.ToCrypto;
             model.ToNetwork = swapReq.ToNetwork;
             model.FiatCurrency = swapReq.FiatCurrency;
@@ -158,7 +160,7 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                     FromRefundAddress = req.FromRefundAddress ?? string.Empty,
                     NotificationNpub = string.Empty
                 };
-                var createdSwap = await pluginService.CreateSwapAsync(swap, req.ApiKey);
+                var createdSwap = await b2pService.CreateSwapAsync(swap, req.ApiKey);
                 if (createdSwap != null && createdSwap.Success)
                 {
                     var sProvider = req.Provider.GetDisplayName();
@@ -177,7 +179,8 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                         ToNetwork = swap.ToNetwork,
                         BTCPayPullPaymentId = pullPaymentId,
                         BTCPayPayoutId = payoutId,
-                        IsAutoSwap = false
+                        IsAutoSwap = false,
+                        IsCheckoutSwap = false
                     };
                     await pluginService.AddSwapInDb(dbSwap);
                     TempData[WellKnownTempData.SuccessMessage] = $"Payout created! {sProvider} Swap ID: {createdSwap.SwapId}";
@@ -220,7 +223,7 @@ public class B2PPluginController(B2PCentralPluginService pluginService, UserMana
                 FiatCurrency = req.FiatCurrency,
                 Providers = req.Providers
             };
-            var swap = await pluginService.GetSwapsListAsync(swapReq, req.ApiKey);
+            var swap = await b2pService.GetSwapsListAsync(swapReq, req.ApiKey);
             if (swap.Count == 0)
             {
                 return BadRequest("No swap found for the given parameters");

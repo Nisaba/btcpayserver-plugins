@@ -25,4 +25,12 @@
         public string ToNetwork { get; set; }
         public string NotificationNpub { get; set; }
     }
+
+    public class SwapCheckoutCreationRequestJS : SwapCreationRequest
+    {
+        public string ApiKey { get; set; }
+        public string InvoiceId { get; set; }
+    }
+
+
 }

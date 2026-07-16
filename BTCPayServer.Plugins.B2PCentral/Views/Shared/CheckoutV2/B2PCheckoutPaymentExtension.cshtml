@@ -1,0 +1,165 @@
+@using BTCPayServer.Abstractions.Services
+@using BTCPayServer.Plugins.B2PCentral.Models
+@using BTCPayServer.Plugins.B2PCentral.Models.Swaps
+@using BTCPayServer.Plugins.B2PCentral.Services
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using Microsoft.AspNetCore.Identity
+@inject Safe Safe
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject B2PCentralPluginService pluginService
+@inject UserManager<BTCPayServer.Data.ApplicationUser> userManager
+
+@{
+    var storeId = (string)((dynamic)Model).StoreId;
+    var settings = await pluginService.GetStoreSettings(storeId);
+    if (settings?.CheckoutEnabled is not true) return;
+
+    var invoiceId = (string)((dynamic)Model).InvoiceId;
+    var user = await userManager.GetUserAsync(User);
+
+    var vueModel = new
+    {
+        antiForgeryToken = Antiforgery.GetAndStoreTokens(Context).RequestToken,
+        invoiceId = invoiceId,
+        storeId = storeId,
+        apiKey = settings.ApiKey,
+        onchainProvider = settings.OnChainCheckoutSwapProvider,
+        lightningProvider = settings.LightningCheckoutSwapProvider,
+        email = user?.Email ?? string.Empty
+    };
+}
+
+<style>
+    .qr-container {
+        text-align: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 0.5rem;
+        display: inline-block;
+        position: relative;
+        margin: 0 auto;
+    }
+
+    .qr-container .qr-icon {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 70px;
+        height: 70px;
+        padding: 5px;
+        border-radius: 50%;
+        background: white;
+    }
+</style>
+
+
+<script src="~/vendor/vue-qrcode/vue-qrcode.min.js" asp-append-version="true"></script>
+<script>
+    window.b2pData = @Safe.Raw(JsonConvert.SerializeObject(vueModel));
+</script>
+<script src="~/Resources/js/b2pCheckoutComponent.js"></script>
+<template id="b2p-checkout-template">
+    <div class="payment-box">
+        <div class="mt-3">
+            <div class="payment-details">
+                <div v-if="due == 0" class="mb-3">
+                    <div class="input-group">
+                        <input type="number"
+                               v-model="manualAmount"
+                               class="form-control"
+                               step="0.00000001"
+                               min="0.00000001"
+                               placeholder="Please enter BTC amount to send"
+                               v-on:keyup.enter="handleAmountSubmit">
+                        <button class="btn btn-primary"
+                                v-on:click="handleAmountSubmit">
+                            Confirm
+                        </button>
+                    </div>
+                    <small class="text-danger" v-if="error">{{ error }}</small>
+                </div>
+
+                <div v-if="due > 0" class="mb-3">
+                    <label class="form-label">Select Payment Method:</label>
+                    <select class="form-select" v-model="selectedCrypto" :disabled="loading">
+                        @foreach (var group in SwapCryptos.AvailableCryptos.GroupBy(c => c.Value.Category).OrderBy(g => g.Key))
+                        {
+                            <optgroup label="@SwapCryptos.CategoryLabels[group.Key]">
+                                @foreach (var crypto in group.OrderBy(c => c.Value.Name))
+                                {
+                                    <option value="@crypto.Key">@SwapCryptos.GetCryptoIcon(crypto.Key) @crypto.Value.Name</option>
+                                }
+                            </optgroup>
+                        }
+                    </select>
+
+                </div>
+
+                <div v-if="loading" class="mb-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+
+                <div v-if="error" class="alert alert-danger mb-3">
+                    {{ error }}
+                </div>
+
+                <div v-if="swapData" class="swap-details border rounded p-3 mb-3">
+
+                    <div class="qr-container mb-3" v-if="qrCodeData">
+                        <div>
+                            <qrcode :value="qrCodeData" :options="qrOptions" tag="div" />
+                        </div>
+                        <img class="qr-icon" :src="activeCryptoIcon" :alt="activeCryptoCode" />
+                    </div>
+
+                    <div class="mb-2">
+                        <strong>Please send this amount</strong>
+                        <div class="input-group">
+                            <input type="text" class="form-control" readonly :value="formatAmount(swapData.fromAmount)">
+                            <input type="text" class="form-control" readonly :value="activeCryptoCode">
+                            <button class="btn btn-secondary" v-on:click="navigator.clipboard.writeText(swapData.fromAmount)">
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <strong>to this Address:</strong>
+                        <div class="input-group">
+                            <input type="text" class="form-control" readonly :value="swapData.fromAddress">
+                            <button class="btn btn-secondary" v-on:click="navigator.clipboard.writeText(swapData.fromAddress)">
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary w-100 mt-2" v-on:click="payInWallet" :disabled="!swapData">
+                        <i class="fa fa-external-link-alt"></i>
+                        Pay in wallet
+                    </button>
+                    <br />
+                    <div class="form-text">
+                        This service is provided by <a href="{{ swapData.ProviderUrl }}" target="_blank"></a>.<br />
+                        Bitcoins will be sent to the merchant as soon as your {{ activeCryptoCode }} transaction is confirmed. Please wait.<br />
+                        If needed, contact support@xxx.com and/or your merchant with the Swap id: {{ swapData.swapId }}
+                    </div>
+                    <div class="mt-2 text-center">
+                        <a href="#" v-on:click.prevent="checkStatus" :class="{ 'text-muted': !swapData }">
+                            <i class="fa fa-refresh" :class="{ 'fa-spin': checkingStatus }"></i>
+                            Check status
+                        </a>
+                        <div v-if="swapStatus" class="mt-1 text-muted">
+                            Status: {{ swapStatus }}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</template>
+
+
+

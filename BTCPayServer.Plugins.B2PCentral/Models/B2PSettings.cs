@@ -49,6 +49,19 @@ public class B2PSettings : IValidatableObject
     [Display(Name = "Swap Destination Address")]
     public string LightningAutoSwapAddressTo { get; set; }
 
+
+
+    [Display(Name = "Enable Altcoins swaps at checkout")]
+    public bool CheckoutEnabled { get; set; }
+
+    [Display(Name = "Provider for on-chain swaps at checkout")]
+    public SwapProvidersEnum OnChainCheckoutSwapProvider { get; set; }
+
+    [Display(Name = "Provider for Lightning swaps at checkout")]
+    public SwapProvidersEnum LightningCheckoutSwapProvider { get; set; }
+
+
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (OnChainAutoSwapEnabled && string.IsNullOrWhiteSpace(OnChainAutoSwapAddressTo))

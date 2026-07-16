@@ -1,0 +1,14 @@
+@using BTCPayServer.Plugins.B2PCentral.Models
+@using BTCPayServer.Plugins.B2PCentral.Services
+@inject B2PCentralPluginService pluginService
+@{
+    B2PSettings settings = await pluginService.GetStoreSettings(Model.StoreId);
+    if (settings?.CheckoutEnabled is not true) return;
+}
+
+<a href="#B2PCentral" class="btcpay-pill m-0 payment-method" :class="{ active: pmId === 'B2PCentral' }"
+       v-on:click.prevent="pmId.includes('BTC-') || pmId === 'ARKADE' ? changePaymentMethod('B2PCentral') : alert('Please select the Bitcoin or Lightning payment method first before choosing Altcoins.')">
+    <div style="text-align: center;">
+        <span style="display: block;">Altcoins</span>
+    </div>
+</a>

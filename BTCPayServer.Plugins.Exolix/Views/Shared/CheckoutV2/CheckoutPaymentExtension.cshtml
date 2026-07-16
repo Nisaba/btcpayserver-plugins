@@ -10,7 +10,7 @@
 @{
     var storeId = (string)((dynamic)Model).StoreId;
     var settings = await pluginService.GetStoreSettings(storeId);
-    if (settings?.Enabled is not true || settings.AcceptedCryptos.Count == 0) return;
+    if (settings?.isConfigured is not true) return;
 
     var pmId = (string)((dynamic)Model).PaymentMethodId;
     var invoiceId = (string)((dynamic)Model).InvoiceId;
