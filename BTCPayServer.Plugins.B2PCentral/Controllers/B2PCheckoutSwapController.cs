@@ -1,9 +1,8 @@
-﻿using BTCPayServer.Plugins.B2PCentral.Migrations;
-using BTCPayServer.Plugins.B2PCentral.Models;
+﻿using BTCPayServer.Plugins.B2PCentral.Models;
 using BTCPayServer.Plugins.B2PCentral.Models.Swaps;
 using BTCPayServer.Plugins.B2PCentral.Services;
-using BTCPayServer.Storage.Models;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Ocsp;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,24 +20,38 @@ namespace BTCPayServer.Plugins.B2PCentral.Controllers
             var createdSwap = new SwapCheckoutCreationResponse();
             try
             {
-
                 var quoteReq = new SwapRateRequest
                 {
                     FiatCurrency = string.Empty,
-                    FromAmount = swapReq.FromAmount,
-                    FromCrypto = swapReq.FromCrypto,
-                    FromNetwork = swapReq.FromNetwork,
-                    ToAmount = 0,
+                    FromAmount = 0,
+                    FromCrypto = swapReq.FromCrypto.Split("-")[0],
+                    FromNetwork = SwapCryptos.GetNetwork(swapReq.FromCrypto),
+                    ToAmount = swapReq.ToAmount,
                     ToCrypto = swapReq.ToCrypto,
                     ToNetwork = swapReq.ToNetwork,
                     Providers = [swapReq.Provider]
                 };
 
                 var quoteResult = await b2pCentralService.GetSwapsListAsync(quoteReq, swapReq.ApiKey);
-                swapReq.QuoteID = quoteResult.First().FixedQuoteId;
 
-                var swapResponse = await b2pCentralService.CreateSwapAsync(swapReq, swapReq.ApiKey);
+                var swapCreateReq = new SwapCreationRequest
+                {
+                    Provider = swapReq.Provider,
+                    QuoteID = quoteResult.First().FixedQuoteId,
+                    ToCrypto = swapReq.ToCrypto,
+                    FromAmount = (decimal)quoteResult.First().FromFixedAmount,
+                    ToAmount = swapReq.ToAmount,
+                    ToAddress = swapReq.ToAddress,
+                    FromRefundAddress = "",
+                    IsFixed = swapReq.IsFixed,
+                    NotificationEmail = swapReq.NotificationEmail,
+                    FromCrypto = quoteReq.FromCrypto,
+                    FromNetwork = quoteReq.FromNetwork,
+                    ToNetwork = swapReq.ToNetwork,
+                    NotificationNpub = ""
+                };
 
+                var swapResponse = await b2pCentralService.CreateSwapAsync(swapCreateReq, swapReq.ApiKey);
                 createdSwap = new SwapCheckoutCreationResponse
                 {
                     SwapId = swapResponse.SwapId,

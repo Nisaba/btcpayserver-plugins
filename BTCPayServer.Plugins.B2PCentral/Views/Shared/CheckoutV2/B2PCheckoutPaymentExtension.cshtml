@@ -82,14 +82,14 @@
                 </div>
 
                 <div v-if="due > 0" class="mb-3">
-                    <label class="form-label">Select Payment Method:</label>
+                    <label class="form-label">Select your Altcoin or Stablecoin:</label>
                     <select class="form-select" v-model="selectedCrypto" :disabled="loading">
                         @foreach (var group in SwapCryptos.AvailableCryptos.GroupBy(c => c.Value.Category).OrderBy(g => g.Key))
                         {
                             <optgroup label="@SwapCryptos.CategoryLabels[group.Key]">
                                 @foreach (var crypto in group.OrderBy(c => c.Value.Name))
                                 {
-                                    <option value="@crypto.Key">@SwapCryptos.GetCryptoIcon(crypto.Key) @crypto.Value.Name</option>
+                                    <option value="@crypto.Key.ToString()">@crypto.Value.Name</option>
                                 }
                             </optgroup>
                         }

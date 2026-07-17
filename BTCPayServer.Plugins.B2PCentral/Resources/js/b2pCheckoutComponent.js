@@ -1,4 +1,4 @@
-const B2PCheckout = {
+const B2PCentralCheckout = {
     template: '#b2p-checkout-template',
     props: {
         model: {
@@ -65,12 +65,6 @@ const B2PCheckout = {
         buildPaymentUrl() {
             if (!this.swapData) return null;
 
-            if (this.selectedSearchCoin) {
-                const key = this.selectedSearchCoin.networkCode;
-                const protocol = this.protocolMap[key] || key.toLowerCase();
-                return `${protocol}:${this.swapData.fromAddress}?amount=${this.formatAmount(this.swapData.fromAmount)}`;
-            }
-
             if (!this.selectedCrypto) return null;
             const protocol = this.getProtocol(this.selectedCrypto);
             return `${protocol}:${this.swapData.fromAddress}?amount=${this.formatAmount(this.swapData.fromAmount)}`;
@@ -122,7 +116,6 @@ const B2PCheckout = {
                 const formData = new FormData();
                 formData.append('Provider', isLightning ? window.b2pData.lightningProvider : window.b2pData.onchainProvider);
                 formData.append('QuoteID', '');
-                formData.append('ToCrypto', 'BTC');
                 formData.append('FromAmount', 0);
                 formData.append('ToAmount', btcAmount);
                 formData.append('ToAddress', sAddress);
@@ -131,8 +124,9 @@ const B2PCheckout = {
                 formData.append('NotificationEmail', window.b2pData.email);
                 formData.append('FromCrypto', this.selectedCrypto);
                 formData.append('FromNetwork', '');
-                formData.append('ToNetwork', isLightning ? "LIGHTNING" : "BTC");
-                formData.append('NotificationNpub', isLightning ? "LIGHTNING" : "BTC");
+                formData.append('ToCrypto', 'BTC');
+                formData.append('ToNetwork', isLightning ? "Lightning" : "Bitcoin");
+                formData.append('NotificationNpub', '');
                 formData.append('ApiKey', window.b2pData.apiKey);
                 formData.append('InvoiceId', window.b2pData.invoiceId);
 
@@ -200,7 +194,6 @@ const B2PCheckout = {
         },
 
         activeCryptoCode() {
-            if (this.selectedSearchCoin) return this.selectedSearchCoin.code == this.selectedSearchCoin.networkCode ? this.selectedSearchCoin.code : this.selectedSearchCoin.code + '-' + this.selectedSearchCoin.networkCode;
             return this.selectedCrypto;
         },
 
@@ -210,4 +203,4 @@ const B2PCheckout = {
     }
 };
 
-Vue.component('B2PCheckout', B2PCheckout);
+Vue.component('B2PCentralCheckout', B2PCentralCheckout);

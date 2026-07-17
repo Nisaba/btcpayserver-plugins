@@ -9,9 +9,10 @@
     <Description>
 		- Get P2P bitcoin buy offers from B2P Central aggregator, from providers like HodlHodl, Bisq, Peach, NoOnes, LocalCoinSwaps, LNp2pBot, Robosats, Mostro, according to your onchain and lightning wallets balances.
 		- Swap seamlessly your bitcoins at the best rate with the best players in the market.
+		- Allow your customers to pay you in altcoins or stablecoins, even if you only accept BTC, by using the B2P Central plugin.
 		- Swap automatically your BTC incomes to altcoins or stablecoins once an invoice is paid, according to a predefined percentage
 	</Description>
-    <Version>3.0.1</Version>
+    <Version>3.5.1</Version>
   </PropertyGroup>
 
   <!-- Plugin development properties -->
