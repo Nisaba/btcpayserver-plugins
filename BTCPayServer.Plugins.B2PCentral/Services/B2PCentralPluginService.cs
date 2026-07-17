@@ -132,8 +132,8 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                 dbSettings.LightningAutoSwapThreshold = settings.LightningAutoSwapThreshold;
                 dbSettings.OnChainAutoSwapProvider = settings.OnChainAutoSwapProvider;
                 dbSettings.LightningAutoSwapProvider = settings.LightningAutoSwapProvider;
-                dbSettings.OnChainAutoSwapCryptoTo = settings.OnChainAutoSwapCryptoTo;
-                dbSettings.LightningAutoSwapCryptoTo = settings.LightningAutoSwapCryptoTo;
+                dbSettings.OnChainAutoSwapCryptoTo = settings.OnChainAutoSwapCryptoTo ?? "";
+                dbSettings.LightningAutoSwapCryptoTo = settings.LightningAutoSwapCryptoTo ?? "";
                 dbSettings.OnChainAutoSwapAddressTo = settings.OnChainAutoSwapAddressTo ?? "";
                 dbSettings.LightningAutoSwapAddressTo = settings.LightningAutoSwapAddressTo ?? "";
                 dbSettings.CheckoutEnabled = settings.CheckoutEnabled;

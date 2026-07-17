@@ -67,6 +67,11 @@ public class B2PPluginController(B2PCentralPluginService pluginService,
             Settings = settings,
             Swaps = await pluginService.GetStoreSwaps(storeId)
         };
+        if (!string.IsNullOrEmpty(model.Settings.ApiKey))
+        {
+            model.SwapProvidersInfos = await b2pService.GetSwapProvidersInfos(model.Settings.ApiKey);
+        }
+
         return View("Index", model);
     }
 
