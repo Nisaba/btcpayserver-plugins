@@ -141,12 +141,12 @@
                     </button>
                     <br />
                     <div class="form-text">
-                        This service is provided by <a href="{{ swapData.providerUrl }}" target="_blank">{{ swapData.providerName }}</a>.<br />
+                        This service is provided by <a :href="swapData.providerUrl" target="_swapProvider">{{ swapData.providerName }}</a>.<br />
                         Bitcoins will be sent to the merchant as soon as your {{ activeCryptoCode }} transaction is confirmed. Please wait.<br />
-                        If needed, contact {{ swapData.providerName }} and/or your merchant with the Swap id: {{ swapData.swapId }}
+                        If needed, contact <a :href="swapData.providerUrl" target="_swapProvider">{{ swapData.providerName }}</a> and/or your merchant with the Swap id: {{ swapData.swapId }}
                     </div>
                     <div class="mt-2 text-center">
-                        <a href="https://b2p-central.com/#swap&{{ swapData.provider }}&{{ swapData.swapId }}" target="b2pCheck" :class="{ 'text-muted': !swapData }">
+                        <a :href="'https://b2p-central.com/#swap&' + swapData.provider + '&' + swapData.swapId" target="b2pCheck" :class="{ 'text-muted': !swapData }">
                             Check status
                         </a>
                     </div>
