@@ -15,7 +15,6 @@ const B2PCentralCheckout = {
             swapData: null,
             loading: false,
             error: null,
-            checkingStatus: false,
             swapStatus: null,
             qrOptions: {
                 margin: 0,
@@ -29,10 +28,14 @@ const B2PCentralCheckout = {
                 'ETH': 'ethereum',
                 'TRX': 'tron',
                 'POL': 'polygon',
+                'MATIC': 'polygon',
                 'BNB': 'bnb',
+                'BSC': 'bnb',
                 'ADA': 'cardano',
                 'SOL': 'solana',
                 'DAI': 'ethereum',
+                'TON': 'ton',
+                'DAI-ETH': 'ethereum-dai', 
                 'USDT-ETH': 'ethereum-usdt',
                 'USDT-TRX': 'tron-usdt',
                 'USDT-BSC': 'bnb-usdt',
@@ -40,6 +43,7 @@ const B2PCentralCheckout = {
                 'USDT-NEAR': 'near-usdt',
                 'USDT-MATIC': 'polygon-usdt',
                 'USDT-TON': 'ton-usdt',
+                'USDT-LIQ': 'liquid-usdt',
                 'USDT-AVAXC': 'avalanche-usdt',
                 'USDC-ETH': 'ethereum-usdc',
                 'USDC-BSC': 'bnb-usdc',
@@ -189,10 +193,6 @@ const B2PCentralCheckout = {
         qrCodeData() {
             return this.buildPaymentUrl();
         },
-        canShowCryptoList() {
-            return this.asNumber(this.model.due) > 0;
-        },
-
         activeCryptoCode() {
             return this.selectedCrypto;
         },

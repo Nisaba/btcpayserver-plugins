@@ -99,6 +99,70 @@ namespace BTCPayServer.Plugins.B2PCentral.Services
             }
         }
 
+        public async Task<SwapCreationResponse> CreateCheckoutSwapAsync(SwapCreationRequest req, string key)
+        {
+            try
+            {
+                var reqJson = JsonConvert.SerializeObject(req, Formatting.None);
+                var webRequest = new HttpRequestMessage(HttpMethod.Put, "swaps")
+                {
+                    Content = new StringContent(reqJson, Encoding.UTF8, "application/json"),
+                    Headers =
+                    {
+                        { "B2P-API-KEY", key },
+                    },
+                };
+
+                using var rep = await httpClient.SendAsync(webRequest);
+                var sRep = await rep.Content.ReadAsStringAsync();
+
+                if (!rep.IsSuccessStatusCode)
+                {
+                    string errorMessage = "";
+
+                    try
+                    {
+                        dynamic apiError = JsonConvert.DeserializeObject(sRep);
+                        string fullErrorString = apiError?.error;
+
+                        if (!string.IsNullOrEmpty(fullErrorString))
+                        {
+                            errorMessage = fullErrorString;
+
+                            int jsonStartIndex = fullErrorString.IndexOf(" - {");
+                            if (jsonStartIndex >= 0)
+                            {
+                                string innerJson = fullErrorString.Substring(jsonStartIndex + 3);
+                                dynamic b2pError = JsonConvert.DeserializeObject(innerJson);
+
+                                if (b2pError?.error != null)
+                                {
+                                    errorMessage = b2pError.error;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            errorMessage = sRep;
+                        }
+                    }
+                    catch
+                    {
+                        errorMessage = sRep;
+                    }
+
+                    throw new Exception(errorMessage);
+                }
+
+                return JsonConvert.DeserializeObject<SwapCreationResponse>(sRep);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "B2PCentral:CreateSwapAsync()");
+                throw;
+            }
+        }
+
         public async Task<List<ProviderInfo>> GetSwapProvidersInfos(string key)
         {
             string sRep = "";

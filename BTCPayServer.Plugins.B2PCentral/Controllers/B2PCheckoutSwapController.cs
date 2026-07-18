@@ -33,13 +33,15 @@ namespace BTCPayServer.Plugins.B2PCentral.Controllers
                 };
 
                 var quoteResult = await b2pCentralService.GetSwapsListAsync(quoteReq, swapReq.ApiKey);
+                var quote = quoteResult.First();
+                var vFromAmount = (decimal)quote.FromFixedAmount;
 
                 var swapCreateReq = new SwapCreationRequest
                 {
                     Provider = swapReq.Provider,
-                    QuoteID = quoteResult.First().FixedQuoteId,
+                    QuoteID = quote.FixedQuoteId,
                     ToCrypto = swapReq.ToCrypto,
-                    FromAmount = (decimal)quoteResult.First().FromFixedAmount,
+                    FromAmount = vFromAmount,
                     ToAmount = swapReq.ToAmount,
                     ToAddress = swapReq.ToAddress,
                     FromRefundAddress = "",
@@ -51,7 +53,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Controllers
                     NotificationNpub = ""
                 };
 
-                var swapResponse = await b2pCentralService.CreateSwapAsync(swapCreateReq, swapReq.ApiKey);
+                var swapResponse = await b2pCentralService.CreateCheckoutSwapAsync(swapCreateReq, swapReq.ApiKey);
                 createdSwap = new SwapCheckoutCreationResponse
                 {
                     SwapId = swapResponse.SwapId,
@@ -61,7 +63,9 @@ namespace BTCPayServer.Plugins.B2PCentral.Controllers
                     ProviderUrl = swapResponse.ProviderUrl,
                     FromAddress = swapResponse.FromAddress,
                     TransactionHash = swapResponse.TransactionHash,
-                    ProviderName = SwapProviders.GetDisplayName(swapReq.Provider)
+                    ProviderName = SwapProviders.GetDisplayName(swapReq.Provider),
+                    Provider = swapReq.Provider,
+                    FromAmount = vFromAmount,
                 };
 
                 await pluginService.AddSwapInDb(new B2PStoreSwap
@@ -80,7 +84,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Controllers
                     BTCPayPayoutId = string.Empty,
                     IsAutoSwap = false,
                     IsCheckoutSwap = true
-                }); ;
+                });
                 createdSwap.Success = true;
             }
             catch (Exception ex)

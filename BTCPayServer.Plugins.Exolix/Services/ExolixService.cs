@@ -87,7 +87,7 @@ namespace BTCPayServer.Plugins.Exolix.Services
                     ToNetwork = req.ToNetwork,
                     ToAddress = req.ToAddress,
                     FromRefundAddress = req.FromRefundAddress ?? string.Empty,
-                    IsFixed = req.FromAmount == 0
+                    IsFixed = true
                 };
 
                 var reqJson = JsonConvert.SerializeObject(b2pReq, Formatting.None);

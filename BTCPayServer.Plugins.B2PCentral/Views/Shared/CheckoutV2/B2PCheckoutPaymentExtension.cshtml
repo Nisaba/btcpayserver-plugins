@@ -141,18 +141,14 @@
                     </button>
                     <br />
                     <div class="form-text">
-                        This service is provided by <a href="{{ swapData.ProviderUrl }}" target="_blank">{{ swapData.ProviderName }}</a>.<br />
+                        This service is provided by <a href="{{ swapData.providerUrl }}" target="_blank">{{ swapData.providerName }}</a>.<br />
                         Bitcoins will be sent to the merchant as soon as your {{ activeCryptoCode }} transaction is confirmed. Please wait.<br />
-                        If needed, contact support@xxx.com and/or your merchant with the Swap id: {{ swapData.swapId }}
+                        If needed, contact {{ swapData.providerName }} and/or your merchant with the Swap id: {{ swapData.swapId }}
                     </div>
                     <div class="mt-2 text-center">
-                        <a href="#" v-on:click.prevent="checkStatus" :class="{ 'text-muted': !swapData }">
-                            <i class="fa fa-refresh" :class="{ 'fa-spin': checkingStatus }"></i>
+                        <a href="https://b2p-central.com/#swap&{{ swapData.provider }}&{{ swapData.swapId }}" target="b2pCheck" :class="{ 'text-muted': !swapData }">
                             Check status
                         </a>
-                        <div v-if="swapStatus" class="mt-1 text-muted">
-                            Status: {{ swapStatus }}
-                        </div>
                     </div>
                 </div>
 

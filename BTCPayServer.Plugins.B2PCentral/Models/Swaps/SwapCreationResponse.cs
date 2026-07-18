@@ -13,6 +13,9 @@
 
     public class SwapCheckoutCreationResponse : SwapCreationResponse
     {
+        public SwapProvidersEnum Provider { get; set; }
         public string ProviderName { get; set; }
+
+        public decimal FromAmount { get; set; }
     }
 }
