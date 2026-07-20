@@ -146,7 +146,7 @@
                         If needed, contact <a :href="swapData.providerUrl" target="_swapProvider">{{ swapData.providerName }}</a> and/or your merchant with the Swap id: {{ swapData.swapId }}
                     </div>
                     <div class="mt-2 text-center">
-                        <a :href="'https://b2p-central.com/#swap&' + swapData.provider + '&' + swapData.swapId" target="b2pCheck" :class="{ 'text-muted': !swapData }">
+                        <a :href="'https://b2p-central.com/#swap&' + swapData.provider + '&' + swapData.swapId" target="_blank" :class="{ 'text-muted': !swapData }">
                             Check status
                         </a>
                     </div>
