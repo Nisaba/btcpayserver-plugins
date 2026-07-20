@@ -147,14 +147,20 @@ const B2PCentralCheckout = {
                 if (!result.success) {
                     try {
                         const errorObj = JSON.parse(result.statusMessage);
-                        const mainError = errorObj.error || 'Unknown error';
-                        const nestedError = typeof errorObj.error === 'object'
-                            ? JSON.stringify(errorObj.error)
-                            : errorObj.error;
-                        this.error = nestedError ? `${mainError} - ${nestedError}` : mainError;
+                        const fullError = errorObj.error || 'Swap creation failed';
+
+                        const parts = fullError.split(' - ');
+                        if (parts.length > 1) {
+                            const httpError = parts[0];
+                            const content = parts.slice(1).join(' - ');
+                            this.error = `${httpError}\n${content}`;
+                        } else {
+                            this.error = fullError;
+                        }
                     } catch (parseError) {
                         this.error = result.statusMessage || 'Swap creation failed';
                     }
+                    return;
                     return;
                 }
                 this.swapData = result;
