@@ -89,6 +89,10 @@
                             <optgroup label="@SwapCryptos.CategoryLabels[group.Key]">
                                 @foreach (var crypto in group.OrderBy(c => c.Value.Name))
                                 {
+                                    if (crypto.Key.ToString() == "BTC-LIGHT")
+                                    {
+                                        continue;
+                                    }
                                     <option value="@crypto.Key.ToString()">@crypto.Value.Name</option>
                                 }
                             </optgroup>

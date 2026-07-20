@@ -145,7 +145,16 @@ const B2PCentralCheckout = {
                 }
 
                 if (!result.success) {
-                    this.error = result.statusMessage || 'Swap creation failed';
+                    try {
+                        const errorObj = JSON.parse(result.statusMessage);
+                        const mainError = errorObj.error || 'Unknown error';
+                        const nestedError = typeof errorObj.error === 'object'
+                            ? JSON.stringify(errorObj.error)
+                            : errorObj.error;
+                        this.error = nestedError ? `${mainError} - ${nestedError}` : mainError;
+                    } catch (parseError) {
+                        this.error = result.statusMessage || 'Swap creation failed';
+                    }
                     return;
                 }
                 this.swapData = result;
