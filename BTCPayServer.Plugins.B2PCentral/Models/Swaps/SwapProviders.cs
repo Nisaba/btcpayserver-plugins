@@ -130,6 +130,11 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.SIDE_SHIFT,
             SwapProvidersEnum.SIMPLE_SWAP,
             SwapProvidersEnum.STEALTH_EX,
+            SwapProvidersEnum.QUICK_EX,
+            SwapProvidersEnum.CHANGE_HERO,
+            SwapProvidersEnum.EL_CAPO,
+            SwapProvidersEnum.SAGE_SWAP,
+            SwapProvidersEnum.SWAPONIX
         ];
 
         public static string GetDisplayName(this SwapProvidersEnum provider)

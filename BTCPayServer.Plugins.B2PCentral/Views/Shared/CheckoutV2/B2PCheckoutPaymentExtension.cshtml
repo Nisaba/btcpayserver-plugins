@@ -137,7 +137,7 @@
                         </div>
                         <div class="qr-icons-wrapper">
                             <img class="qr-icon2" :src="activeCryptoIcon" :alt="activeCryptoCode" />
-                            <img class="qr-blockchain-icon" :src="activeBlockchainIcon" :alt="activeBlockchainIcon" />
+                            <img class="qr-blockchain-icon" v-if="activeBlockchain" :src="activeBlockchainIcon" :alt="activeBlockchainIcon" />
                         </div>
 
                     </div>
