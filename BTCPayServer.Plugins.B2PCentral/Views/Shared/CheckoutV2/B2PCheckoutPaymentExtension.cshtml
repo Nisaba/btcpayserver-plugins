@@ -41,16 +41,34 @@
         margin: 0 auto;
     }
 
-    .qr-container .qr-icon {
+
+    .qr-icons-wrapper {
         position: absolute;
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
         width: 70px;
         height: 70px;
+    }
+
+    .qr-container .qr-icon2 {
+        width: 100%;
+        height: 100%;
         padding: 5px;
         border-radius: 50%;
         background: white;
+    }
+
+    .qr-container .qr-blockchain-icon {
+        position: absolute;
+        right: -8px;
+        bottom: -8px;
+        width: 32px;
+        height: 32px;
+        padding: 3px;
+        border-radius: 50%;
+        background: white;
+        box-shadow: 0 0 4px rgba(0,0,0,0.3);
     }
 </style>
 
@@ -117,7 +135,11 @@
                         <div>
                             <qrcode :value="qrCodeData" :options="qrOptions" tag="div" />
                         </div>
-                        <img class="qr-icon" :src="activeCryptoIcon" :alt="activeCryptoCode" />
+                        <div class="qr-icons-wrapper">
+                            <img class="qr-icon2" :src="activeCryptoIcon" :alt="activeCryptoCode" />
+                            <img class="qr-blockchain-icon" :src="activeBlockchainIcon" :alt="activeBlockchainIcon" />
+                        </div>
+
                     </div>
 
                     <div class="mb-2">

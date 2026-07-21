@@ -90,6 +90,11 @@ const B2PCentralCheckout = {
             return `/Resources/ico/${cryptoCode.substring(0, 4).replace("-", "")}.webp`;
         },
 
+        getBlockchainIcon(cryptoCode) {
+            const tbl = cryptoCode.split("-");
+            return tbl.length > 1 ? `/Resources/ico/${tbl[1]}.webp` : '';
+        },
+
         async createSwap() {
             if (!this.selectedCrypto) return;
 
@@ -211,9 +216,11 @@ const B2PCentralCheckout = {
         activeCryptoCode() {
             return this.selectedCrypto;
         },
-
         activeCryptoIcon() {
             return this.getCryptoIcon(this.selectedCrypto);
+        },
+        activeBlockchainIcon() {
+            return this.getBlockchainIcon(this.selectedCrypto);
         }
     }
 };

@@ -124,6 +124,14 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.QUICK_EX
         ];
 
+        public static readonly SwapProvidersEnum[] NeedQuotationProviders = [
+            SwapProvidersEnum.BITCOIN_VN,
+            SwapProvidersEnum.CHANGELLY,
+            SwapProvidersEnum.SIDE_SHIFT,
+            SwapProvidersEnum.SIMPLE_SWAP,
+            SwapProvidersEnum.STEALTH_EX,
+        ];
+
         public static string GetDisplayName(this SwapProvidersEnum provider)
         {
             var field = provider.GetType().GetField(provider.ToString());

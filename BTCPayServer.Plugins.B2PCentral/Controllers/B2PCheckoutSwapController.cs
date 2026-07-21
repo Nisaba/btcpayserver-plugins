@@ -32,12 +32,17 @@ namespace BTCPayServer.Plugins.B2PCentral.Controllers
                     Providers = [swapReq.Provider]
                 };
 
-                var quoteResult = await b2pCentralService.GetSwapsListAsync(quoteReq, swapReq.ApiKey);
-                var quote = quoteResult.FirstOrDefault();
-                if(quote == null) {
-                    throw new Exception("Such pair is not available for this amount");
+                B2PSwap quote = null;
+                Decimal vFromAmount = 0;
+                if (SwapProviders.NeedQuotationProviders.Contains(swapReq.Provider)) {
+                    var quoteResult = await b2pCentralService.GetSwapsListAsync(quoteReq, swapReq.ApiKey);
+                    quote = quoteResult.FirstOrDefault();
+                    if (quote == null)
+                    {
+                        throw new Exception("Such pair is not available for this amount");
+                    }
+                    vFromAmount = (decimal)quote.FromFixedAmount;
                 }
-                var vFromAmount = (decimal)quote.FromFixedAmount;
 
                 var swapCreateReq = new SwapCreationRequest
                 {
