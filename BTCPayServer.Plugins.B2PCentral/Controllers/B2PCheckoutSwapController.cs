@@ -10,13 +10,17 @@ using System.Threading.Tasks;
 namespace BTCPayServer.Plugins.B2PCentral.Controllers
 {
     [Route("~/plugins/{storeId}/B2PCentralCheckoutSwap")]
-    public class B2PCentralSwapController(B2PCentralService b2pCentralService, B2PCentralPluginService pluginService) : Controller
+    public class B2PCentralSwapController(B2PCentralService b2pCentralService,
+                                          B2PCentralPluginService pluginService) : Controller
     {
 
         [HttpPost]
         [IgnoreAntiforgeryToken]
         public async Task<SwapCheckoutCreationResponse> Index([FromRoute] string storeId, [FromForm] SwapCheckoutCreationRequestJS swapReq)
         {
+#if DEBUG
+            swapReq.ToAddress = "bc1qfksx4fuzm6xua093zhllzwmzadtzegyhpqn4au";
+#endif
             var createdSwap = new SwapCheckoutCreationResponse();
             try
             {
@@ -51,14 +55,14 @@ namespace BTCPayServer.Plugins.B2PCentral.Controllers
                     QuoteID = vQuoteId,
                     ToCrypto = swapReq.ToCrypto,
                     FromAmount = vFromAmount,
-                    ToAmount = swapReq.ToAmount,
-                    ToAddress = swapReq.ToAddress,
-                    FromRefundAddress = "",
-                    IsFixed = swapReq.IsFixed,
-                    NotificationEmail = swapReq.NotificationEmail,
                     FromCrypto = quoteReq.FromCrypto,
                     FromNetwork = quoteReq.FromNetwork,
+                    FromRefundAddress = "",
+                    ToAmount = swapReq.ToAmount,
+                    ToAddress = swapReq.ToAddress,
                     ToNetwork = swapReq.ToNetwork,
+                    IsFixed = swapReq.IsFixed,
+                    NotificationEmail = swapReq.NotificationEmail,
                     NotificationNpub = ""
                 };
 
@@ -98,6 +102,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Controllers
             }
             catch (Exception ex)
             {
+                
                 createdSwap.Success = false;
                 createdSwap.StatusMessage = ex.Message;
             }

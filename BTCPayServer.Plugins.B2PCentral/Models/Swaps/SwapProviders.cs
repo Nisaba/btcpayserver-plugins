@@ -126,6 +126,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
 
         public static readonly SwapProvidersEnum[] NeedQuotationProviders = [
             SwapProvidersEnum.BITCOIN_VN,
+            SwapProvidersEnum.GODEX,
             SwapProvidersEnum.CHANGELLY,
             SwapProvidersEnum.SIDE_SHIFT,
             SwapProvidersEnum.SIMPLE_SWAP,
@@ -134,7 +135,9 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.CHANGE_HERO,
             SwapProvidersEnum.EL_CAPO,
             SwapProvidersEnum.SAGE_SWAP,
-            SwapProvidersEnum.SWAPONIX
+            SwapProvidersEnum.SWAPONIX,
+            SwapProvidersEnum.BITANIA,
+            SwapProvidersEnum.PEGASUS_SWAP,
         ];
 
         public static string GetDisplayName(this SwapProvidersEnum provider)
