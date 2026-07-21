@@ -221,7 +221,7 @@ const B2PCentralCheckout = {
         },
         activeBlockchainIcon() {
             return this.getBlockchainIcon(this.selectedCrypto);
-        }
+        },
         activeBlockchain() {
             return this.getBlockchainIcon(this.selectedCrypto) != '';
         }
