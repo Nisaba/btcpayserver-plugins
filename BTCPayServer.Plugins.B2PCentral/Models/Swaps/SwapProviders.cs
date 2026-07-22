@@ -129,7 +129,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.GODEX,
             SwapProvidersEnum.CHANGELLY,
             SwapProvidersEnum.SIDE_SHIFT,
-            SwapProvidersEnum.SIMPLE_SWAP,
+//            SwapProvidersEnum.SIMPLE_SWAP,
             SwapProvidersEnum.STEALTH_EX,
             SwapProvidersEnum.QUICK_EX,
             SwapProvidersEnum.CHANGE_HERO,
@@ -137,7 +137,8 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.SAGE_SWAP,
             SwapProvidersEnum.SWAPONIX,
             SwapProvidersEnum.BITANIA,
-            SwapProvidersEnum.PEGASUS_SWAP,
+            SwapProvidersEnum.CCE_CASH,
+            SwapProvidersEnum.PEGASUS_SWAP
         ];
 
         public static string GetDisplayName(this SwapProvidersEnum provider)

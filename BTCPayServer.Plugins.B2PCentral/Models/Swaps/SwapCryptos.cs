@@ -64,7 +64,7 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
         private static readonly Dictionary<string, string> NetworkMap = new()
         {
             // Prefix-based mappings
-            { "Tron", "Tron" },
+            { "TRX", "Tron" },
             { "ETH", "Ethereum" },
             { "SOL", "Solana" },
             { "LIGHT", "Lightning" },
