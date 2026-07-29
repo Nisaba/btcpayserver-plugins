@@ -94,7 +94,7 @@ Just enable the option ‘Enable Altcoin Swaps at Checkout’ and select your pr
 - During checkout, the customer must click on "Altcoins" and then choose their crypto from the drop-down list. They can then complete their transaction according to the information provided, using the appropriate QR code.
 - Every time an altcoin is selected in the list, a swap is created. The BTCPay store owner then receives an email with the swap details and a link to B2P Central to check its status. These details can also be found in the "Swaps List" tab in the plugin’s back office.
 - On his side, the customer can click on the link "Check status" in the checkout page to open an information page on B2P Central and track the evolution of its swap.
-- The plugin will automatically detect if the invoice is payable via Lightning. If not, the plugin will fall back to the onchain swap. It works better with "Unify on-chain and lightning payment URL/QR code" option activated in the  store settings. If not, Lightning swap will be activated only if the user cliks on "Lightning" before clicking on "Altcoins" tab. Otherwise, onchain mode is selected for the swap.
+- The plugin automatically detects if the invoice is payable via Lightning. If not, the plugin will fall back to the onchain swap. It works better with "Unify on-chain and lightning payment URL/QR code" option activated in the  store settings. If not, Lightning swap will be activated only if the user cliks on "Lightning" before clicking on "Altcoins" tab. Otherwise, onchain mode is selected for the swap.
 
 
 ## Auto Swaps
