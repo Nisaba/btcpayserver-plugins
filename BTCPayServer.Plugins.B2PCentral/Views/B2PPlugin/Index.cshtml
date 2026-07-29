@@ -424,7 +424,9 @@
                 <div class="form-group mb-3">
                     <label asp-for="Settings.OnChainCheckoutSwapProvider" class="form-label"></label>
                     <select asp-for="Settings.OnChainCheckoutSwapProvider" id="OnChainCheckoutSwapProvider" class="form-select">
-                        @foreach (var provider in SwapProviders.ActiveProviders.OrderBy(p => p.GetDisplayName()))
+                        @foreach (var provider in SwapProviders.ActiveProviders
+                                                 .Where(p => p != SwapProvidersEnum.CCE_CASH)
+                                                 .OrderBy(p => p.GetDisplayName()))
                         {
                             <option value="@provider">@provider.GetDisplayName()</option>
                         }

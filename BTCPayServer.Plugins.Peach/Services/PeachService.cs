@@ -23,7 +23,7 @@ namespace BTCPayServer.Plugins.Peach.Services
     public class PeachService(ILogger<PeachService> logger, HttpClient httpClient, IMemoryCache cache)
     {
         public static string BaseUrl => "https://api.peachbitcoin.com/v1/";
-        public string Referal => "PRF4BC";
+   //     public string Referal => "PRF4BC";
 
         public async Task<string> GetToken(PeachSettings peachSettings)
         {
