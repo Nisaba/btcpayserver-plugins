@@ -434,7 +434,11 @@
                     <span asp-validation-for="Settings.OnChainCheckoutSwapProvider" class="text-danger"></span>
                 </div>
 
-                
+                <div class="form-group mb-3">
+                    <label asp-for="Settings.LightningCheckoutEnabled" class="form-label"></label>
+                    <input asp-for="Settings.LightningCheckoutEnabled" type="checkbox" class="btcpay-toggle" id="LightningCheckoutEnabled" />
+                </div>
+               
                 <div class="form-group mb-3">
                     <label asp-for="Settings.LightningCheckoutSwapProvider" class="form-label"></label>
                     <select asp-for="Settings.LightningCheckoutSwapProvider" id="LightningCheckoutSwapProvider" class="form-select">
@@ -473,6 +477,7 @@
                 <input asp-for="Settings.CheckoutEnabled" type="hidden" />
                 <input asp-for="Settings.LightningCheckoutSwapProvider" type="hidden" />
                 <input asp-for="Settings.OnChainCheckoutSwapProvider" type="hidden" />
+                <input asp-for="Settings.LightningCheckoutEnabled" type="hidden" />
 
                 <div class="d-flex align-items-center justify-content-between mb-4">
                     <div>

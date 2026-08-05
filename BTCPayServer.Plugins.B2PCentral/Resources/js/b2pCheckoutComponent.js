@@ -114,7 +114,7 @@ const B2PCentralCheckout = {
                 const sInvoiceBitcoinUrl = this.model.invoiceBitcoinUrl || '';
                 let sAddress = this.model.address;
 
-                let isLightning = sInvoiceBitcoinUrl.includes('lnbc');
+                let isLightning = window.b2pData.lightningEnabled && sInvoiceBitcoinUrl.includes('lnbc');
                 if (isLightning && !sAddress.includes("lnbc")) {
                     const lightningPart = sInvoiceBitcoinUrl.split('lightning')[1];
                     if (lightningPart) {

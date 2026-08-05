@@ -61,6 +61,9 @@ public class B2PSettings : IValidatableObject
     public SwapProvidersEnum LightningCheckoutSwapProvider { get; set; }
 
 
+    [Display(Name = "Enable Lightning swaps when possible")]
+    public bool LightningCheckoutEnabled { get; set; } = false;
+
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

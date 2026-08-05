@@ -143,6 +143,7 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                 dbSettings.CheckoutEnabled = settings.CheckoutEnabled;
                 dbSettings.OnChainCheckoutSwapProvider = settings.OnChainCheckoutSwapProvider;
                 dbSettings.LightningCheckoutSwapProvider = settings.LightningCheckoutSwapProvider;
+                dbSettings.LightningCheckoutEnabled = settings.LightningCheckoutEnabled;
 
                 context.B2PSettings.Update(dbSettings);
             }

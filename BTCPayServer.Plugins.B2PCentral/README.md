@@ -210,5 +210,11 @@ What's new in v 2.2.4 :
 What's new in v 3.0.1 :
 - New auto swap feature to automatically convert your BTC balance to a target cryptocurrency when a defined threshold is reached
 
-What's new in v 3.0.2 :
+What's new in v 3.5.1 :
+- New checkout swaps feature to allow your customers to pay in their preferred cryptocurrency at checkout
+
+What's new in v 3.5.2 :
 - Fix an issue in saving settings
+
+What's new in v 3.5.3 :
+- Lightning swaps can be disable independently from onchain swaps
