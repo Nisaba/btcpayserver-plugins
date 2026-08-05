@@ -33,7 +33,14 @@ public class B2PPluginController(B2PCentralPluginService pluginService,
         };
         if (!string.IsNullOrEmpty(model.Settings.ApiKey))
         {
-            model.SwapProvidersInfos = await b2pService.GetSwapProvidersInfos(model.Settings.ApiKey);
+            try
+            {
+                model.SwapProvidersInfos = await b2pService.GetSwapProvidersInfos(model.Settings.ApiKey);
+            }
+            catch (Exception ex)
+            {
+                TempData[WellKnownTempData.ErrorMessage] = $"Failed to get swap providers info. Please check your API key: {ex.Message}";
+            }
         }
         return View(model);
     }
@@ -69,7 +76,14 @@ public class B2PPluginController(B2PCentralPluginService pluginService,
         };
         if (!string.IsNullOrEmpty(model.Settings.ApiKey))
         {
-            model.SwapProvidersInfos = await b2pService.GetSwapProvidersInfos(model.Settings.ApiKey);
+            try
+            {
+                model.SwapProvidersInfos = await b2pService.GetSwapProvidersInfos(model.Settings.ApiKey);
+            }
+            catch (Exception ex)
+            {
+                TempData[WellKnownTempData.ErrorMessage] = $"Please check your API key: {ex.Message}";
+            }
         }
 
         return View("Index", model);

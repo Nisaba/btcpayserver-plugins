@@ -12,7 +12,7 @@
 		Allow your customers to pay you in altcoins or stablecoins, even if you only accept BTC.
 		Swap automatically your BTC incomes to altcoins or stablecoins once an invoice is paid, according to a predefined percentage
 	</Description>
-    <Version>3.5.1</Version>
+    <Version>3.5.2</Version>
   </PropertyGroup>
 
   <!-- Plugin development properties -->

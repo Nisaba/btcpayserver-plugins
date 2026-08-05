@@ -120,6 +120,10 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
             var dbSettings = await context.B2PSettings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
             if (dbSettings == null)
             {
+                settings.OnChainAutoSwapCryptoTo = settings.OnChainAutoSwapCryptoTo ?? "";
+                settings.LightningAutoSwapCryptoTo = settings.LightningAutoSwapCryptoTo ?? "";
+                settings.OnChainAutoSwapAddressTo = settings.OnChainAutoSwapAddressTo ?? "";
+                settings.LightningAutoSwapAddressTo = settings.LightningAutoSwapAddressTo ?? "";
                 context.B2PSettings.Add(settings);
             } else
             {

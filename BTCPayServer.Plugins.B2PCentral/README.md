@@ -209,3 +209,6 @@ What's new in v 2.2.4 :
 
 What's new in v 3.0.1 :
 - New auto swap feature to automatically convert your BTC balance to a target cryptocurrency when a defined threshold is reached
+
+What's new in v 3.0.2 :
+- Fix an issue in saving settings
