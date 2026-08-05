@@ -8,7 +8,7 @@
 @inject Safe Safe
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @inject B2PCentralPluginService pluginService
-@inject UserManager<BTCPayServer.Data.ApplicationUser> userManager
+@inject BTCPayServer.Services.Stores.StoreRepository storeRepository;
 
 @{
     var storeId = (string)((dynamic)Model).StoreId;
@@ -16,7 +16,8 @@
     if (settings?.CheckoutEnabled is not true) return;
 
     var invoiceId = (string)((dynamic)Model).InvoiceId;
-    var user = await userManager.GetUserAsync(User);
+    var storeUsers = await storeRepository.GetStoreUsers(storeId);
+    var mainUser = storeUsers.First(a => a.StoreRole.Role == "Owner");
 
     var vueModel = new
     {
@@ -26,7 +27,7 @@
         apiKey = settings.ApiKey,
         onchainProvider = settings.OnChainCheckoutSwapProvider,
         lightningProvider = settings.LightningCheckoutSwapProvider,
-        email = user?.Email ?? string.Empty,
+        email = mainUser?.Email ?? string.Empty,
         lightningEnabled = settings.LightningCheckoutEnabled
     };
 }

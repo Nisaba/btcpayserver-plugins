@@ -2,7 +2,6 @@
 using BTCPayServer.Plugins.B2PCentral.Models.Swaps;
 using BTCPayServer.Plugins.B2PCentral.Services;
 using Microsoft.AspNetCore.Mvc;
-using Org.BouncyCastle.Ocsp;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
