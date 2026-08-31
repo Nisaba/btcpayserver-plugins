@@ -20,7 +20,8 @@ public class Plugin : BaseBTCPayServerPlugin
                 .AddHostedService<PluginMigrationRunner>()
                 .AddSingleton<ShopstrDbContextFactory>()
                 .AddSingleton<ShopstrService>()
-                .AddSingleton<ShopstrPluginService>();
+                .AddSingleton<ShopstrPluginService>()
+                .AddSingleton<WooCommerceService>();
 
     }
 

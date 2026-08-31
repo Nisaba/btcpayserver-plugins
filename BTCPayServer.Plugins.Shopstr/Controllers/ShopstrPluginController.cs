@@ -14,7 +14,7 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
     [Authorize(Policy = Policies.CanModifyStoreSettings, AuthenticationSchemes = AuthenticationSchemes.Cookie)]
     [AutoValidateAntiforgeryToken]
 
-    public class ShopstrPluginController (ShopstrPluginService pluginService, ShopstrService shopstrService) : Controller
+    public class ShopstrPluginController (ShopstrPluginService pluginService, ShopstrService shopstrService, WooCommerceService wooCommerceService) : Controller
     {
 
         [HttpGet]
@@ -103,6 +103,107 @@ namespace BTCPayServer.Plugins.Shopstr.Controllers
                 {
                     if (productsFromShopstr.Any(p => p.Id == item.Id))
                         await shopstrService.CreateShopstrProduct(item, app, nostrSettings, "", true);
+                }
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            finally
+            {
+                shopstrService.DisposeClient();
+            }
+        }
+
+        [HttpPost]
+        [Route("SaveWooCommerceSettings")]
+        public async Task<IActionResult> SaveWooCommerceSettings([FromRoute] string storeId,
+            [FromForm] string wooCommerceUrl, [FromForm] string consumerKey, [FromForm] string consumerSecret,
+            [FromForm] string location, [FromForm] bool flashSales, [FromForm] string condition, [FromForm] string restrictions)
+        {
+            var settings = new WooCommerceSettings
+            {
+                StoreId = storeId,
+                WooCommerceUrl = wooCommerceUrl?.Trim(),
+                ConsumerKey = consumerKey?.Trim(),
+                ConsumerSecret = consumerSecret?.Trim(),
+                Location = location?.Trim() ?? "",
+                FlashSales = flashSales,
+                Condition = Enum.Parse<ConditionEnum>(condition ?? "None"),
+                Restrictions = restrictions ?? ""
+            };
+            await pluginService.UpdateWooCommerceSettings(settings);
+            return Ok();
+        }
+
+        [HttpPost]
+        [Route("PublishWooCommerce")]
+        public async Task<IActionResult> PublishWooCommerce([FromRoute] string storeId)
+        {
+            try
+            {
+                var wcSettings = await pluginService.GetWooCommerceSettings(storeId);
+                if (wcSettings == null || !wcSettings.IsConfigured)
+                    return BadRequest("WooCommerce is not configured");
+
+                var nostrSettings = await pluginService.GetNostrSettings(storeId);
+                if (nostrSettings == null || !nostrSettings.IsConfigured)
+                    return BadRequest("Nostr plugin is not configured");
+
+                var wcApp = await wooCommerceService.FetchProducts(wcSettings);
+                if (!wcApp.ShopItems.Any())
+                    return Ok();
+
+                var baseUrl = wcSettings.WooCommerceUrl.TrimEnd('/');
+                await shopstrService.InitializeClient(nostrSettings.Relays);
+
+                var productsFromShopstr = await shopstrService.GetShopstrProducts(nostrSettings.PubKey);
+
+                foreach (var item in wcApp.ShopItems)
+                {
+                    var existingProduct = productsFromShopstr.FirstOrDefault(p => p.Id == item.Id);
+                    var bPublish = existingProduct == null || !existingProduct.Compare(item, wcApp);
+                    if (bPublish)
+                    {
+                        await shopstrService.CreateShopstrProduct(item, wcApp, nostrSettings, baseUrl);
+                    }
+                }
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            finally
+            {
+                shopstrService.DisposeClient();
+            }
+        }
+
+        [HttpPost]
+        [Route("UnPublishWooCommerce")]
+        public async Task<IActionResult> UnPublishWooCommerce([FromRoute] string storeId)
+        {
+            try
+            {
+                var wcSettings = await pluginService.GetWooCommerceSettings(storeId);
+                if (wcSettings == null || !wcSettings.IsConfigured)
+                    return BadRequest("WooCommerce is not configured");
+
+                var nostrSettings = await pluginService.GetNostrSettings(storeId);
+                var wcApp = await wooCommerceService.FetchProducts(wcSettings);
+                if (!wcApp.ShopItems.Any())
+                    return Ok();
+
+                await shopstrService.InitializeClient(nostrSettings.Relays);
+                var productsFromShopstr = await shopstrService.GetShopstrProducts(nostrSettings.PubKey);
+                productsFromShopstr.RemoveAll(e => !e.Status);
+
+                foreach (var item in wcApp.ShopItems)
+                {
+                    if (productsFromShopstr.Any(p => p.Id == item.Id))
+                        await shopstrService.CreateShopstrProduct(item, wcApp, nostrSettings, "", true);
                 }
                 return Ok();
             }
