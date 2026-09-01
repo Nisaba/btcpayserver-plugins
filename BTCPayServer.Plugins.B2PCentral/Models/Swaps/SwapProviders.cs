@@ -77,7 +77,16 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
         QUICK_EX = 23,
 
         [Description("ElCapo")]
-        EL_CAPO = 24
+        EL_CAPO = 24,
+
+        [Description("omenswap")]
+        OMEN_SWAP = 25,
+
+        [Description("LetsExchange")]
+        LETS_EXCHANGE = 26,
+
+        [Description("TheChange")]
+        THE_CHANGE = 27,
 
     }
 
@@ -111,7 +120,10 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.STEREO_SWAP,
             SwapProvidersEnum.BITCOIN_VN,
             SwapProvidersEnum.QUICK_EX,
-            SwapProvidersEnum.EL_CAPO
+            SwapProvidersEnum.EL_CAPO,
+            SwapProvidersEnum.OMEN_SWAP,
+            SwapProvidersEnum.LETS_EXCHANGE,
+            SwapProvidersEnum.THE_CHANGE
         ];
 
         public static readonly SwapProvidersEnum[] KYCProviders = [
@@ -138,7 +150,9 @@ namespace BTCPayServer.Plugins.B2PCentral.Models.Swaps
             SwapProvidersEnum.SWAPONIX,
             SwapProvidersEnum.BITANIA,
             SwapProvidersEnum.CCE_CASH,
-            SwapProvidersEnum.PEGASUS_SWAP
+            SwapProvidersEnum.PEGASUS_SWAP,
+            SwapProvidersEnum.LETS_EXCHANGE,
+            SwapProvidersEnum.THE_CHANGE
         ];
 
         public static string GetDisplayName(this SwapProvidersEnum provider)

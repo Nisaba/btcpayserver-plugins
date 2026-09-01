@@ -133,7 +133,6 @@
                         var tbl = [];
                         if (document.querySelector('#chkBitaria').checked) tbl.push(@((short)ProvidersEnum.Bitania));
                         if (document.querySelector('#chkHodl').checked) tbl.push(@((short)ProvidersEnum.HodlHodl));
-                        if (document.querySelector('#chkNoo').checked) tbl.push(@((short)ProvidersEnum.NoOnes));
                         if (document.querySelector('#chkLocalSw').checked) tbl.push(@((short)ProvidersEnum.LocalCoinSwap));
                         if (document.querySelector('#chkPeach').checked) tbl.push(@((short)ProvidersEnum.Peach));
                         if (document.querySelector('#chkBisqV1').checked) tbl.push(@((short)ProvidersEnum.BisqV1));
@@ -158,11 +157,6 @@
                         <input id="chkHodl" type="checkbox" class="form-check-input me-2" checked />
                         <img src="/Resources/img/HodlHodl.webp" style="width: 28px; height: 28px; margin-right: 8px;" />
                         <label for="chkHodl" class="form-check-label" style="cursor: pointer;">HodlHodl</label>
-                    </div>
-                    <div style="display: flex; align-items: center; min-width: 150px;">
-                        <input id="chkNoo" type="checkbox" class="form-check-input me-2" checked />
-                        <img src="/Resources/img/NoOnes.webp" style="width: 28px; height: 28px; margin-right: 8px;"/>
-                        <label for="chkNoo" class="form-check-label" style="cursor: pointer;">NoOnes</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkLocalSw" type="checkbox" class="form-check-input me-2" checked />
@@ -232,7 +226,6 @@
                     function LightningSearchClick() {
                         var tbl = [];
                         if (document.querySelector('#chkHodlLN').checked) tbl.push(@((short)ProvidersEnum.HodlHodlLN));
-                        if (document.querySelector('#chkLNp2p').checked) tbl.push(@((short)ProvidersEnum.LNp2pBot));
                         if (document.querySelector('#chkRbs').checked) tbl.push(@((short)ProvidersEnum.RoboSats));
                         if (document.querySelector('#chkMst').checked) tbl.push(@((short)ProvidersEnum.Mostro));
                         if (tbl.length == 0) return;
@@ -250,11 +243,6 @@
                         <input id="chkHodlLN" type="checkbox" class="form-check-input me-2" checked />
                         <img src="/Resources/img/HodlHodl.webp" style="width: 28px; height: 28px; margin-right: 8px;" />
                         <label for="chkHodlLN" class="form-check-label" style="cursor: pointer;">HodlHodl</label>
-                    </div>
-                    <div style="display: flex; align-items: center; min-width: 150px;">
-                        <input id="chkLNp2p" type="checkbox" class="form-check-input me-2" checked />
-                        <img src="/Resources/img/LNp2pBot.webp" style="width: 28px; height: 28px; margin-right: 8px;"/>
-                        <label for="chkLNp2p" class="form-check-label" style="cursor: pointer;">LNp2pBot</label>
                     </div>
                     <div style="display: flex; align-items: center; min-width: 150px;">
                         <input id="chkRbs" type="checkbox" class="form-check-input me-2" checked />

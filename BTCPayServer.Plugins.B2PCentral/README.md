@@ -14,7 +14,7 @@ The configuration section is available for users having CanModifyStoreSettings r
 
 ## P2P Bitcoin Sell Offers
 
-Offers are provided by HodlHodl, NoOnes, LocalCoinSwap and Peach for onchain bitcoins. And by LNp2pBot, Mostro and RoboSats for Lightning bitcoins.
+Offers are provided by HodlHodl, Bitania, LocalCoinSwap and Peach for onchain bitcoins. And by Mostro and RoboSats for Lightning bitcoins.
 Then you have 2 tabs for onchain and Lightning, if the walets are configured in the current store.
 These tabs are available for users having CanViewStoreSettings rights.
 
@@ -218,3 +218,8 @@ What's new in v 3.5.2 :
 
 What's new in v 3.5.3 :
 - Lightning swaps can be disable independently from onchain swaps
+
+What's new in v 3.5.4 :
+- Remove NoOnes as onchain provider (not working anymore)
+- Remove LnP2Pbot as Lightning provider (not working anymore)
+- Add omenswap, The Change and LetsExchange as swap providers
