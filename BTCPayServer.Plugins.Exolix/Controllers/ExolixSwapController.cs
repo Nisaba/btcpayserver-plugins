@@ -16,6 +16,16 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
 
         public async Task<SwapCreationResponse> Index([FromRoute] string storeId, [FromForm] SwapRequest req, [FromQuery] bool isTrueNetwork = false)
         {
+            var settings = await pluginService.GetStoreSettings(storeId);
+            if (!settings.Enabled)
+            {
+                return new SwapCreationResponse
+                {
+                    Success = false,
+                    StatusMessage = "Swap is not enabled for this store"
+                };
+            }
+
             var invoice = await pluginService.GetInvoiceAsync(req.BtcPayInvoiceId);
             if (invoice == null || invoice.StoreId != storeId)
             {
