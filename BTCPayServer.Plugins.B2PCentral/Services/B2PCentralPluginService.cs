@@ -42,7 +42,8 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
                                    PayoutMethodHandlerDictionary payoutHandlers,
                                    PullPaymentHostedService pullPaymentHostedService,
                                    WalletHistogramService walletHistogramService,
-                                   B2PCentralService b2PCentralService
+                                   B2PCentralService b2PCentralService,
+                                   InvoiceRepository invoiceRepository
                                    )
 {
     private HttpClient _httpClient2 = new ();
@@ -108,6 +109,28 @@ public class B2PCentralPluginService(B2PCentralPluginDbContextFactory pluginDbCo
         catch (Exception e)
         {
             logger.LogError(e, "B2PCentral:GetStoreSwaps()");
+            throw;
+        }
+    }
+
+    public async Task<Client.Models.InvoiceData> GetInvoiceAsync(string invoiceId)
+    {
+        try
+        {
+            var entity = await invoiceRepository.GetInvoice(invoiceId);
+            if (entity == null)
+                return null;
+
+            return new Client.Models.InvoiceData
+            {
+                Id = entity.Id,
+                StoreId = entity.StoreId,
+                Status = entity.Status,
+            };
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "ExolixPlugin:GetInvoiceAsync()");
             throw;
         }
     }

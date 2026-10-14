@@ -1,7 +1,9 @@
-﻿using BTCPayServer.Plugins.B2PCentral.Models;
+﻿using BTCPayServer.Client.Models;
+using BTCPayServer.Plugins.B2PCentral.Models;
 using BTCPayServer.Plugins.B2PCentral.Models.Swaps;
 using BTCPayServer.Plugins.B2PCentral.Services;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Ocsp;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,6 +22,33 @@ namespace BTCPayServer.Plugins.B2PCentral.Controllers
 #if DEBUG
             swapReq.ToAddress = "bc1qfksx4fuzm6xua093zhllzwmzadtzegyhpqn4au";
 #endif
+            var settings = await pluginService.GetStoreSettings(storeId);
+            if (!settings.CheckoutEnabled)
+            {
+                return new SwapCheckoutCreationResponse
+                {
+                    Success = false,
+                    StatusMessage = "Checkout swap is not enabled for this store"
+                };
+            }
+            var invoice = await pluginService.GetInvoiceAsync(swapReq.InvoiceId);
+            if (invoice == null || invoice.StoreId != storeId)
+            {
+                return new SwapCheckoutCreationResponse
+                {
+                    Success = false,
+                    StatusMessage = "Invalid invoice"
+                };
+            }
+
+            if (invoice.Status != InvoiceStatus.New)
+            {
+                return new SwapCheckoutCreationResponse
+                {
+                    Success = false,
+                    StatusMessage = "Invoice already processed"
+                };
+            }
             var createdSwap = new SwapCheckoutCreationResponse();
             try
             {

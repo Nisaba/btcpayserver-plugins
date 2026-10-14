@@ -222,4 +222,6 @@ What's new in v 3.5.3 :
 What's new in v 3.5.4 :
 - Remove NoOnes as onchain provider (not working anymore)
 - Remove LnP2Pbot as Lightning provider (not working anymore)
-- Add omenswap, The Change and LetsExchange as swap providers
+
+What's new in v 3.5.5 :
+- fix security issues
