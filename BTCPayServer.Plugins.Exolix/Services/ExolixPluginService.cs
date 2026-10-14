@@ -1,4 +1,5 @@
-﻿using BTCPayServer.Client.Models;
+﻿using BTCPayServer.Client;
+using BTCPayServer.Client.Models;
 using BTCPayServer.Data;
 using BTCPayServer.HostedServices;
 using BTCPayServer.Models.StoreViewModels;
@@ -16,6 +17,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,10 +30,11 @@ namespace BTCPayServer.Plugins.Exolix.Services
                                       StoreRepository storeRepository,
                                       WalletHistogramService walletHistogramService,
                                       PaymentMethodHandlerDictionary handlers,
-                                       ILogger<ExolixPluginService> logger,
+                                      ILogger<ExolixPluginService> logger,
                                       PayoutMethodHandlerDictionary payoutHandlers,
                                       PullPaymentHostedService pullPaymentHostedService,
-                                       ApplicationDbContextFactory btcPayDbContextFactory
+                                       ApplicationDbContextFactory btcPayDbContextFactory,
+                                       InvoiceRepository invoiceRepository
                                        )
     {
         private HttpClient _httpClient2 = new HttpClient();
@@ -148,6 +152,27 @@ namespace BTCPayServer.Plugins.Exolix.Services
             }
         }
 
+        public async Task <Client.Models.InvoiceData> GetInvoiceAsync(string invoiceId)
+        {
+            try
+            {
+                var entity = await invoiceRepository.GetInvoice(invoiceId);
+                if (entity == null)
+                    return null;
+
+                return new Client.Models.InvoiceData
+                {
+                    Id = entity.Id,
+                    StoreId = entity.StoreId,
+                    Status = entity.Status,
+                };
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "ExolixPlugin:GetInvoiceAsync()");
+                throw;
+            }
+        }
         public async Task<StoreWalletConfig> GetBalances(string storeId, string BaseUrl)
         {
             StoreWalletConfig cnfg = new StoreWalletConfig();
@@ -324,6 +349,58 @@ namespace BTCPayServer.Plugins.Exolix.Services
                 logger.LogError(e, "ExolixPlugin:CreatePayout()");
                 throw;
             }
+        }
+
+        public static string GenerateReadToken()
+        {
+            var bytes = RandomNumberGenerator.GetBytes(32);
+            return Convert.ToBase64String(bytes)
+                .Replace("+", "-")
+                .Replace("/", "_")
+                .TrimEnd('=');
+        }
+
+        public static string HashToken(string token)
+        {
+            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+            return Convert.ToHexString(bytes).ToLowerInvariant();
+        }
+
+        public async Task<bool> ValidateReadTokenAsync(string swapId, string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return false;
+
+            try
+            {
+                await using var _context = pluginDbContextFactory.CreateContext();
+                var tx = await _context.ExolixTransactions
+                    .FirstOrDefaultAsync(t => t.TxID == swapId);
+
+                if (tx?.ReadTokenHash == null)
+                    return false;
+
+                var providedHash = HashToken(token);
+
+                return CryptographicOperations.FixedTimeEquals(
+                    Encoding.UTF8.GetBytes(tx.ReadTokenHash),
+                    Encoding.UTF8.GetBytes(providedHash));
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "ExolixPlugin:ValidateReadTokenAsync()");
+                return false;
+            }
+        }
+
+        public async Task<ExolixTx> GetTransactionWithTokenAsync(string swapId, string token)
+        {
+            if (!await ValidateReadTokenAsync(swapId, token))
+                return null;
+
+            await using var _context = pluginDbContextFactory.CreateContext();
+            return await _context.ExolixTransactions
+                .FirstOrDefaultAsync(t => t.TxID == swapId);
         }
 
     }

@@ -17,6 +17,7 @@ const ExolixCheckout = {
             error: null,
             checkingStatus: false,
             swapStatus: null,
+            readToken: null,
             qrOptions: {
                 margin: 0,
                 type: 'svg',
@@ -62,11 +63,10 @@ const ExolixCheckout = {
             searchError: null,
             searchDone: false,
 
-            selectedSearchCoin: null   // { code, networkCode, coinIcon, networkIcon, networkName }
+            selectedSearchCoin: null
         }
     },
     methods: {
-
         getProtocol(cryptoCode) {
             return this.protocolMap[cryptoCode] || cryptoCode.toLowerCase();
         },
@@ -111,6 +111,7 @@ const ExolixCheckout = {
             this.loading = true;
             this.error = null;
             this.swapData = null;
+            this.readToken = null;
 
             try {
                 var btcAmount = this.asNumber(this.model.due);
@@ -157,7 +158,13 @@ const ExolixCheckout = {
                     this.error = result.statusMessage || 'Swap creation failed';
                     return;
                 }
+                
                 this.swapData = result;
+                this.readToken = result.readToken;
+
+                if (result.readToken) {
+                    sessionStorage.setItem(`exolix_token_${result.swapId}`, result.readToken);
+                }
             } catch (e) {
                 this.error = e.message || 'Failed to create swap. Please try again.';
             } finally {
@@ -211,6 +218,7 @@ const ExolixCheckout = {
             this.swapData = null;
             this.error = null;
             this.swapStatus = null;
+            this.readToken = null;
 
             this.createSwapFromSearch(coin.code, network.network);
         },
@@ -221,6 +229,7 @@ const ExolixCheckout = {
             this.loading = true;
             this.error = null;
             this.swapData = null;
+            this.readToken = null;
 
             try {
                 let btcAmount = this.asNumber(this.model.due);
@@ -267,7 +276,13 @@ const ExolixCheckout = {
                     this.error = result.statusMessage || 'Swap creation failed';
                     return;
                 }
+                
                 this.swapData = result;
+                this.readToken = result.readToken;
+                
+                if (result.readToken) {
+                    sessionStorage.setItem(`exolix_token_${result.swapId}`, result.readToken);
+                }
             } catch (e) {
                 this.error = e.message || 'Failed to create swap. Please try again.';
             } finally {
@@ -282,11 +297,29 @@ const ExolixCheckout = {
 
             this.checkingStatus = true;
             try {
-                const response = await fetch(`/plugins/${window.exolixData.storeId}/ExolixSwap/${this.swapData.swapId}`, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
+                let token = this.readToken;
+                if (!token) {
+                    token = sessionStorage.getItem(`exolix_token_${this.swapData.swapId}`);
+                }
+                
+                if (!token) {
+                    this.swapStatus = 'Token not available. Please recreate the swap.';
+                    return;
+                }
 
+                const response = await fetch(
+                    `/plugins/${window.exolixData.storeId}/ExolixSwap/${this.swapData.swapId}?token=${encodeURIComponent(token)}`,
+                    {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' }
+                    }
+                );
+
+                if (response.status === 404) {
+                    this.swapStatus = 'Swap not found or token expired';
+                    return;
+                }
+                
                 if (!response.ok) throw new Error('Failed to fetch status');
 
                 const result = await response.json();
@@ -322,7 +355,6 @@ const ExolixCheckout = {
     watch: {
         selectedCrypto(newValue) {
             if (newValue) {
-                // Reset any search selection when the standard dropdown changes
                 this.selectedSearchCoin = null;
                 this.createSwap();
             }
@@ -352,7 +384,6 @@ const ExolixCheckout = {
 
         activeCryptoIcon() {
             if (this.selectedSearchCoin) {
-                // Prefer coin-level icon; fall back to network icon
                 return this.selectedSearchCoin.coinIcon
                     || this.selectedSearchCoin.networkIcon
                     || this.getCryptoIcon(this.selectedSearchCoin.code);

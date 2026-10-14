@@ -8,6 +8,6 @@
         public string FromAddress { get; set; }
         public float FromAmount { get; set; }
         public float ToAmount { get; set; }
-
+        public string ReadToken { get; set; }
     }
 }

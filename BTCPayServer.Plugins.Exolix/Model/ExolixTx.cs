@@ -1,6 +1,6 @@
-﻿
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BTCPayServer.Plugins.Exolix.Model
 {
@@ -16,5 +16,11 @@ namespace BTCPayServer.Plugins.Exolix.Model
         public DateTime DateT { get; set; }
 
         public string BTCPayInvoiceId { get; set; }
+        
+        [StringLength(64)]
+        public string ReadTokenHash { get; set; }
+        
+        [NotMapped]
+        public string ReadToken { get; set; }
     }
 }

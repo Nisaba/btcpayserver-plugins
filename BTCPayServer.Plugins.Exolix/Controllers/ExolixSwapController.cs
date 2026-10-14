@@ -1,4 +1,5 @@
-﻿using BTCPayServer.Plugins.Exolix.Model;
+﻿using BTCPayServer.Client.Models;
+using BTCPayServer.Plugins.Exolix.Model;
 using BTCPayServer.Plugins.Exolix.Services;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -12,8 +13,27 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
 
         [HttpPost]
         [IgnoreAntiforgeryToken]
+
         public async Task<SwapCreationResponse> Index([FromRoute] string storeId, [FromForm] SwapRequest req, [FromQuery] bool isTrueNetwork = false)
         {
+            var invoice = await pluginService.GetInvoiceAsync(req.BtcPayInvoiceId);
+            if (invoice == null || invoice.StoreId != storeId)
+            {
+                return new SwapCreationResponse
+                {
+                    Success = false,
+                    StatusMessage = "Invalid invoice"
+                };
+            }
+
+            if (invoice.Status != InvoiceStatus.New)
+            {
+                return new SwapCreationResponse
+                {
+                    Success = false,
+                    StatusMessage = "Invoice already processed"
+                };
+            }
             var rep = new SwapCreationResponse();
             try
             {
@@ -42,6 +62,7 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                 };
                 rep = await exolixService.CreateSwapAsync(exoliwSwapReq, isTrueNetwork);
 
+                var readToken = ExolixPluginService.GenerateReadToken();
                 await pluginService.AddStoreTransaction(new ExolixTx
                 {
                     StoreId = storeId,
@@ -49,8 +70,11 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
                     DateT = DateTime.UtcNow,
                     BTCAmount = req.BtcAmount,
                     TxID = rep.SwapId,
-                    BTCPayInvoiceId = req.BtcPayInvoiceId
+                    BTCPayInvoiceId = req.BtcPayInvoiceId,
+                    ReadTokenHash = ExolixPluginService.HashToken(readToken)
                 });
+                rep.ReadToken = readToken;
+
                 rep.Success = true;
             }
             catch (Exception ex)
@@ -63,8 +87,17 @@ namespace BTCPayServer.Plugins.Exolix.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetSwapInfo([FromRoute] string id)
+        public async Task<IActionResult> GetSwapInfo([FromRoute] string id, [FromQuery] string token)
         {
+            if (string.IsNullOrEmpty(token))
+            {
+                return NotFound(new { error = "Swap not found" });
+            }
+            if (!await pluginService.ValidateReadTokenAsync(id, token))
+            {
+                return NotFound(new { error = "Swap not found" });
+            }
+
             try
             {
                 var swapInfo = await exolixService.GetSwapInfoAsync(id);

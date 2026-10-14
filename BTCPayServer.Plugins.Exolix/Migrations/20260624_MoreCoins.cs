@@ -23,7 +23,8 @@ namespace BTCPayServer.Plugins.Exolix.Migrations
         {
             migrationBuilder.DropColumn(
                 name: "AllowMoreExolixCoins",
-                table: "ExolixSettings"
+                table: "ExolixSettings",
+                schema: "BTCPayServer.Plugins.Exolix"
             );
         }
     }

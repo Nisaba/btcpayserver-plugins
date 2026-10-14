@@ -14,17 +14,17 @@ public class PluginMigrationRunner(
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var settings = await settingsRepository.GetSettingAsync<PluginDataMigrationHistory>() ??
-                       new PluginDataMigrationHistory();
+/*        var settings = await settingsRepository.GetSettingAsync<PluginDataMigrationHistory>() ??
+                       new PluginDataMigrationHistory();*/
         await using var ctx = pluginDbContextFactory.CreateContext();
         await ctx.Database.MigrateAsync(cancellationToken);
 
         // settings migrations
-        if (!settings.UpdatedSomething)
+       /* if (!settings.UpdatedSomething)
         {
             settings.UpdatedSomething = true;
             await settingsRepository.UpdateSetting(settings);
-        }
+        }*/
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
