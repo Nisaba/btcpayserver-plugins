@@ -44,5 +44,9 @@ What's new in v 1.2.3 :
 What's new in v 1.3.1 :
 - Migration to .NET 10 for BTCPay release v2.3.7 and above
 
+What's new in v 1.3.2 :
+- Better log management (https://github.com/Nisaba/btcpayserver-plugins/issues/22) for BTCPay release v2.4.5 and above
+
+
 
 If you like my work, you can send me with a few sats here: donate@btcpay2.nisaba.solutions. Thank you !

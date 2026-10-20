@@ -4,16 +4,26 @@ using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Sinks.Slack;
 using Serilog.Sinks.Slack.Models;
+using SerilogLogger = global::Serilog.Core.Logger;
 
 namespace BTCPayServer.Plugins.Serilog.Services;
 
-public class SerilogService(ISettingsRepository settingsRepository, ILoggerFactory factory)
+public class SerilogService : IDisposable
 {
-    private bool _configured;
+    private readonly ISettingsRepository _settingsRepository;
+    private readonly ReloadableLogger _pluginLogger;
+    private bool _disposed;
+
+    public SerilogService(ISettingsRepository settingsRepository, ILoggerFactory factory)
+    {
+        _settingsRepository = settingsRepository;
+        _pluginLogger = new ReloadableLogger(SerilogLogger.None);
+        factory.AddSerilog(_pluginLogger);
+    }
 
     public async Task InitSerilogConfig(CancellationToken cancellationToken = default)
     {
-        var serilogSetting = (await settingsRepository.GetSettingAsync<LogSettings>()) ?? new LogSettings();
+        var serilogSetting = (await _settingsRepository.GetSettingAsync<LogSettings>()) ?? new LogSettings();
         DoSerilogConfig(serilogSetting);
     }
 
@@ -40,13 +50,14 @@ public class SerilogService(ISettingsRepository settingsRepository, ILoggerFacto
             loggerConfig.WriteTo.Telegram(botToken: cfg.Token, chatId: cfg.ChatID, restrictedToMinimumLevel: cfg.MinLevel);
         }
 
-        (Log.Logger as IDisposable)?.Dispose();
-        Log.Logger = loggerConfig.CreateLogger();
+        _pluginLogger.Reload(loggerConfig.CreateLogger());
+    }
 
-        if (!_configured)
-        {
-            factory.AddSerilog(Log.Logger);
-            _configured = true;
-        }
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+        _disposed = true;
+        _pluginLogger.Dispose();
     }
 }
