@@ -7,12 +7,12 @@ using BTCPayServer.Security.Greenfield;
 using BTCPayServer.Services.Apps;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NBitcoin.DataEncoders;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -58,21 +58,34 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 {
                     var keyBytes = new byte[20];
                     RandomNumberGenerator.Fill(keyBytes);
-                    var apiKey = Encoders.Hex.EncodeData(keyBytes);
-
-                    var hash = Encoders.Hex.EncodeData(SHA256.HashData(Encoding.UTF8.GetBytes(apiKey)));
-                    var idHash = SHA256.HashData(SHA256.HashData(Encoding.UTF8.GetBytes(apiKey)));
-                    var id = APIKeyData.IdPrefix + "_" + Encoders.Hex.EncodeData(idHash)[..16];
+                    var apiKey = Convert.ToHexString(keyBytes).ToLowerInvariant();
 
                     var apiKeyData = new APIKeyData
                     {
-                        Id = id,
-                        Key = apiKey,
-                        Hash = hash,
-                        Prefix = apiKey.Substring(0, 6),
+                        Id = apiKey,
                         Label = "Telegram Bot Plugin",
                         UserId = userId
                     };
+
+                    // Utiliser la réflexion pour définir les nouvelles propriétés si elles existent
+                    var keyProperty = typeof(APIKeyData).GetProperty("Key", BindingFlags.Public | BindingFlags.Instance);
+                    if (keyProperty != null && keyProperty.CanWrite)
+                    {
+                        keyProperty.SetValue(apiKeyData, apiKey);
+                    }
+
+                    var hashProperty = typeof(APIKeyData).GetProperty("Hash", BindingFlags.Public | BindingFlags.Instance);
+                    if (hashProperty != null && hashProperty.CanWrite)
+                    {
+                        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(apiKey))).ToLowerInvariant();
+                        hashProperty.SetValue(apiKeyData, hash);
+                    }
+
+                    var prefixProperty = typeof(APIKeyData).GetProperty("Prefix", BindingFlags.Public | BindingFlags.Instance);
+                    if (prefixProperty != null && prefixProperty.CanWrite)
+                    {
+                        prefixProperty.SetValue(apiKeyData, apiKey.Substring(0, Math.Min(6, apiKey.Length)));
+                    }
 
                     apiKeyData.SetBlob(new APIKeyBlob
                     {
