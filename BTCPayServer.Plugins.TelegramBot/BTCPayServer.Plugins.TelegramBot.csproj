@@ -9,7 +9,7 @@
 		<Description>
 			Allows merchants to create a Telegram Bot and synchronize their BTCPay points of sales with it.
 		</Description>
-		<Version>1.1.0</Version>
+		<Version>1.1.1</Version>
 	</PropertyGroup>
 
 	<!-- Plugin development properties -->
@@ -64,8 +64,8 @@
 	</ItemGroup>
 
 
-
 	<ItemGroup>
-	  <ProjectReference Include="..\..\submodules\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
+		<ProjectReference Include="..\btcpayserver\BTCPayServer\BTCPayServer.csproj" />
+		<!--	<ProjectReference Include="..\..\submodules\btcpayserver\BTCPayServer\BTCPayServer.csproj" /> -->
 	</ItemGroup>
 </Project>
