@@ -12,7 +12,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -54,17 +53,9 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                 var config = await context.Config.FirstOrDefaultAsync();
                 if (config == null)
                 {
-                    var keyBytes = new byte[20];
-                    RandomNumberGenerator.Fill(keyBytes);
-                    var apiKey = Convert.ToHexString(keyBytes).ToLowerInvariant();
-
-                    var apiKeyData = new APIKeyData
-                    {
-                        Id = apiKey,
-                        Type = APIKeyType.Permanent,
-                        Label = "Telegram Bot Plugin",
-                        UserId = userId
-                    };
+                    var apiKeyData = APIKeyRepository.New();
+                    apiKeyData.Label = "Telegram Bot Plugin";
+                    apiKeyData.UserId = userId;
 
                     apiKeyData.SetBlob(new APIKeyBlob
                     {
@@ -76,7 +67,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     config = new TelegramBotConfig
                     { 
                         BaseUrl = baseUrl,
-                        ApiKey = apiKey
+                        ApiKey = apiKeyData.Key 
                     };
                     context.Config.Add(config);
                     bUpdate = true;
