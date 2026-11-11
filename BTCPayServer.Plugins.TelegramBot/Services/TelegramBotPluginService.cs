@@ -194,9 +194,14 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
         {
             try
             {
+                var app = (await appService.GetApps("PointOfSale"))
+                    .FirstOrDefault(a => a.Id == appId && a.StoreDataId == storeId && !a.Archived);
+                if (app == null)
+                    throw new InvalidOperationException($"App {appId} not found for store {storeId}");
+
                 bool bStart = false;
                 bool bStop = false;
-                var botService = telegramBots.FirstOrDefault(b => b.AppData.Id == appId);
+                var botService = telegramBots.FirstOrDefault(b => b.AppData.Id == appId && b.AppData.StoreDataId == storeId);
 
                 using var context = dbContextFactory.CreateContext();
                 var dbSettings = await context.Settings.FirstOrDefaultAsync(a => a.StoreId == storeId && a.AppId == appId);
@@ -214,8 +219,6 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
                     if (botService == null)
                     {
                         var telegramBotLogger = loggerFactory.CreateLogger<TelegramBot>();
-                        var app = (await appService.GetApps("PointOfSale"))
-                            .FirstOrDefault(a => a.Id == appId && a.StoreDataId == storeId);
                         var appSettings = app.GetSettings<PointOfSaleSettings>();
 
                         var appData = BuildAppData(app, appSettings, botToken, isEnabled);
@@ -401,8 +404,7 @@ namespace BTCPayServer.Plugins.TelegramBot.Services
         {
             try
             {
-                var botService = telegramBots.FirstOrDefault(b => b.AppData.Id == appId);
-                if (botService == null)
+                var botService = telegramBots.FirstOrDefault(b => b.AppData.Id == appId && b.AppData.StoreDataId == storeId); if (botService == null)
                     return false;
 
                 var app = (await appService.GetApps("PointOfSale"))
