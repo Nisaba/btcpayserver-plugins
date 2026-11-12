@@ -54,7 +54,8 @@ namespace BTCPayServer.Plugins.Shopstr.Services
                 {
                     storeId = storeId,
                     Nip5Settings = await storeRepository.GetSettingAsync<Nip5StoreSettings>(storeId, "NIP05"),
-                    StoreApps = filteredApps
+                    StoreApps = filteredApps,
+                    WooCommerceSettings = await GetWooCommerceSettings(storeId)
                 };
 
             }
@@ -146,6 +147,50 @@ namespace BTCPayServer.Plugins.Shopstr.Services
             catch (Exception e)
             {
                 logger.LogError(e, "ShopstrPlugin:GetNostrSettings()");
+                throw;
+            }
+        }
+
+        public async Task<WooCommerceSettings> GetWooCommerceSettings(string storeId)
+        {
+            try
+            {
+                await using var context = dbContextFactory.CreateContext();
+                return await context.WooCommerceSettings.FirstOrDefaultAsync(a => a.StoreId == storeId);
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "ShopstrPlugin:GetWooCommerceSettings()");
+                throw;
+            }
+        }
+
+        public async Task UpdateWooCommerceSettings(WooCommerceSettings settings)
+        {
+            try
+            {
+                await using var context = dbContextFactory.CreateContext();
+                var existing = await context.WooCommerceSettings.FirstOrDefaultAsync(a => a.StoreId == settings.StoreId);
+                if (existing == null)
+                {
+                    context.WooCommerceSettings.Add(settings);
+                }
+                else
+                {
+                    existing.WooCommerceUrl = settings.WooCommerceUrl;
+                    existing.ConsumerKey = settings.ConsumerKey;
+                    existing.ConsumerSecret = settings.ConsumerSecret;
+                    existing.Location = settings.Location;
+                    existing.FlashSales = settings.FlashSales;
+                    existing.Condition = settings.Condition;
+                    existing.Restrictions = settings.Restrictions;
+                    context.WooCommerceSettings.Update(existing);
+                }
+                await context.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "ShopstrPlugin:UpdateWooCommerceSettings()");
                 throw;
             }
         }
